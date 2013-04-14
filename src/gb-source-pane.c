@@ -403,18 +403,6 @@ gb_source_pane_class_init (GbSourcePaneClass *klass)
                                    gParamSpecs[PROP_FILE]);
 }
 
-#if 1
-static gboolean
-flip (gpointer data)
-{
-   gboolean v;
-
-   g_object_get(data, "reveal-child", &v, NULL);
-   g_object_set(data, "reveal-child", !v, NULL);
-   return TRUE;
-}
-#endif
-
 static void
 gb_source_pane_init (GbSourcePane *pane)
 {
@@ -489,15 +477,12 @@ gb_source_pane_init (GbSourcePane *pane)
    priv->search_revealer = g_object_new(GD_TYPE_REVEALER,
                                         "halign", GTK_ALIGN_END,
                                         "margin-right", 32,
-                                        "reveal-child", TRUE,
+                                        "reveal-child", FALSE,
                                         "valign", GTK_ALIGN_START,
                                         "vexpand", FALSE,
                                         "visible", TRUE,
                                         NULL);
    gtk_overlay_add_overlay(GTK_OVERLAY(priv->overlay), priv->search_revealer);
-
-   if (0)
-   g_timeout_add(1500, flip, priv->search_revealer);
 
    frame_ = g_object_new(GTK_TYPE_FRAME,
                          "visible", TRUE,
