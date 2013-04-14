@@ -313,6 +313,30 @@ gb_source_pane_dispose (GObject *object)
    G_OBJECT_CLASS(gb_source_pane_parent_class)->dispose(object);
 }
 
+static gboolean
+gb_source_pane_search_entry_key_press (GtkSearchEntry *search_entry,
+                                       GdkEventKey    *key,
+                                       GbSourcePane   *pane)
+{
+   GbSourcePanePrivate *priv = pane->priv;
+
+   if (key->keyval == GDK_KEY_Escape) {
+      g_object_set(priv->search_revealer,
+                   "reveal-child", FALSE,
+                   NULL);
+      g_object_set(priv->highlight,
+                   "visible", FALSE,
+                   NULL);
+      g_object_set(priv->view,
+                   "has-focus", TRUE,
+                   "search-text", NULL,
+                   NULL);
+      return TRUE;
+   }
+
+   return FALSE;
+}
+
 static void
 gb_source_pane_finalize (GObject *object)
 {
@@ -504,6 +528,9 @@ gb_source_pane_init (GbSourcePane *pane)
                                      "visible", TRUE,
                                      "width-chars", 25,
                                      NULL);
+   g_signal_connect(priv->search_entry, "key-press-event",
+                    G_CALLBACK(gb_source_pane_search_entry_key_press),
+                    pane);
    gtk_container_add(GTK_CONTAINER(hbox), priv->search_entry);
 
    if (gtk_widget_get_direction(priv->search_entry) == GTK_TEXT_DIR_RTL) {
