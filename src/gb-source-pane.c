@@ -499,6 +499,7 @@ gb_source_pane_init (GbSourcePane *pane)
 
    priv->search_entry = g_object_new(GTK_TYPE_SEARCH_ENTRY,
                                      "halign", GTK_ALIGN_END,
+                                     "placeholder-text", _("Search"),
                                      "valign", GTK_ALIGN_START,
                                      "visible", TRUE,
                                      "width-chars", 25,
