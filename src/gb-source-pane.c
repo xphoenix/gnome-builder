@@ -38,8 +38,6 @@ struct _GbSourcePanePrivate
 {
    GFile *file;
 
-   GtkTextTag *highlight_tag;
-
    GtkWidget *highlight;
    GtkWidget *overlay;
    GtkWidget *ruler;
@@ -320,7 +318,7 @@ gb_source_pane_finalize (GObject *object)
 {
    GbSourcePanePrivate *priv = GB_SOURCE_PANE(object)->priv;
 
-   g_clear_object(&priv->highlight_tag);
+   g_clear_object(&priv->file);
 
    G_OBJECT_CLASS(gb_source_pane_parent_class)->finalize(object);
 }
@@ -443,11 +441,6 @@ gb_source_pane_init (GbSourcePane *pane)
    gtk_container_add(GTK_CONTAINER(priv->scroller), priv->view);
    g_object_unref(buffer);
 
-   priv->highlight_tag = gtk_text_buffer_create_tag(GTK_TEXT_BUFFER(buffer),
-                                                    "Tag::Search",
-                                                    "background", "#ff0000",
-                                                    NULL);
-
    priv->highlight = g_object_new(GB_TYPE_SOURCE_OVERLAY,
                                   "hexpand", TRUE,
                                   "tag", "Tag::Search",
@@ -569,4 +562,12 @@ gb_source_pane_init (GbSourcePane *pane)
    pane->priv->mark_set_handler =
       g_signal_connect_after(buffer, "mark-set", G_CALLBACK(on_mark_set),
                              pane);
+
+   g_object_bind_property(pane->priv->search_entry, "text",
+                          pane->priv->view, "search-text",
+                          G_BINDING_SYNC_CREATE);
+
+   g_object_bind_property(pane->priv->view, "search-has-matches",
+                          pane->priv->highlight, "visible",
+                          G_BINDING_SYNC_CREATE);
 }
