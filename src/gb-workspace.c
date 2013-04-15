@@ -310,6 +310,7 @@ gb_workspace_init (GbWorkspace *workspace)
       gtk_ui_manager_insert_action_group(ui, action_group, -1);
       gtk_ui_manager_add_ui_from_file(ui, "src/gb-workspace.ui", NULL);
       menu = gtk_ui_manager_get_widget(ui, "/ui/menu");
+      gtk_widget_set_halign(menu, GTK_ALIGN_END);
 
       accel_group = gtk_ui_manager_get_accel_group(ui);
       gtk_window_add_accel_group(GTK_WINDOW(workspace), accel_group);
@@ -321,6 +322,7 @@ gb_workspace_init (GbWorkspace *workspace)
                         "visible", TRUE,
                         NULL);
    button = g_object_new(GTK_TYPE_MENU_BUTTON,
+                         "direction", GTK_ARROW_DOWN,
                          "image", image,
                          "hexpand", FALSE,
                          "popup", menu,
