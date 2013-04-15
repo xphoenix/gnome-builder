@@ -239,6 +239,12 @@ gb_source_pane_emit_modified_changed (GbSourcePane *pane)
    gb_workspace_pane_set_modified(GB_WORKSPACE_PANE(pane), modified);
 }
 
+static void
+gb_source_pane_grab_focus (GtkWidget *widget)
+{
+   gtk_widget_grab_focus(GB_SOURCE_PANE(widget)->priv->view);
+}
+
 static gboolean
 get_child_position (GtkOverlay   *overlay,
                     GtkWidget    *widget,
@@ -424,6 +430,7 @@ static void
 gb_source_pane_class_init (GbSourcePaneClass *klass)
 {
    GObjectClass *object_class;
+   GtkWidgetClass *widget_class;
 
    object_class = G_OBJECT_CLASS(klass);
    object_class->dispose = gb_source_pane_dispose;
@@ -431,6 +438,9 @@ gb_source_pane_class_init (GbSourcePaneClass *klass)
    object_class->get_property = gb_source_pane_get_property;
    object_class->set_property = gb_source_pane_set_property;
    g_type_class_add_private(object_class, sizeof(GbSourcePanePrivate));
+
+   widget_class = GTK_WIDGET_CLASS(klass);
+   widget_class->grab_focus = gb_source_pane_grab_focus;
 
    gParamSpecs[PROP_FILE] =
       g_param_spec_object("file",

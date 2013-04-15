@@ -84,6 +84,7 @@ on_open_activated (GSimpleAction *action,
          gtk_container_add(GTK_CONTAINER(parent), pane);
          gb_source_pane_load_async(GB_SOURCE_PANE(pane), file, NULL, NULL, NULL);
          g_object_unref(file);
+         gtk_widget_grab_focus(pane);
       }
    }
    gtk_widget_destroy(GTK_WIDGET(dialog));
