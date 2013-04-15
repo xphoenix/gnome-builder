@@ -295,7 +295,9 @@ gb_workspace_init (GbWorkspace *workspace)
        */
 
       static const GtkActionEntry entries[] = {
-         { "find", NULL, N_("Find"), "<Primary>F", N_("Search within the current document."), G_CALLBACK(gb_workspace_find_activate) },
+         { "find", NULL, N_("Find"), "<Primary>F",
+           N_("Search within the current document."),
+           G_CALLBACK(gb_workspace_find_activate) },
       };
 
       GtkActionGroup *action_group;
