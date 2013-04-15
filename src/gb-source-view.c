@@ -123,6 +123,8 @@ gb_source_view_update_search (GbSourceView *view,
       if (!priv->search_case_sensitive) {
          flags = G_REGEX_CASELESS;
       }
+#else
+      flags = G_REGEX_CASELESS;
 #endif
       escaped = g_regex_escape_string(priv->search_text, -1);
       regex = g_regex_new(escaped, flags, 0, NULL);
