@@ -155,11 +155,7 @@ gb_workspace_add (GtkContainer *container,
 {
    GbWorkspacePrivate *priv = GB_WORKSPACE(container)->priv;
 
-   g_print("%s\n", g_type_name(G_TYPE_FROM_INSTANCE(child)));
-   g_print("gb_workspace_add\n");
-
    if (GB_IS_WORKSPACE_PANE(child)) {
-      g_print("it is a workspace pane\n");
       gtk_container_add(GTK_CONTAINER(priv->layout), child);
    } else {
       GTK_CONTAINER_CLASS(gb_workspace_parent_class)->add(container, child);
