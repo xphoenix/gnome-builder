@@ -19,6 +19,7 @@
 #include <gd/gd-header-bar.h>
 #include <glib/gi18n.h>
 
+#include "gb-search-provider.h"
 #include "gb-workspace.h"
 #include "gb-workspace-layout.h"
 #include "gb-workspace-layout-edit.h"
@@ -31,6 +32,8 @@ G_DEFINE_TYPE(GbWorkspace, gb_workspace, GTK_TYPE_APPLICATION_WINDOW)
 struct _GbWorkspacePrivate
 {
    GbProject *project;
+
+   GtkAccelGroup *accel_group;
 
    GtkWidget *edit;
    GtkWidget *layout;
@@ -164,6 +167,24 @@ gb_workspace_add (GtkContainer *container,
 }
 
 static void
+gb_workspace_find_activate (GtkAction   *action,
+                            GbWorkspace *workspace)
+{
+   GtkWidget *widget;
+
+   g_assert(GB_IS_WORKSPACE(workspace));
+
+   if ((widget = gtk_window_get_focus(GTK_WINDOW(workspace)))) {
+      for (; widget; widget = gtk_widget_get_parent(widget)) {
+         if (GB_IS_SEARCH_PROVIDER(widget)) {
+            gb_search_provider_focus_search(GB_SEARCH_PROVIDER(widget));
+            break;
+         }
+      }
+   }
+}
+
+static void
 gb_workspace_finalize (GObject *object)
 {
    G_OBJECT_CLASS(gb_workspace_parent_class)->finalize(object);
@@ -219,6 +240,7 @@ gb_workspace_init (GbWorkspace *workspace)
    GbWorkspacePrivate *priv;
    GtkWidget *image;
    GtkWidget *button;
+   GtkWidget *menu;
 
    workspace->priv = G_TYPE_INSTANCE_GET_PRIVATE(workspace,
                                                  GB_TYPE_WORKSPACE,
@@ -267,6 +289,32 @@ gb_workspace_init (GbWorkspace *workspace)
                          NULL);
    gd_header_bar_pack_end(GD_HEADER_BAR(priv->toolbar), button);
 
+   {
+      /*
+       * TODO: We should find a better way to add these.
+       */
+
+      static const GtkActionEntry entries[] = {
+         { "find", NULL, N_("Find"), "<Primary>F", N_("Search within the current document."), G_CALLBACK(gb_workspace_find_activate) },
+      };
+
+      GtkActionGroup *action_group;
+      GtkAccelGroup *accel_group;
+      GtkUIManager *ui;
+
+      action_group = gtk_action_group_new("workspace-menu");
+      gtk_action_group_add_actions(action_group, entries,
+                                   G_N_ELEMENTS(entries), workspace);
+
+      ui = gtk_ui_manager_new();
+      gtk_ui_manager_insert_action_group(ui, action_group, -1);
+      gtk_ui_manager_add_ui_from_file(ui, "src/gb-workspace.ui", NULL);
+      menu = gtk_ui_manager_get_widget(ui, "/ui/menu");
+
+      accel_group = gtk_ui_manager_get_accel_group(ui);
+      gtk_window_add_accel_group(GTK_WINDOW(workspace), accel_group);
+   }
+
    image = g_object_new(GTK_TYPE_IMAGE,
                         "icon-name", "emblem-system-symbolic",
                         "icon-size", GTK_ICON_SIZE_MENU,
@@ -275,6 +323,7 @@ gb_workspace_init (GbWorkspace *workspace)
    button = g_object_new(GTK_TYPE_MENU_BUTTON,
                          "image", image,
                          "hexpand", FALSE,
+                         "popup", menu,
                          "visible", TRUE,
                          NULL);
    gd_header_bar_pack_end(GD_HEADER_BAR(priv->toolbar), button);
