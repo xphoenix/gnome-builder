@@ -175,6 +175,7 @@ gb_source_pane_load_async (GbSourcePane        *pane,
 {
    GbSourcePanePrivate *priv;
    GtkTextBuffer *buffer;
+   GtkTextIter iter;
    GError *error = NULL;
    gchar *contents;
    gchar *path;
@@ -213,6 +214,9 @@ gb_source_pane_load_async (GbSourcePane        *pane,
    g_free(contents);
 
    gb_source_pane_set_file(pane, file);
+
+   gtk_text_buffer_get_start_iter(buffer, &iter);
+   gtk_text_buffer_select_range(buffer, &iter, &iter);
 
    gtk_text_buffer_set_modified(buffer, FALSE);
 
