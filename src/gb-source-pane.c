@@ -335,6 +335,27 @@ gb_source_pane_dispose (GObject *object)
 }
 
 static gboolean
+gb_source_pane_view_key_press (GtkTextView  *text_view,
+                               GdkEventKey  *key,
+                               GbSourcePane *pane)
+{
+   GbSourcePanePrivate *priv = pane->priv;
+
+   if (key->keyval == GDK_KEY_Escape) {
+      g_object_set(priv->highlight,
+                   "visible", FALSE,
+                   NULL);
+      g_object_set(text_view,
+                   "search-text", NULL,
+                   NULL);
+      gtk_widget_grab_focus(priv->view);
+      return TRUE;
+   }
+
+   return FALSE;
+}
+
+static gboolean
 gb_source_pane_search_entry_key_press (GtkSearchEntry *search_entry,
                                        GdkEventKey    *key,
                                        GbSourcePane   *pane)
@@ -348,10 +369,7 @@ gb_source_pane_search_entry_key_press (GtkSearchEntry *search_entry,
       g_object_set(priv->highlight,
                    "visible", FALSE,
                    NULL);
-      g_object_set(priv->view,
-                   "has-focus", TRUE,
-                   "search-text", NULL,
-                   NULL);
+      gtk_widget_grab_focus(priv->view);
       return TRUE;
    }
 
@@ -471,6 +489,9 @@ gb_source_pane_init (GbSourcePane *pane)
                              "buffer", buffer,
                              "visible", TRUE,
                              NULL);
+   g_signal_connect(priv->view, "key-press-event",
+                    G_CALLBACK(gb_source_pane_view_key_press),
+                    pane);
    gtk_container_add(GTK_CONTAINER(priv->scroller), priv->view);
    g_object_unref(buffer);
 
