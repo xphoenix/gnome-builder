@@ -26,13 +26,21 @@
 #include <gtksourceview/gtksourcestylescheme.h>
 #include <nautilus/nautilus-floating-bar.h>
 
+#include "gb-search-provider.h"
 #include "gb-source-gutter-renderer-compiler.h"
 #include "gb-source-gutter-renderer-diff.h"
 #include "gb-source-overlay.h"
 #include "gb-source-pane.h"
 #include "gb-source-view.h"
 
-G_DEFINE_TYPE(GbSourcePane, gb_source_pane, GB_TYPE_WORKSPACE_PANE)
+static void gb_search_provider_init (GbSearchProviderIface *iface);
+
+G_DEFINE_TYPE_EXTENDED(GbSourcePane,
+                       gb_source_pane,
+                       GB_TYPE_WORKSPACE_PANE,
+                       0,
+                       G_IMPLEMENT_INTERFACE(GB_TYPE_SEARCH_PROVIDER,
+                                             gb_search_provider_init))
 
 struct _GbSourcePanePrivate
 {
@@ -291,6 +299,19 @@ on_delete_range (GtkTextBuffer *buffer,
                  GbSourcePane  *pane)
 {
    update_position(pane, buffer);
+}
+
+static void
+gb_source_pane_focus_search (GbSearchProvider *provider)
+{
+   GbSourcePane *pane = (GbSourcePane *)provider;
+
+   g_assert(GB_IS_SOURCE_PANE(pane));
+
+   g_object_set(pane->priv->search_revealer,
+                "reveal-child", TRUE,
+                NULL);
+   gtk_widget_grab_focus(pane->priv->search_entry);
 }
 
 static void
@@ -583,4 +604,10 @@ gb_source_pane_init (GbSourcePane *pane)
    g_object_bind_property(pane->priv->view, "search-has-matches",
                           pane->priv->highlight, "visible",
                           G_BINDING_SYNC_CREATE);
+}
+
+static void
+gb_search_provider_init (GbSearchProviderIface *iface)
+{
+   iface->focus_search = gb_source_pane_focus_search;
 }

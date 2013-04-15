@@ -36,6 +36,7 @@ OBJECTS += src/gb-project-item.o
 OBJECTS += src/gb-project-file.o
 OBJECTS += src/gb-runner.o
 OBJECTS += src/gb-runner-program.o
+OBJECTS += src/gb-search-provider.o
 OBJECTS += src/gb-source-diff.o
 OBJECTS += src/gb-source-gutter-renderer-compiler.o
 OBJECTS += src/gb-source-gutter-renderer-diff.o
