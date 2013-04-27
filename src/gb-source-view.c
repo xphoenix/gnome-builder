@@ -296,12 +296,15 @@ gb_source_view_class_init (GbSourceViewClass *klass)
                            G_PARAM_CONSTRUCT));
    g_object_class_install_property(object_class, PROP_STATE,
                                    gParamSpecs[PROP_STATE]);
+
+   gtk_source_style_scheme_manager_append_search_path(
+         gtk_source_style_scheme_manager_get_default(),
+         "data");
 }
 
 static void
 gb_source_view_init (GbSourceView *view)
 {
-   GtkSourceStyleSchemeManager *sm;
    GtkSourceLanguageManager *lm;
    PangoFontDescription *font;
    GtkSourceStyleScheme *scheme;
@@ -318,9 +321,9 @@ gb_source_view_init (GbSourceView *view)
 
    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
    if (GTK_SOURCE_IS_BUFFER(buffer)) {
-      sm = gtk_source_style_scheme_manager_get_default();
-      gtk_source_style_scheme_manager_append_search_path(sm, ".");
-      scheme = gtk_source_style_scheme_manager_get_scheme(sm, "tango");
+      scheme = gtk_source_style_scheme_manager_get_scheme(
+            gtk_source_style_scheme_manager_get_default(),
+            "solarized-light");
 
       lm = gtk_source_language_manager_get_default();
       lang = gtk_source_language_manager_get_language(lm, "c");
