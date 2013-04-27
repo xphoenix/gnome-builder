@@ -28,6 +28,7 @@ struct _GbSourceOverlayPrivate
    GdkRGBA      background_color;
    gchar       *tag;
    GtkTextView *widget;
+   GtkTextTag  *text_tag;
 };
 
 enum
@@ -219,12 +220,12 @@ gb_source_overlay_draw (GtkWidget *widget,
    GbSourceOverlay *overlay = (GbSourceOverlay *)widget;
    GtkTextTagTable *table;
    cairo_region_t *region;
-   GtkAllocation alloc;
    GtkTextBuffer *buffer;
+   GtkAllocation alloc;
+   GdkRectangle vis;
    GtkTextIter iter;
    GtkTextIter begin;
    GtkTextIter end;
-   GtkTextTag *tag;
    GdkWindow *window;
    gint n_rectangles;
    gint i;
@@ -234,6 +235,11 @@ gb_source_overlay_draw (GtkWidget *widget,
 
    priv = overlay->priv;
 
+   window = gtk_widget_get_window(widget);
+   if (!gtk_cairo_should_draw_window(cr, window)) {
+      return FALSE;
+   }
+
    if (!GTK_IS_TEXT_VIEW(priv->widget) || !priv->tag) {
       return FALSE;
    }
@@ -242,17 +248,14 @@ gb_source_overlay_draw (GtkWidget *widget,
       return FALSE;
    }
 
-   window = gtk_widget_get_window(widget);
-   if (!gtk_cairo_should_draw_window(cr, window)) {
-      return FALSE;
-   }
-
    if (!(table = gtk_text_buffer_get_tag_table(buffer))) {
       return FALSE;
    }
 
-   if (!(tag = gtk_text_tag_table_lookup(table, priv->tag))) {
-      return FALSE;
+   if (!priv->text_tag) {
+      if (!(priv->text_tag = gtk_text_tag_table_lookup(table, priv->tag))) {
+         return FALSE;
+      }
    }
 
    gtk_widget_get_allocation(widget, &alloc);
@@ -262,16 +265,20 @@ gb_source_overlay_draw (GtkWidget *widget,
    rect.height = alloc.height;
    region = cairo_region_create_rectangle(&rect);
 
-   gtk_text_buffer_get_bounds(buffer, &iter, &end);
+   gtk_text_view_get_visible_rect(GTK_TEXT_VIEW(priv->widget), &vis);
+   gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(priv->widget), &iter, vis.x, vis.y);
+   gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(priv->widget), &end,
+                                      vis.x + vis.width,
+                                      vis.y + vis.height);
 
    do {
-      if (!gtk_text_iter_begins_tag(&iter, tag)) {
-         if (!gtk_text_iter_forward_to_tag_toggle(&iter, tag)) {
+      if (!gtk_text_iter_begins_tag(&iter, priv->text_tag)) {
+         if (!gtk_text_iter_forward_to_tag_toggle(&iter, priv->text_tag)) {
             break;
          }
       }
       gtk_text_iter_assign(&begin, &iter);
-      if (!gtk_text_iter_forward_to_tag_toggle(&iter, tag)) {
+      if (!gtk_text_iter_forward_to_tag_toggle(&iter, priv->text_tag)) {
          break;
       }
 
@@ -290,7 +297,7 @@ gb_source_overlay_draw (GtkWidget *widget,
    cairo_fill_preserve(cr);
    cairo_clip(cr);
 
-   draw_bevels(overlay, cr, buffer, tag);
+   draw_bevels(overlay, cr, buffer, priv->text_tag);
 
    cairo_restore(cr);
 
@@ -495,7 +502,7 @@ gb_source_overlay_init (GbSourceOverlay *overlay)
                                   GbSourceOverlayPrivate);
 
    gdk_rgba_parse(&overlay->priv->background_color, "#000000");
-   overlay->priv->background_color.alpha = 0.8;
+   overlay->priv->background_color.alpha = 0.6;
 
    gtk_widget_add_events(GTK_WIDGET(overlay),
                          (GDK_BUTTON_PRESS_MASK |

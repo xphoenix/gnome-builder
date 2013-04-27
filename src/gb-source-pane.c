@@ -287,7 +287,7 @@ on_mark_set (GtkTextBuffer *buffer,
              GtkTextMark   *mark,
              GbSourcePane  *pane)
 {
-   if (mark == gtk_text_buffer_get_insert(buffer)) {
+   if (mark && (mark == gtk_text_buffer_get_insert(buffer))) {
       update_position(pane, buffer);
    }
 }
