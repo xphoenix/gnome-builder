@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${exec_prefix}/include
+
+Name: Gnome Builder
+Description: A development environment for GNOME.
+Version: @VERSION@
+Libs: 
+Cflags: -I${includedir}/gnome-builder-1.0
+Requires: gtk+-3.0 gtksourceview-3.0 libpeas-1.0

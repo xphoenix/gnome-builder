@@ -858,9 +858,16 @@ gb_animation_mode_get_type (void)
 
 /**
  * gb_object_animatev:
+ * @object: A #GObject.
+ * @mode: The animation mode.
+ * @duration_msec: The duration in milliseconds.
+ * @frame_rate: The target frame rate.
+ * @first_property: The first property to animate.
+ * @args: A variadac list of arguments
+ *
  * Returns: (transfer none): A #GbAnimation.
  */
-GbAnimation*
+GbAnimation *
 gb_object_animatev (gpointer         object,
                     GbAnimationMode  mode,
                     guint            duration_msec,

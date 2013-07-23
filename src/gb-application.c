@@ -18,6 +18,7 @@
 
 #include <glib/gi18n.h>
 
+#include "builder-menu-ui.h"
 #include "gb-application.h"
 #include "gb-file-filters.h"
 #include "gb-source-pane.h"
@@ -125,7 +126,7 @@ gb_application_activate (GApplication *application)
       GError *error = NULL;
 
       builder = gtk_builder_new();
-      if (!gtk_builder_add_from_file(builder, "builder-menu.ui", &error)) {
+      if (!gtk_builder_add_from_string(builder, builder_menu_ui, -1, &error)) {
          g_error("%s", error->message);
       }
 

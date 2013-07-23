@@ -1,0 +1,222 @@
+-include $(top_srcdir)/Makefile.introspection
+
+bin_PROGRAMS =
+bin_PROGRAMS += gnome-builder
+
+headerdir = $(prefix)/include/gnome-builder-@GB_API_VERSION@/gnome-builder
+header_DATA = $(INST_H_FILES)
+
+INST_H_FILES =
+INST_H_FILES += $(top_srcdir)/src/gb-animation.h
+INST_H_FILES += $(top_srcdir)/src/gb-application.h
+INST_H_FILES += $(top_srcdir)/src/gb-compiler-clang.h
+INST_H_FILES += $(top_srcdir)/src/gb-compiler.h
+INST_H_FILES += $(top_srcdir)/src/gb-compiler-js.h
+INST_H_FILES += $(top_srcdir)/src/gb-compiler-result.h
+INST_H_FILES += $(top_srcdir)/src/gb-debugger-gdb.h
+INST_H_FILES += $(top_srcdir)/src/gb-debugger.h
+INST_H_FILES += $(top_srcdir)/src/gb-docs-pane.h
+INST_H_FILES += $(top_srcdir)/src/gb-docs-provider-devhelp.h
+INST_H_FILES += $(top_srcdir)/src/gb-docs-provider-gir.h
+INST_H_FILES += $(top_srcdir)/src/gb-docs-provider.h
+INST_H_FILES += $(top_srcdir)/src/gb-file-filters.h
+INST_H_FILES += $(top_srcdir)/src/gb-frame-source.h
+INST_H_FILES += $(top_srcdir)/src/gb-language-c.h
+INST_H_FILES += $(top_srcdir)/src/gb-language-formatter-c.h
+INST_H_FILES += $(top_srcdir)/src/gb-language-formatter.h
+INST_H_FILES += $(top_srcdir)/src/gb-language-formatter-js.h
+INST_H_FILES += $(top_srcdir)/src/gb-language.h
+INST_H_FILES += $(top_srcdir)/src/gb-language-js.h
+INST_H_FILES += $(top_srcdir)/src/gb-profiler.h
+INST_H_FILES += $(top_srcdir)/src/gb-profiler-ltrace.h
+INST_H_FILES += $(top_srcdir)/src/gb-profiler-strace.h
+INST_H_FILES += $(top_srcdir)/src/gb-profiler-valgrind.h
+INST_H_FILES += $(top_srcdir)/src/gb-project-file.h
+INST_H_FILES += $(top_srcdir)/src/gb-project.h
+INST_H_FILES += $(top_srcdir)/src/gb-project-item.h
+INST_H_FILES += $(top_srcdir)/src/gb-runner.h
+INST_H_FILES += $(top_srcdir)/src/gb-runner-program.h
+INST_H_FILES += $(top_srcdir)/src/gb-search-provider.h
+INST_H_FILES += $(top_srcdir)/src/gb-source-diff.h
+INST_H_FILES += $(top_srcdir)/src/gb-source-gutter-renderer-compiler.h
+INST_H_FILES += $(top_srcdir)/src/gb-source-gutter-renderer-diff.h
+INST_H_FILES += $(top_srcdir)/src/gb-source-overlay.h
+INST_H_FILES += $(top_srcdir)/src/gb-source-pane.h
+INST_H_FILES += $(top_srcdir)/src/gb-source-snippet-chunk.h
+INST_H_FILES += $(top_srcdir)/src/gb-source-snippet.h
+INST_H_FILES += $(top_srcdir)/src/gb-source-snippets.h
+INST_H_FILES += $(top_srcdir)/src/gb-source-state.h
+INST_H_FILES += $(top_srcdir)/src/gb-source-state-insert.h
+INST_H_FILES += $(top_srcdir)/src/gb-source-state-snippet.h
+INST_H_FILES += $(top_srcdir)/src/gb-source-view.h
+INST_H_FILES += $(top_srcdir)/src/gb-symbol-combo-box.h
+INST_H_FILES += $(top_srcdir)/src/gb-symbol.h
+INST_H_FILES += $(top_srcdir)/src/gb-symbol-pane.h
+INST_H_FILES += $(top_srcdir)/src/gb-symbol-provider-c.h
+INST_H_FILES += $(top_srcdir)/src/gb-symbol-provider.h
+INST_H_FILES += $(top_srcdir)/src/gb-symbol-provider-js.h
+INST_H_FILES += $(top_srcdir)/src/gb-terminal-pane.h
+INST_H_FILES += $(top_srcdir)/src/gb-workspace.h
+INST_H_FILES += $(top_srcdir)/src/gb-workspace-layout-edit.h
+INST_H_FILES += $(top_srcdir)/src/gb-workspace-layout.h
+INST_H_FILES += $(top_srcdir)/src/gb-workspace-layout-splash.h
+INST_H_FILES += $(top_srcdir)/src/gb-workspace-layout-switcher.h
+INST_H_FILES += $(top_srcdir)/src/gb-workspace-pane-group.h
+INST_H_FILES += $(top_srcdir)/src/gb-workspace-pane.h
+
+NOINST_H_FILES =
+NOINST_H_FILES += $(top_srcdir)/src/egg/egg-list-box.h
+NOINST_H_FILES += $(top_srcdir)/src/gd/gd-header-bar.h
+NOINST_H_FILES += $(top_srcdir)/src/gd/gd-revealer.h
+NOINST_H_FILES += $(top_srcdir)/src/nautilus/nautilus-floating-bar.h
+NOINST_H_FILES += $(top_builddir)/src/builder-menu.h
+
+GIR_C_FILES =
+GIR_C_FILES += $(top_srcdir)/src/gb-animation.c
+GIR_C_FILES += $(top_srcdir)/src/gb-application.c
+GIR_C_FILES += $(top_srcdir)/src/gb-compiler.c
+GIR_C_FILES += $(top_srcdir)/src/gb-compiler-clang.c
+GIR_C_FILES += $(top_srcdir)/src/gb-compiler-js.c
+GIR_C_FILES += $(top_srcdir)/src/gb-compiler-result.c
+GIR_C_FILES += $(top_srcdir)/src/gb-debugger.c
+GIR_C_FILES += $(top_srcdir)/src/gb-debugger-gdb.c
+GIR_C_FILES += $(top_srcdir)/src/gb-docs-pane.c
+GIR_C_FILES += $(top_srcdir)/src/gb-docs-provider.c
+GIR_C_FILES += $(top_srcdir)/src/gb-docs-provider-devhelp.c
+GIR_C_FILES += $(top_srcdir)/src/gb-docs-provider-gir.c
+GIR_C_FILES += $(top_srcdir)/src/gb-file-filters.c
+GIR_C_FILES += $(top_srcdir)/src/gb-frame-source.c
+GIR_C_FILES += $(top_srcdir)/src/gb-language.c
+GIR_C_FILES += $(top_srcdir)/src/gb-language-c.c
+GIR_C_FILES += $(top_srcdir)/src/gb-language-formatter.c
+GIR_C_FILES += $(top_srcdir)/src/gb-language-formatter-c.c
+GIR_C_FILES += $(top_srcdir)/src/gb-language-formatter-js.c
+GIR_C_FILES += $(top_srcdir)/src/gb-language-js.c
+GIR_C_FILES += $(top_srcdir)/src/gb-profiler.c
+GIR_C_FILES += $(top_srcdir)/src/gb-profiler-ltrace.c
+GIR_C_FILES += $(top_srcdir)/src/gb-profiler-strace.c
+GIR_C_FILES += $(top_srcdir)/src/gb-profiler-valgrind.c
+GIR_C_FILES += $(top_srcdir)/src/gb-project.c
+GIR_C_FILES += $(top_srcdir)/src/gb-project-file.c
+GIR_C_FILES += $(top_srcdir)/src/gb-project-item.c
+GIR_C_FILES += $(top_srcdir)/src/gb-runner.c
+GIR_C_FILES += $(top_srcdir)/src/gb-runner-program.c
+GIR_C_FILES += $(top_srcdir)/src/gb-search-provider.c
+GIR_C_FILES += $(top_srcdir)/src/gb-source-diff.c
+GIR_C_FILES += $(top_srcdir)/src/gb-source-gutter-renderer-compiler.c
+GIR_C_FILES += $(top_srcdir)/src/gb-source-gutter-renderer-diff.c
+GIR_C_FILES += $(top_srcdir)/src/gb-source-overlay.c
+GIR_C_FILES += $(top_srcdir)/src/gb-source-pane.c
+GIR_C_FILES += $(top_srcdir)/src/gb-source-snippet.c
+GIR_C_FILES += $(top_srcdir)/src/gb-source-snippet-chunk.c
+GIR_C_FILES += $(top_srcdir)/src/gb-source-snippets.c
+GIR_C_FILES += $(top_srcdir)/src/gb-source-state.c
+GIR_C_FILES += $(top_srcdir)/src/gb-source-state-insert.c
+GIR_C_FILES += $(top_srcdir)/src/gb-source-state-snippet.c
+GIR_C_FILES += $(top_srcdir)/src/gb-source-view.c
+GIR_C_FILES += $(top_srcdir)/src/gb-symbol.c
+GIR_C_FILES += $(top_srcdir)/src/gb-symbol-combo-box.c
+GIR_C_FILES += $(top_srcdir)/src/gb-symbol-pane.c
+GIR_C_FILES += $(top_srcdir)/src/gb-symbol-provider.c
+GIR_C_FILES += $(top_srcdir)/src/gb-symbol-provider-c.c
+GIR_C_FILES += $(top_srcdir)/src/gb-symbol-provider-js.c
+GIR_C_FILES += $(top_srcdir)/src/gb-terminal-pane.c
+GIR_C_FILES += $(top_srcdir)/src/gb-workspace.c
+GIR_C_FILES += $(top_srcdir)/src/gb-workspace-layout.c
+GIR_C_FILES += $(top_srcdir)/src/gb-workspace-layout-edit.c
+GIR_C_FILES += $(top_srcdir)/src/gb-workspace-layout-splash.c
+GIR_C_FILES += $(top_srcdir)/src/gb-workspace-layout-switcher.c
+GIR_C_FILES += $(top_srcdir)/src/gb-workspace-pane.c
+GIR_C_FILES += $(top_srcdir)/src/gb-workspace-pane-group.c
+
+NOGIR_C_FILES =
+NOGIR_C_FILES += $(top_srcdir)/src/main.c
+NOGIR_C_FILES += $(top_srcdir)/src/egg/egg-list-box.c
+NOGIR_C_FILES += $(top_srcdir)/src/gd/gd-header-bar.c
+NOGIR_C_FILES += $(top_srcdir)/src/gd/gd-revealer.c
+NOGIR_C_FILES += $(top_srcdir)/src/nautilus/nautilus-floating-bar.c
+
+gnome_builder_SOURCES =
+gnome_builder_SOURCES += $(GIR_C_FILES)
+gnome_builder_SOURCES += $(INST_H_FILES)
+gnome_builder_SOURCES += $(NOGIR_C_FILES)
+gnome_builder_SOURCES += $(NOINST_H_FILES)
+
+gnome_builder_CPPFLAGS =
+gnome_builder_CPPFLAGS += $(DEVHELP_CFLAGS)
+gnome_builder_CPPFLAGS += $(GIO_CFLAGS)
+gnome_builder_CPPFLAGS += $(GOBJECT_CFLAGS)
+gnome_builder_CPPFLAGS += $(GTK3_CFLAGS)
+gnome_builder_CPPFLAGS += $(GTKSOURCEVIEW_CFLAGS)
+gnome_builder_CPPFLAGS += $(JSON_CFLAGS)
+gnome_builder_CPPFLAGS += $(PEAS_CFLAGS)
+gnome_builder_CPPFLAGS += $(VTE_CFLAGS)
+gnome_builder_CPPFLAGS += -DGETTEXT_PACKAGE=\""gnome-builder"\"
+gnome_builder_CPPFLAGS += -DPACKAGE_DATA_DIR=\""$(datadir)"\"
+gnome_builder_CPPFLAGS += -DPACKAGE_LIB_DIR=\""$(libdir)"\"
+gnome_builder_CPPFLAGS += -DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)s/locale"\"
+gnome_builder_CPPFLAGS += -DPACKAGE_SYSCONFDIR=\""$(sysconfdir)"\"
+gnome_builder_CPPFLAGS += -DGNOME_BUILDER_COMPILATION
+gnome_builder_CPPFLAGS += '-DG_LOG_DOMAIN="Builder"'
+gnome_builder_CPPFLAGS += -I$(top_srcdir)/src
+
+gnome_builder_LDADD =
+gnome_builder_LDADD += -lclang
+gnome_builder_LDADD += -lm
+gnome_builder_LDADD += $(DEVHELP_LIBS)
+gnome_builder_LDADD += $(GIO_LIBS)
+gnome_builder_LDADD += $(GOBJECT_LIBS)
+gnome_builder_LDADD += $(GTK3_LIBS)
+gnome_builder_LDADD += $(GTKSOURCEVIEW_LIBS)
+gnome_builder_LDADD += $(JSON_LIBS)
+gnome_builder_LDADD += $(PEAS_LIBS)
+gnome_builder_LDADD += $(VTE_LIBS)
+# TODO: Discover the following path.
+gnome_builder_LDADD += -L/usr/lib64/llvm
+
+$(top_builddir)/src/builder-menu-ui.h: $(top_srcdir)/src/builder-menu-ui.xml
+	-rm -f $@
+	$(XMLLINT) $< --noblanks > $@.tmp
+	tail $@.tmp -n 1 | sed -e 's|\"|\\\"|g' \
+		-e 's|^|static const char builder_menu_ui[] = "|' \
+		-e 's|$$|";|' > $@.tmp2
+	-rm -f $@.tmp
+	mv $@.tmp2 $@
+
+gnome_builder-builder-menu-ui.$(OBJEXT): $(top_builddir)/src/builder-menu-ui.h
+
+if HAVE_INTROSPECTION
+
+INTROSPECTION_GIRS =
+INTROSPECTION_COMPILER_ARGS = --includedir=$(top_srcdir)/src
+
+INTROSPECTION_SCANNER_ARGS =
+INTROSPECTION_SCANNER_ARGS += --add-include-path=$(top_srcdir)/src
+INTROSPECTION_SCANNER_ARGS += --identifier-prefix=Gb
+INTROSPECTION_SCANNER_ARGS += --symbol-prefix=gb
+INTROSPECTION_SCANNER_ARGS += --warn-all
+
+GnomeBuilder-1.0.gir: gnome-builder
+GnomeBuilder_1_0_gir_INCLUDES =
+GnomeBuilder_1_0_gir_INCLUDES += GObject-2.0
+GnomeBuilder_1_0_gir_INCLUDES += Gtk-3.0
+GnomeBuilder_1_0_gir_INCLUDES += GtkSource-3.0
+GnomeBuilder_1_0_gir_INCLUDES += Json-1.0
+GnomeBuilder_1_0_gir_INCLUDES += Peas-1.0
+GnomeBuilder_1_0_gir_INCLUDES += PeasGtk-1.0
+GnomeBuilder_1_0_gir_INCLUDES += Vte-2.90
+GnomeBuilder_1_0_gir_CFLAGS = 
+GnomeBuilder_1_0_gir_PROGRAM = $(top_builddir)/gnome-builder
+GnomeBuilder_1_0_gir_FILES = $(GIR_C_FILES) $(INST_H_FILES)
+INTROSPECTION_GIRS += GnomeBuilder-1.0.gir
+
+girdir = $(datadir)/gir-1.0
+gir_DATA = $(INTROSPECTION_GIRS)
+
+typelibdir = $(libdir)/girepository-1.0
+typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
+
+CLEANFILES += $(gir_DATA)
+CLEANFILES += $(typelib_DATA)
+
+endif

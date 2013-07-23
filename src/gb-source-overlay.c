@@ -356,7 +356,7 @@ gb_source_overlay_touch_event (GtkWidget     *widget,
     *       underlying scrolled window. Need to investigate.
     */
    propagate_event(widget, (GdkEvent *)touch);
-   switch (touch->type) {
+   switch ((gint)touch->type) {
    case GDK_TOUCH_END:
    case GDK_TOUCH_CANCEL:
       gtk_widget_hide(widget);
