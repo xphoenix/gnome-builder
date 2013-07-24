@@ -16,7 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <girepository.h>
 #include <glib/gi18n.h>
+#include <stdlib.h>
 
 #include "builder-menu-ui.h"
 #include "gb-application.h"
@@ -150,6 +152,61 @@ gb_application_activate (GApplication *application)
    gtk_window_present(window);
 }
 
+static int
+gb_application_command_line (GApplication *application,
+                             GApplicationCommandLine *command_line)
+{
+   GOptionContext *context;
+   GInputStream *stream;
+   GError *error = NULL;
+   gchar **args;
+   gchar **argv;
+   gchar *path;
+   GFile *file;
+   gint argc;
+   gint i;
+   int ret = EXIT_SUCCESS;
+
+   g_return_val_if_fail(GB_IS_APPLICATION(application), 0);
+   g_return_val_if_fail(G_IS_APPLICATION_COMMAND_LINE(command_line), 0);
+
+   args = g_application_command_line_get_arguments(command_line, &argc);
+   argv = g_new0(gchar *, argc + 1);
+   for (i = 0; i < argc; i++) {
+      argv[i] = args[i];
+   }
+
+   context = g_option_context_new(_("- Build applications for Gnome."));
+   g_option_context_add_group(context, gtk_get_option_group(TRUE));
+   g_option_context_add_group(context, g_irepository_get_option_group());
+   if (!g_option_context_parse(context, &argc, &argv, &error)) {
+      g_application_command_line_printerr(command_line, "%s\n",
+                                          error->message);
+      g_error_free(error);
+      ret = EXIT_FAILURE;
+      goto failure;
+   }
+   g_option_context_free(context);
+
+   /*
+    * If there is an argument left and it is a path to a directory,
+    * we will attempt to open it as a project.
+    */
+   if ((argc == 2) && g_file_test(argv[1], G_FILE_TEST_IS_DIR)) {
+      /*
+       * TODO: Load project file.
+       */
+   } else {
+      g_application_activate(application);
+   }
+
+failure:
+   g_strfreev(args);
+   g_free(argv);
+
+   return ret;
+}
+
 static void
 gb_application_finalize (GObject *object)
 {
@@ -198,6 +255,7 @@ gb_application_class_init (GbApplicationClass *klass)
 
    application_class = G_APPLICATION_CLASS(klass);
    application_class->activate = gb_application_activate;
+   application_class->command_line = gb_application_command_line;
 }
 
 static void

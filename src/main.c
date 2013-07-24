@@ -37,7 +37,7 @@ main (gint   argc,
 
    application = g_object_new(GB_TYPE_APPLICATION,
                               "application-id", "org.gnome.Builder",
-                              /* "flags", G_APPLICATION_HANDLES_OPEN, */
+                              "flags", G_APPLICATION_HANDLES_COMMAND_LINE,
                               "register-session", TRUE,
                               NULL);
 

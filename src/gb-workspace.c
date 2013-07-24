@@ -52,6 +52,21 @@ enum
 
 //static GParamSpec *gParamSpecs[LAST_PROP];
 
+/**
+ * gb_workspace_get_project:
+ * @workspace: (in): A #GbWorkspace.
+ *
+ * Fetches the "project" property.
+ *
+ * Returns: (transfer none): A #GbProject or %NULL.
+ */
+GbProject *
+gb_workspace_get_project (GbWorkspace *workspace)
+{
+   g_return_val_if_fail(GB_IS_WORKSPACE(workspace), NULL);
+   return workspace->priv->project;
+}
+
 void
 gb_workspace_set_project (GbWorkspace *workspace,
                           GbProject   *project)

@@ -20,6 +20,13 @@
 
 #include "gb-file-filters.h"
 
+/**
+ * gb_file_filter_c_new:
+ *
+ * Returns a new file filter for C/C++ source files.
+ *
+ * Returns: (transfer full): A #GtkFileFilter.
+ */
 GtkFileFilter *
 gb_file_filter_c_new (void)
 {
@@ -33,6 +40,13 @@ gb_file_filter_c_new (void)
    return filter;
 }
 
+/**
+ * gb_file_filter_header_new:
+ *
+ * Returns a new file filter for C/C++ header files.
+ *
+ * Returns: (transfer full): A #GtkFileFilter.
+ */
 GtkFileFilter *
 gb_file_filter_header_new (void)
 {
@@ -46,6 +60,13 @@ gb_file_filter_header_new (void)
    return filter;
 }
 
+/**
+ * gb_file_filter_js_new:
+ *
+ * Returns a new file filter for javascript files.
+ *
+ * Returns: (transfer full): A #GtkFileFilter.
+ */
 GtkFileFilter *
 gb_file_filter_js_new (void)
 {
