@@ -108,16 +108,20 @@ gb_application_activate (GApplication *application)
    {
       GtkCssProvider *provider;
       GError *error = NULL;
+      GBytes *bytes;
 
-      provider = gtk_css_provider_new();
-      if (!gtk_css_provider_load_from_path(provider, "css/overrides.css", &error)) {
-         g_printerr("%s\n", error->message);
-         g_error_free(error);
+      bytes = g_resource_lookup_data(gb_application_get_resource(), "/org/gnome/Builder/data/css/overrides.css", 0, NULL);
+      if (bytes) {
+         provider = gtk_css_provider_new();
+         if (!gtk_css_provider_load_from_data(provider, g_bytes_get_data(bytes, NULL), g_bytes_get_size(bytes), &error)) {
+            g_printerr("%s\n", error->message);
+            g_clear_error(&error);
+         } else {
+            gtk_style_context_add_provider_for_screen(gdk_screen_get_default(), GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+         }
+         g_object_unref(provider);
+         g_bytes_unref(bytes);
       }
-
-      gtk_style_context_add_provider_for_screen(gdk_screen_get_default(), GTK_STYLE_PROVIDER(provider), 1000);// GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-
-      g_object_unref(provider);
    }
 
    g_action_map_add_action_entries(G_ACTION_MAP(application), app_entries, G_N_ELEMENTS(app_entries), application);
