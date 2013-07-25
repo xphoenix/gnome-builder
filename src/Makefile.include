@@ -183,7 +183,7 @@ $(top_builddir)/src/builder-menu-ui.h: $(top_srcdir)/src/builder-menu-ui.xml
 	-rm -f $@.tmp
 	mv $@.tmp2 $@
 
-gnome_builder-builder-menu-ui.$(OBJEXT): $(top_builddir)/src/builder-menu-ui.h
+gnome_builder-gb-application.$(OBJEXT): $(top_builddir)/src/builder-menu-ui.h
 
 if HAVE_INTROSPECTION
 
