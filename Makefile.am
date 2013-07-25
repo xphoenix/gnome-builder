@@ -2,6 +2,7 @@ EXTRA_DIST =
 CLEANFILES =
 DISTCLEANFILES =
 
+include data/Makefile.include
 include src/Makefile.include
 include tests/Makefile.include
 

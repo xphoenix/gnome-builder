@@ -69,7 +69,7 @@ NOINST_H_FILES += $(top_srcdir)/src/egg/egg-list-box.h
 NOINST_H_FILES += $(top_srcdir)/src/gd/gd-header-bar.h
 NOINST_H_FILES += $(top_srcdir)/src/gd/gd-revealer.h
 NOINST_H_FILES += $(top_srcdir)/src/nautilus/nautilus-floating-bar.h
-NOINST_H_FILES += $(top_builddir)/src/builder-menu.h
+NOINST_H_FILES += $(top_builddir)/src/gb-application-resource.h
 
 GIR_C_FILES =
 GIR_C_FILES += $(top_srcdir)/src/gb-animation.c
@@ -135,6 +135,7 @@ NOGIR_C_FILES += $(top_srcdir)/src/egg/egg-list-box.c
 NOGIR_C_FILES += $(top_srcdir)/src/gd/gd-header-bar.c
 NOGIR_C_FILES += $(top_srcdir)/src/gd/gd-revealer.c
 NOGIR_C_FILES += $(top_srcdir)/src/nautilus/nautilus-floating-bar.c
+NOGIR_C_FILES += $(top_builddir)/src/gb-application-resource.c
 
 gnome_builder_SOURCES =
 gnome_builder_SOURCES += $(GIR_C_FILES)
@@ -160,6 +161,9 @@ gnome_builder_CPPFLAGS += -DGNOME_BUILDER_COMPILATION
 gnome_builder_CPPFLAGS += '-DG_LOG_DOMAIN="Builder"'
 gnome_builder_CPPFLAGS += -I$(top_srcdir)/src
 
+gnome_builder-gb-application.$(OBJEXT): $(top_builddir)/src/gb-application-resource.h
+gnome_builder-gb-application.$(OBJEXT): $(top_builddir)/src/gb-application-resource.c
+
 gnome_builder_LDADD =
 gnome_builder_LDADD += -lclang
 gnome_builder_LDADD += -lm
@@ -171,21 +175,9 @@ gnome_builder_LDADD += $(GTKSOURCEVIEW_LIBS)
 gnome_builder_LDADD += $(JSON_LIBS)
 gnome_builder_LDADD += $(PEAS_LIBS)
 gnome_builder_LDADD += $(VTE_LIBS)
+
 # TODO: Discover the following path.
 gnome_builder_LDADD += -L/usr/lib64/llvm
-
-$(top_builddir)/src/builder-menu-ui.h: $(top_srcdir)/src/builder-menu-ui.xml
-	-rm -f $@
-	$(XMLLINT) $< --noblanks > $@.tmp
-	tail $@.tmp -n 1 | sed -e 's|\"|\\\"|g' \
-		-e 's|^|static const char builder_menu_ui[] = "|' \
-		-e 's|$$|";|' > $@.tmp2
-	-rm -f $@.tmp
-	mv $@.tmp2 $@
-
-gnome_builder-gb-application.$(OBJEXT): $(top_builddir)/src/builder-menu-ui.h
-
-if HAVE_INTROSPECTION
 
 INTROSPECTION_GIRS =
 INTROSPECTION_COMPILER_ARGS = --includedir=$(top_srcdir)/src
@@ -218,5 +210,3 @@ typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
 
 CLEANFILES += $(gir_DATA)
 CLEANFILES += $(typelib_DATA)
-
-endif

@@ -1,0 +1,34 @@
+GLIB_COMPILE_RESOURCE = glib-compile-resources
+
+
+RESOURCE_FILES =
+RESOURCE_FILES += $(top_srcdir)/data/gb-application.gresource.xml
+RESOURCE_FILES += $(top_srcdir)/data/css/overrides.css
+RESOURCE_FILES += $(top_srcdir)/data/ui/gb-application-menu.ui
+RESOURCE_FILES += $(top_srcdir)/data/style-schemes/solarized-dark.xml
+RESOURCE_FILES += $(top_srcdir)/data/style-schemes/solarized-light.xml
+
+
+EXTRA_DIST += $(RESOURCE_FILES)
+
+
+CLEANFILES += $(top_builddir)/src/gb-application-resource.c
+CLEANFILES += $(top_builddir)/src/gb-application-resource.h
+
+
+RESOURCE_TARGET_C = $(top_builddir)/src/gb-application-resource.c
+RESOURCE_TARGET_H = $(top_builddir)/src/gb-application-resource.h
+
+
+$(RESOURCE_TARGET_C): $(RESOURCE_FILES)
+	$(GLIB_COMPILE_RESOURCE) --target=$(RESOURCE_TARGET_C).tmp \
+		--generate-source --c-name=gb_application \
+		$(top_srcdir)/data/gb-application.gresource.xml
+	mv $(RESOURCE_TARGET_C).tmp $(RESOURCE_TARGET_C)
+
+
+$(RESOURCE_TARGET_H): $(RESOURCE_FILES)
+	$(GLIB_COMPILE_RESOURCE) --target=$(RESOURCE_TARGET_H).tmp \
+		--generate-header --c-name=gb_application \
+		$(top_srcdir)/data/gb-application.gresource.xml
+	mv $(RESOURCE_TARGET_H).tmp $(RESOURCE_TARGET_H)
