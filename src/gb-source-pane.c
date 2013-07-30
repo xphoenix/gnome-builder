@@ -548,9 +548,11 @@ gb_source_pane_init (GbSourcePane *pane)
    gtk_container_add(GTK_CONTAINER(priv->search_revealer), frame_);
 
    /* HACK: Belongs in theme. */
-   GdkRGBA rgba;
-   gdk_rgba_parse(&rgba, "#eeeeec");
-   gtk_widget_override_background_color(frame_, GTK_STATE_FLAG_NORMAL, &rgba);
+   {
+      GdkRGBA rgba;
+      gdk_rgba_parse(&rgba, "#eeeeec");
+      gtk_widget_override_background_color(frame_, GTK_STATE_FLAG_NORMAL, &rgba);
+   }
 
    hbox = g_object_new(GTK_TYPE_BOX,
                        "border-width", 6,
