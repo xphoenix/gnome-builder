@@ -380,18 +380,6 @@ gb_workspace_init (GbWorkspace *workspace)
       gtk_container_add(GTK_CONTAINER(box), button);
    }
 
-#if 0
-   button = g_object_new(GTK_TYPE_BUTTON,
-                         "label", _("Build"),
-                         "hexpand", FALSE,
-                         "visible", TRUE,
-                         "width-request", 75,
-                         NULL);
-   gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                               "suggested-action");
-   gd_header_bar_pack_start(GD_HEADER_BAR(priv->toolbar), button);
-#endif
-
    priv->notebook =
       g_object_new(GTK_TYPE_NOTEBOOK,
                    "hexpand", TRUE,
