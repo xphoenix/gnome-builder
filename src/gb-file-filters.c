@@ -77,3 +77,21 @@ gb_file_filter_js_new (void)
    gtk_file_filter_add_pattern(filter, "*.js");
    return filter;
 }
+
+/**
+ * gb_file_filter_text_new:
+ *
+ * Returns a new file filter for text files.
+ *
+ * Returns: (transfer full): A #GtkFileFilter.
+ */
+GtkFileFilter *
+gb_file_filter_text_new (void)
+{
+   GtkFileFilter *filter;
+
+   filter = gtk_file_filter_new();
+   gtk_file_filter_set_name(filter, _("Text Files"));
+   gtk_file_filter_add_mime_type(filter, "text/*");
+   return filter;
+}

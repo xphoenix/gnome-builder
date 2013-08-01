@@ -26,6 +26,7 @@ G_BEGIN_DECLS
 GtkFileFilter *gb_file_filter_c_new       (void);
 GtkFileFilter *gb_file_filter_header_new  (void);
 GtkFileFilter *gb_file_filter_js_new      (void);
+GtkFileFilter *gb_file_filter_text_new    (void);
 
 G_END_DECLS
 

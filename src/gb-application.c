@@ -79,6 +79,8 @@ on_open_activated (GSimpleAction *action,
    g_free(projects_path);
 
    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog),
+                               gb_file_filter_text_new());
+   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog),
                                gb_file_filter_c_new());
    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog),
                                gb_file_filter_header_new());
