@@ -299,7 +299,7 @@ gb_source_view_class_init (GbSourceViewClass *klass)
 
    gtk_source_style_scheme_manager_append_search_path(
          gtk_source_style_scheme_manager_get_default(),
-         "data");
+         "data/style-schemes");
 }
 
 static void
