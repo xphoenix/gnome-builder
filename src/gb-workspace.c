@@ -366,7 +366,7 @@ gb_workspace_init (GbWorkspace *workspace)
       gtk_container_add(GTK_CONTAINER(box), button);
 
       image = g_object_new(GTK_TYPE_IMAGE,
-                           "stock", GTK_STOCK_MEDIA_PLAY,
+                           "icon-name", "media-playback-start",
                            "icon-size", GTK_ICON_SIZE_MENU,
                            "visible", TRUE,
                            NULL);

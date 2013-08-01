@@ -211,7 +211,7 @@ gb_workspace_pane_group_init (GbWorkspacePaneGroup *group)
 
    image = g_object_new(GTK_TYPE_IMAGE,
                         "icon-size", GTK_ICON_SIZE_MENU,
-                        "stock", GTK_STOCK_GO_BACK,
+                        "icon-name", "go-previous",
                         NULL);
    priv->prev = g_object_new(GTK_TYPE_BUTTON,
                              "hexpand", FALSE,
@@ -223,7 +223,7 @@ gb_workspace_pane_group_init (GbWorkspacePaneGroup *group)
 
    image = g_object_new(GTK_TYPE_IMAGE,
                         "icon-size", GTK_ICON_SIZE_MENU,
-                        "stock", GTK_STOCK_GO_FORWARD,
+                        "icon-name", "go-next",
                         NULL);
    priv->next = g_object_new(GTK_TYPE_BUTTON,
                              "hexpand", FALSE,
@@ -272,7 +272,7 @@ gb_workspace_pane_group_init (GbWorkspacePaneGroup *group)
 
    image = g_object_new(GTK_TYPE_IMAGE,
                         "icon-size", GTK_ICON_SIZE_MENU,
-                        "stock", GTK_STOCK_CLOSE,
+                        "icon-name", "gtk-close",
                         NULL);
    priv->close = g_object_new(GTK_TYPE_BUTTON,
                               "hexpand", FALSE,
