@@ -59,6 +59,7 @@ on_open_activated (GSimpleAction *action,
    GtkDialog *dialog;
    GList *windows;
    GFile *file;
+   char *projects_path;
 
    if ((windows = gtk_application_get_windows(application))) {
       parent = windows->data;
@@ -69,16 +70,26 @@ on_open_activated (GSimpleAction *action,
                          "title", _("Open File"),
                          "transient-for", parent,
                          NULL);
+
+   projects_path = g_build_filename(g_get_home_dir(), "Projects", NULL);
+   if (g_file_test(projects_path, G_FILE_TEST_IS_DIR)) {
+      gtk_file_chooser_add_shortcut_folder(GTK_FILE_CHOOSER(dialog),
+                                           projects_path, NULL);
+   }
+   g_free(projects_path);
+
    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog),
                                gb_file_filter_c_new());
    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog),
                                gb_file_filter_header_new());
    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog),
                                gb_file_filter_js_new());
+
    gtk_dialog_add_buttons(dialog,
                           _("Cancel"), GTK_RESPONSE_CANCEL,
                           _("Open"), GTK_RESPONSE_OK,
                           NULL);
+
    if (gtk_dialog_run(dialog) == GTK_RESPONSE_OK) {
       if ((file = gtk_file_chooser_get_file(GTK_FILE_CHOOSER(dialog)))) {
          pane = g_object_new(GB_TYPE_SOURCE_PANE,
@@ -90,6 +101,7 @@ on_open_activated (GSimpleAction *action,
          gtk_widget_grab_focus(pane);
       }
    }
+
    gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
