@@ -344,7 +344,7 @@ nautilus_floating_bar_add_action (NautilusFloatingBar *self,
 {
 	GtkWidget *w, *button;
 
-	w = gtk_image_new_from_stock (stock_id, GTK_ICON_SIZE_MENU);
+	w = gtk_image_new_from_icon_name (stock_id, GTK_ICON_SIZE_MENU);
 	gtk_widget_show (w);
 
 	button = gtk_button_new ();
