@@ -1,4 +1,4 @@
-/* gb-debugger-gdb.c:
+/* gb-debugger-gdb.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

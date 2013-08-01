@@ -1,4 +1,4 @@
-/* gb-workspace-layout.c:
+/* gb-workspace-layout.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

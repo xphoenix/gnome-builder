@@ -1,4 +1,4 @@
-/* gb-project-item.h:
+/* gb-project-item.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

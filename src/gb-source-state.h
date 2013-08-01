@@ -1,4 +1,4 @@
-/* gb-source-state.h:
+/* gb-source-state.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

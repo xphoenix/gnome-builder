@@ -1,4 +1,4 @@
-/* gb-source-snippets.h:
+/* gb-source-snippets.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

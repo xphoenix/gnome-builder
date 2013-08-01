@@ -1,4 +1,4 @@
-/* gb-source-view.h:
+/* gb-source-view.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

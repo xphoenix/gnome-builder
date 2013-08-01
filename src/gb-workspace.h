@@ -1,4 +1,4 @@
-/* gb-workspace.h:
+/* gb-workspace.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

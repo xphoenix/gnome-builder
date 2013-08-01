@@ -1,4 +1,4 @@
-/* gb-source-diff.c:
+/* gb-source-diff.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

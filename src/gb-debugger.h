@@ -1,4 +1,4 @@
-/* gb-debugger.h:
+/* gb-debugger.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

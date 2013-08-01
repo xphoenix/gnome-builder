@@ -1,4 +1,4 @@
-/* gb-application.h:
+/* gb-application.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

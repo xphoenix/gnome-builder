@@ -1,4 +1,4 @@
-/* gb-source-gutter-renderer-diff.c:
+/* gb-source-gutter-renderer-diff.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

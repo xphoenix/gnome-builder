@@ -1,4 +1,4 @@
-/* gb-symbol-provider-js.h:
+/* gb-symbol-provider-js.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

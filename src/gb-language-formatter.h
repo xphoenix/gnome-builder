@@ -1,4 +1,4 @@
-/* gb-language-formatter.h:
+/* gb-language-formatter.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

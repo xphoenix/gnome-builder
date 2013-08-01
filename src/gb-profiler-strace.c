@@ -1,4 +1,4 @@
-/* gb-profiler-strace.c:
+/* gb-profiler-strace.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

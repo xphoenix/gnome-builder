@@ -1,4 +1,4 @@
-/* gb-terminal-pane.h:
+/* gb-terminal-pane.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

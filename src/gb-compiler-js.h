@@ -1,4 +1,4 @@
-/* gb-compiler-js.h:
+/* gb-compiler-js.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

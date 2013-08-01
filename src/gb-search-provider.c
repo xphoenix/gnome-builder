@@ -1,4 +1,4 @@
-/* gb-search-provider.c:
+/* gb-search-provider.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

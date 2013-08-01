@@ -1,4 +1,4 @@
-/* gb-symbol-combo-box.h:
+/* gb-symbol-combo-box.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

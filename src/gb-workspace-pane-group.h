@@ -1,4 +1,4 @@
-/* gb-workspace-pane-group.h:
+/* gb-workspace-pane-group.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

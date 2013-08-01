@@ -1,4 +1,4 @@
-/* gb-source-snippet-chunk.c:
+/* gb-source-snippet-chunk.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

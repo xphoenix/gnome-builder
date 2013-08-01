@@ -1,4 +1,4 @@
-/* gb-language.h:
+/* gb-language.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

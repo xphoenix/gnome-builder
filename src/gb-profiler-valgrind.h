@@ -1,4 +1,4 @@
-/* gb-profiler-valgrind.h:
+/* gb-profiler-valgrind.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

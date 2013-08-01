@@ -1,4 +1,4 @@
-/* gb-docs-provider-gir.h:
+/* gb-docs-provider-gir.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

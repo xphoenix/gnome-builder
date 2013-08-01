@@ -1,4 +1,4 @@
-/* gb-symbol-provider-c.c:
+/* gb-symbol-provider-c.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

@@ -1,4 +1,4 @@
-/* gb-runner-program.c:
+/* gb-runner-program.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

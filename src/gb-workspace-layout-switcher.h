@@ -1,4 +1,4 @@
-/* gb-workspace-layout-switcher.h:
+/* gb-workspace-layout-switcher.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

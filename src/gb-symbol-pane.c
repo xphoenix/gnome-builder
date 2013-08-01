@@ -1,4 +1,4 @@
-/* gb-symbol-pane.c:
+/* gb-symbol-pane.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

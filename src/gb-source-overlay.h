@@ -1,4 +1,4 @@
-/* gb-source-overlay.h:
+/* gb-source-overlay.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

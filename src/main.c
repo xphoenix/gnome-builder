@@ -1,4 +1,4 @@
-/* main.c:
+/* main.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

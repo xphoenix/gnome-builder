@@ -1,4 +1,4 @@
-/* gb-docs-pane.h:
+/* gb-docs-pane.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

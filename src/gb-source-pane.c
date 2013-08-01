@@ -1,4 +1,4 @@
-/* gb-source-pane.c:
+/* gb-source-pane.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

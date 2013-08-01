@@ -1,4 +1,4 @@
-/* gb-compiler-clang.c:
+/* gb-compiler-clang.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

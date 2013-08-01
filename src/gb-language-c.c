@@ -1,4 +1,4 @@
-/* gb-language-c.c:
+/* gb-language-c.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

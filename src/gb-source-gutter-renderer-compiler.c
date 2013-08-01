@@ -1,4 +1,4 @@
-/* gb-source-gutter-renderer-compiler.c:
+/* gb-source-gutter-renderer-compiler.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

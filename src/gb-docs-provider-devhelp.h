@@ -1,4 +1,4 @@
-/* gb-docs-provider-devhelp.h:
+/* gb-docs-provider-devhelp.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

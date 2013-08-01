@@ -1,4 +1,4 @@
-/* gb-animation.h:
+/* gb-animation.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

@@ -1,4 +1,4 @@
-/* gb-profiler-ltrace.h:
+/* gb-profiler-ltrace.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

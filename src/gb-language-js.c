@@ -1,4 +1,4 @@
-/* gb-language-js.c:
+/* gb-language-js.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

@@ -1,4 +1,4 @@
-/* gb-source-state-insert.c:
+/* gb-source-state-insert.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

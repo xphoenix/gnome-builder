@@ -1,4 +1,4 @@
-/* gb-profiler.c:
+/* gb-profiler.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

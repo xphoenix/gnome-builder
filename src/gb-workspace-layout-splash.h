@@ -1,4 +1,4 @@
-/* gb-workspace-layout-splash.h:
+/* gb-workspace-layout-splash.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *

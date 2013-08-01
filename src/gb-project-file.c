@@ -1,4 +1,4 @@
-/* gb-project-file.c:
+/* gb-project-file.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *
