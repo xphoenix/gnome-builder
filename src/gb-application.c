@@ -30,16 +30,33 @@ G_DEFINE_TYPE(GbApplication, gb_application, GTK_TYPE_APPLICATION)
 
 struct _GbApplicationPrivate
 {
-   gpointer dummy;
+   GbWorkspace *workspace;
 };
 
 enum
 {
    PROP_0,
+   PROP_WORKSPACE,
    LAST_PROP
 };
 
-//static GParamSpec *gParamSpecs[LAST_PROP];
+static GParamSpec *gParamSpecs[LAST_PROP];
+
+/**
+ * gb_application_get_workspace:
+ * @application: A #GbApplication.
+ *
+ * Get the workspace for the application.
+ *
+ * Returns: (transfer none): A #GbWorkspace or %NULL if it has not yet been
+ *    created.
+ */
+GbWorkspace *
+gb_application_get_workspace (GbApplication *application)
+{
+   g_return_val_if_fail(GB_IS_APPLICATION(application), NULL);
+   return application->priv->workspace;
+}
 
 /**
  * gb_application_get_default:
@@ -141,9 +158,12 @@ static GActionEntry app_entries[] = {
 static void
 gb_application_activate (GApplication *application)
 {
+   GbApplicationPrivate *priv;
    GdkRectangle geometry;
    GtkWindow *window;
    GdkScreen *screen;
+
+   priv = GB_APPLICATION(application)->priv;
 
    {
       GtkCssProvider *provider;
@@ -184,6 +204,7 @@ gb_application_activate (GApplication *application)
                          "title", _("Builder"),
                          "window-position", GTK_WIN_POS_CENTER,
                          NULL);
+   priv->workspace = GB_WORKSPACE(window);
    screen = gdk_screen_get_default();
    gdk_screen_get_monitor_geometry(screen,
                                    gdk_screen_get_primary_monitor(screen),
@@ -263,9 +284,12 @@ gb_application_get_property (GObject    *object,
                              GValue     *value,
                              GParamSpec *pspec)
 {
-   //GbApplication *application = GB_APPLICATION(object);
+   GbApplication *application = GB_APPLICATION(object);
 
    switch (prop_id) {
+   case PROP_WORKSPACE:
+      g_value_set_object(value, gb_application_get_workspace(application));
+      break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
    }
@@ -277,7 +301,9 @@ gb_application_set_property (GObject      *object,
                              const GValue *value,
                              GParamSpec   *pspec)
 {
-   //GbApplication *application = GB_APPLICATION(object);
+#if 0
+   GbApplication *application = GB_APPLICATION(object);
+#endif
 
    switch (prop_id) {
    default:
@@ -300,6 +326,15 @@ gb_application_class_init (GbApplicationClass *klass)
    application_class = G_APPLICATION_CLASS(klass);
    application_class->activate = gb_application_activate;
    application_class->command_line = gb_application_command_line;
+
+   gParamSpecs[PROP_WORKSPACE] =
+      g_param_spec_object("workspace",
+                          _("Workspace"),
+                          _("The applications workspace."),
+                          GB_TYPE_WORKSPACE,
+                          (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_WORKSPACE,
+                                   gParamSpecs[PROP_WORKSPACE]);
 }
 
 static void

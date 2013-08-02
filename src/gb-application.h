@@ -21,6 +21,8 @@
 
 #include <gtk/gtk.h>
 
+#include "gb-workspace.h"
+
 G_BEGIN_DECLS
 
 #define GB_TYPE_APPLICATION            (gb_application_get_type())
@@ -50,7 +52,8 @@ struct _GbApplicationClass
 };
 
 GbApplication *gb_application_get_default   (void);
-GType gb_application_get_type (void) G_GNUC_CONST;
+GType          gb_application_get_type      (void) G_GNUC_CONST;
+GbWorkspace   *gb_application_get_workspace (GbApplication  *application);
 
 G_END_DECLS
 
