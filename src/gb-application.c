@@ -41,6 +41,32 @@ enum
 
 //static GParamSpec *gParamSpecs[LAST_PROP];
 
+/**
+ * gb_application_get_default:
+ *
+ * Fetch the default application instance.
+ *
+ * Returns: (transfer none): A #GbApplication.
+ */
+GbApplication *
+gb_application_get_default (void)
+{
+   static GbApplication *instance;
+   GbApplication *app;
+
+   if (g_once_init_enter(&instance)) {
+      app = g_object_new(GB_TYPE_APPLICATION,
+                         "application-id", "org.gnome.Builder",
+                         "flags", G_APPLICATION_HANDLES_COMMAND_LINE,
+                         "register-session", TRUE,
+                         NULL);
+      g_application_set_default(G_APPLICATION(app));
+      g_once_init_leave(&instance, app);
+   }
+
+   return instance;
+}
+
 static void
 on_quit_activated (GSimpleAction *action,
                    GVariant      *parameter,

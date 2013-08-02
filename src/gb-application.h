@@ -27,6 +27,7 @@ G_BEGIN_DECLS
 #define GB_APPLICATION(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GB_TYPE_APPLICATION, GbApplication))
 #define GB_APPLICATION_CONST(obj)      (G_TYPE_CHECK_INSTANCE_CAST ((obj), GB_TYPE_APPLICATION, GbApplication const))
 #define GB_APPLICATION_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  GB_TYPE_APPLICATION, GbApplicationClass))
+#define GB_APPLICATION_DEFAULT         (gb_application_get_default())
 #define GB_IS_APPLICATION(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GB_TYPE_APPLICATION))
 #define GB_IS_APPLICATION_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),  GB_TYPE_APPLICATION))
 #define GB_APPLICATION_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj),  GB_TYPE_APPLICATION, GbApplicationClass))
@@ -48,6 +49,7 @@ struct _GbApplicationClass
    GtkApplicationClass parent_class;
 };
 
+GbApplication *gb_application_get_default   (void);
 GType gb_application_get_type (void) G_GNUC_CONST;
 
 G_END_DECLS
