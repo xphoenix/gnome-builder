@@ -28,10 +28,6 @@ main (gint   argc,
    GApplication *application;
    gint ret;
 
-#if !GLIB_CHECK_VERSION(2, 35, 0)
-   g_type_init();
-#endif
-
    g_set_prgname("gnome-builder");
    g_set_application_name(_("Builder"));
 
