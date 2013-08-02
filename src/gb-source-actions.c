@@ -23,8 +23,8 @@
 
 static gboolean
 gb_source_actions_focus_search (GbAction  *action,
-                                 GVariant  *parameter,
-                                 GError   **error)
+                                GVariant  *parameter,
+                                GError   **error)
 {
    GbWorkspace *workspace;
    GtkWidget *focus;
@@ -39,6 +39,5 @@ gb_source_actions_focus_search (GbAction  *action,
       }
    }
 }
-
 
 GB_ACTION_REGISTER_STATIC("focus-search", gb_source_actions_focus_search);
