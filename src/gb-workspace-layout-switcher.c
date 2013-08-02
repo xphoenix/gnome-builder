@@ -153,11 +153,11 @@ gb_workspace_layout_switcher_init (GbWorkspaceLayoutSwitcher *switcher)
       b = g_object_new(GTK_TYPE_RADIO_BUTTON,
                        "draw-indicator", FALSE,
                        "group", b,
-                       "label", _("VCS"),
+                       "label", _("Git"),
                        "visible", TRUE,
                        NULL);
       g_signal_connect(b, "toggled", G_CALLBACK(item_toggled),
-                       GINT_TO_POINTER(GB_WORKSPACE_VCS));
+                       GINT_TO_POINTER(GB_WORKSPACE_GIT));
       gtk_container_add(GTK_CONTAINER(switcher), b);
 
       b = g_object_new(GTK_TYPE_RADIO_BUTTON,
