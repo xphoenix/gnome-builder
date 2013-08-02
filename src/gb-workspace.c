@@ -19,6 +19,7 @@
 #include <gd/gd-header-bar.h>
 #include <glib/gi18n.h>
 
+#include "gb-application.h"
 #include "gb-search-provider.h"
 #include "gb-workspace.h"
 #include "gb-workspace-layout.h"
@@ -178,24 +179,6 @@ gb_workspace_add (GtkContainer *container,
 }
 
 static void
-gb_workspace_find_activate (GtkAction   *action,
-                            GbWorkspace *workspace)
-{
-   GtkWidget *widget;
-
-   g_assert(GB_IS_WORKSPACE(workspace));
-
-   if ((widget = gtk_window_get_focus(GTK_WINDOW(workspace)))) {
-      for (; widget; widget = gtk_widget_get_parent(widget)) {
-         if (GB_IS_SEARCH_PROVIDER(widget)) {
-            gb_search_provider_focus_search(GB_SEARCH_PROVIDER(widget));
-            break;
-         }
-      }
-   }
-}
-
-static void
 gb_workspace_finalize (GObject *object)
 {
    G_OBJECT_CLASS(gb_workspace_parent_class)->finalize(object);
@@ -249,9 +232,10 @@ static void
 gb_workspace_init (GbWorkspace *workspace)
 {
    GbWorkspacePrivate *priv;
+   GMenuModel *menu;
+   GtkBuilder *builder;
    GtkWidget *image;
    GtkWidget *button;
-   GtkWidget *menu;
 
    workspace->priv = G_TYPE_INSTANCE_GET_PRIVATE(workspace,
                                                  GB_TYPE_WORKSPACE,
@@ -300,34 +284,22 @@ gb_workspace_init (GbWorkspace *workspace)
                          NULL);
    gd_header_bar_pack_end(GD_HEADER_BAR(priv->toolbar), button);
 
-   {
-      /*
-       * TODO: We should find a better way to add these.
-       */
 
-      static const GtkActionEntry entries[] = {
-         { "find", NULL, N_("Find"), "<Primary>F",
-           N_("Search within the current document."),
-           G_CALLBACK(gb_workspace_find_activate) },
-      };
+   builder = gtk_builder_new();
+   gtk_builder_add_from_string(builder,
+                               "<interface>"
+                               "  <menu id='menubar'>"
+                               "    <section>"
+                               "      <item>"
+                               "        <attribute name='label' translatable='yes'>_Focus Search</attribute>"
+                               "        <attribute name='action'>app.focus-search</attribute>"
+                               "        <attribute name='accel'>&lt;Primary&gt;f</attribute>"
+                               "      </item>"
+                               "    </section>"
+                               "  </menu>"
+                               "</interface>", -1, NULL);
 
-      GtkActionGroup *action_group;
-      GtkAccelGroup *accel_group;
-      GtkUIManager *ui;
-
-      action_group = gtk_action_group_new("workspace-menu");
-      gtk_action_group_add_actions(action_group, entries,
-                                   G_N_ELEMENTS(entries), workspace);
-
-      ui = gtk_ui_manager_new();
-      gtk_ui_manager_insert_action_group(ui, action_group, -1);
-      gtk_ui_manager_add_ui_from_file(ui, "src/gb-workspace.ui", NULL);
-      menu = gtk_ui_manager_get_widget(ui, "/ui/menu");
-      gtk_widget_set_halign(menu, GTK_ALIGN_END);
-
-      accel_group = gtk_ui_manager_get_accel_group(ui);
-      gtk_window_add_accel_group(GTK_WINDOW(workspace), accel_group);
-   }
+   menu = G_MENU_MODEL(gtk_builder_get_object(builder, "menubar"));
 
    image = g_object_new(GTK_TYPE_IMAGE,
                         "icon-name", "emblem-system-symbolic",
@@ -338,7 +310,7 @@ gb_workspace_init (GbWorkspace *workspace)
                          "direction", GTK_ARROW_DOWN,
                          "image", image,
                          "hexpand", FALSE,
-                         "popup", menu,
+                         "menu-model", menu,
                          "visible", TRUE,
                          NULL);
    gd_header_bar_pack_end(GD_HEADER_BAR(priv->toolbar), button);
@@ -401,4 +373,6 @@ gb_workspace_init (GbWorkspace *workspace)
    gtk_container_add(GTK_CONTAINER(priv->notebook), priv->edit);
 
    gb_workspace_set_mode(workspace, GB_WORKSPACE_SPLASH);
+
+   g_object_unref(builder);
 }
