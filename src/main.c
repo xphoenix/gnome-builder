@@ -31,14 +31,8 @@ main (gint   argc,
    g_set_prgname("gnome-builder");
    g_set_application_name(_("Builder"));
 
-   application = g_object_new(GB_TYPE_APPLICATION,
-                              "application-id", "org.gnome.Builder",
-                              "flags", G_APPLICATION_HANDLES_COMMAND_LINE,
-                              "register-session", TRUE,
-                              NULL);
-
+   application = G_APPLICATION(GB_APPLICATION_DEFAULT);
    ret = g_application_run(application, argc, argv);
-
    g_object_unref(application);
 
    return ret;
