@@ -178,34 +178,33 @@ gnome_builder_LDADD += $(VTE_LIBS)
 # TODO: Discover the following path.
 gnome_builder_LDADD += -L/usr/lib64/llvm
 
-INTROSPECTION_GIRS =
-INTROSPECTION_COMPILER_ARGS = --includedir=$(top_srcdir)/src
+#INTROSPECTION_GIRS =
+#INTROSPECTION_COMPILER_ARGS = --includedir=$(top_srcdir)/src
 
-INTROSPECTION_SCANNER_ARGS =
-INTROSPECTION_SCANNER_ARGS += --add-include-path=$(top_srcdir)/src
-INTROSPECTION_SCANNER_ARGS += --identifier-prefix=Gb
-INTROSPECTION_SCANNER_ARGS += --symbol-prefix=gb
-INTROSPECTION_SCANNER_ARGS += --warn-all
+#INTROSPECTION_SCANNER_ARGS =
+#INTROSPECTION_SCANNER_ARGS += --add-include-path=$(top_srcdir)/src
+#INTROSPECTION_SCANNER_ARGS += --identifier-prefix=Gb
+#INTROSPECTION_SCANNER_ARGS += --symbol-prefix=gb
+#INTROSPECTION_SCANNER_ARGS += --warn-all
 
-GnomeBuilder-1.0.gir: gnome-builder
-GnomeBuilder_1_0_gir_INCLUDES =
-GnomeBuilder_1_0_gir_INCLUDES += GObject-2.0
-GnomeBuilder_1_0_gir_INCLUDES += Gtk-3.0
-GnomeBuilder_1_0_gir_INCLUDES += GtkSource-3.0
-GnomeBuilder_1_0_gir_INCLUDES += Json-1.0
-GnomeBuilder_1_0_gir_INCLUDES += Peas-1.0
-GnomeBuilder_1_0_gir_INCLUDES += PeasGtk-1.0
-GnomeBuilder_1_0_gir_INCLUDES += Vte-2.90
-GnomeBuilder_1_0_gir_CFLAGS = 
-GnomeBuilder_1_0_gir_PROGRAM = $(top_builddir)/gnome-builder
-GnomeBuilder_1_0_gir_FILES = $(GIR_C_FILES) $(INST_H_FILES)
-INTROSPECTION_GIRS += GnomeBuilder-1.0.gir
+#GnomeBuilder-1.0.gir: gnome-builder
+#GnomeBuilder_1_0_gir_INCLUDES =
+#GnomeBuilder_1_0_gir_INCLUDES += GIRepository-2.0
+#GnomeBuilder_1_0_gir_INCLUDES += GObject-2.0
+#GnomeBuilder_1_0_gir_INCLUDES += Gtk-3.0
+#GnomeBuilder_1_0_gir_INCLUDES += GtkSource-3.0
+#GnomeBuilder_1_0_gir_INCLUDES += Json-1.0
+#GnomeBuilder_1_0_gir_INCLUDES += Vte-2.90
+#GnomeBuilder_1_0_gir_CFLAGS = 
+#GnomeBuilder_1_0_gir_PROGRAM = $(top_builddir)/gnome-builder
+#GnomeBuilder_1_0_gir_FILES = $(GIR_C_FILES) $(INST_H_FILES)
+#INTROSPECTION_GIRS += GnomeBuilder-1.0.gir
 
-girdir = $(datadir)/gir-1.0
-gir_DATA = $(INTROSPECTION_GIRS)
+#girdir = $(datadir)/gir-1.0
+#gir_DATA = $(INTROSPECTION_GIRS)
 
-typelibdir = $(libdir)/girepository-1.0
-typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
+#typelibdir = $(libdir)/girepository-1.0
+#typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
 
-CLEANFILES += $(gir_DATA)
-CLEANFILES += $(typelib_DATA)
+#CLEANFILES += $(gir_DATA)
+#CLEANFILES += $(typelib_DATA)
