@@ -224,6 +224,8 @@ gb_workspace_class_init (GbWorkspaceClass *klass)
 
    container_class = GTK_CONTAINER_CLASS(klass);
    container_class->add = gb_workspace_add;
+
+   g_io_extension_point_register("org.gnome.Builder.Workspace");
 }
 
 static void
