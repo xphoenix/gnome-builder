@@ -67,7 +67,6 @@ INST_H_FILES += $(top_srcdir)/src/gb-workspace-pane.h
 
 NOINST_H_FILES =
 NOINST_H_FILES += $(top_srcdir)/src/gd/gd-header-bar.h
-NOINST_H_FILES += $(top_srcdir)/src/gd/gd-revealer.h
 NOINST_H_FILES += $(top_srcdir)/src/nautilus/nautilus-floating-bar.h
 NOINST_H_FILES += $(top_builddir)/src/gb-application-resource.h
 
@@ -133,7 +132,6 @@ GIR_C_FILES += $(top_srcdir)/src/gb-workspace-pane-group.c
 NOGIR_C_FILES =
 NOGIR_C_FILES += $(top_srcdir)/src/main.c
 NOGIR_C_FILES += $(top_srcdir)/src/gd/gd-header-bar.c
-NOGIR_C_FILES += $(top_srcdir)/src/gd/gd-revealer.c
 NOGIR_C_FILES += $(top_srcdir)/src/nautilus/nautilus-floating-bar.c
 NOGIR_C_FILES += $(top_builddir)/src/gb-application-resource.c
 NOGIR_C_FILES += $(top_builddir)/src/gb-source-actions.c
