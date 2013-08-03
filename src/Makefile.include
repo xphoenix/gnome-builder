@@ -144,12 +144,12 @@ gnome_builder_SOURCES += $(NOINST_H_FILES)
 
 gnome_builder_CPPFLAGS =
 gnome_builder_CPPFLAGS += $(DEVHELP_CFLAGS)
+gnome_builder_CPPFLAGS += $(GIR_CFLAGS)
 gnome_builder_CPPFLAGS += $(GIO_CFLAGS)
 gnome_builder_CPPFLAGS += $(GOBJECT_CFLAGS)
 gnome_builder_CPPFLAGS += $(GTK3_CFLAGS)
 gnome_builder_CPPFLAGS += $(GTKSOURCEVIEW_CFLAGS)
 gnome_builder_CPPFLAGS += $(JSON_CFLAGS)
-gnome_builder_CPPFLAGS += $(PEAS_CFLAGS)
 gnome_builder_CPPFLAGS += $(VTE_CFLAGS)
 gnome_builder_CPPFLAGS += -DGETTEXT_PACKAGE=\""gnome-builder"\"
 gnome_builder_CPPFLAGS += -DPACKAGE_DATA_DIR=\""$(datadir)"\"
@@ -168,11 +168,11 @@ gnome_builder_LDADD += -lclang
 gnome_builder_LDADD += -lm
 gnome_builder_LDADD += $(DEVHELP_LIBS)
 gnome_builder_LDADD += $(GIO_LIBS)
+gnome_builder_LDADD += $(GIR_LIBS)
 gnome_builder_LDADD += $(GOBJECT_LIBS)
 gnome_builder_LDADD += $(GTK3_LIBS)
 gnome_builder_LDADD += $(GTKSOURCEVIEW_LIBS)
 gnome_builder_LDADD += $(JSON_LIBS)
-gnome_builder_LDADD += $(PEAS_LIBS)
 gnome_builder_LDADD += $(VTE_LIBS)
 
 # TODO: Discover the following path.
