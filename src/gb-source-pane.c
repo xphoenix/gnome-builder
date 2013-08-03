@@ -49,8 +49,8 @@ struct _GbSourcePanePrivate
    GtkWidget *overlay;
    GtkWidget *ruler;
    GtkWidget *scroller;
+   GtkWidget *search_bar;
    GtkWidget *search_entry;
-   GtkWidget *search_revealer;
    GtkWidget *view;
 
    gint insert_text_handler;
@@ -317,8 +317,8 @@ gb_source_pane_focus_search (GbSearchProvider *provider)
 
    g_assert(GB_IS_SOURCE_PANE(pane));
 
-   g_object_set(pane->priv->search_revealer,
-                "reveal-child", TRUE,
+   g_object_set(pane->priv->search_bar,
+                "search-mode-enabled", TRUE,
                 NULL);
    gtk_widget_grab_focus(pane->priv->search_entry);
 }
@@ -372,8 +372,8 @@ gb_source_pane_search_entry_key_press (GtkSearchEntry *search_entry,
    GbSourcePanePrivate *priv = pane->priv;
 
    if (key->keyval == GDK_KEY_Escape) {
-      g_object_set(priv->search_revealer,
-                   "reveal-child", FALSE,
+      g_object_set(priv->search_bar,
+                   "search-mode-enabled", FALSE,
                    NULL);
       g_object_set(priv->highlight,
                    "visible", FALSE,
@@ -462,10 +462,6 @@ gb_source_pane_init (GbSourcePane *pane)
    GbSourcePanePrivate *priv;
    GtkSourceBuffer *buffer;
    GtkSourceGutter *gutter;
-   GtkWidget *button;
-   GtkWidget *frame_;
-   GtkWidget *hbox;
-   GtkWidget *image;
 
    pane->priv = G_TYPE_INSTANCE_GET_PRIVATE(pane,
                                             GB_TYPE_SOURCE_PANE,
@@ -478,13 +474,40 @@ gb_source_pane_init (GbSourcePane *pane)
                 "title", _("Unnamed File"),
                 NULL);
 
+   priv->search_bar = g_object_new(GTK_TYPE_SEARCH_BAR,
+                                   "show-close-button", FALSE,
+                                   "visible", TRUE,
+                                   "vexpand", FALSE,
+                                   "hexpand", TRUE,
+                                   NULL);
+   gtk_container_add(GTK_CONTAINER(pane), priv->search_bar);
+
+   priv->search_entry = g_object_new(GTK_TYPE_SEARCH_ENTRY,
+                                     "margin-left", 100,
+                                     "margin-right", 100,
+                                     "hexpand", TRUE,
+                                     "visible", TRUE,
+                                     "width-chars", 32,
+                                     NULL);
+   g_signal_connect(priv->search_entry, "key-press-event",
+                    G_CALLBACK(gb_source_pane_search_entry_key_press),
+                    pane);
+   gtk_container_add(GTK_CONTAINER(priv->search_bar), priv->search_entry);
+   gtk_search_bar_connect_entry(GTK_SEARCH_BAR(priv->search_bar),
+                                GTK_ENTRY(priv->search_entry));
+
    priv->overlay = g_object_new(GTK_TYPE_OVERLAY,
                                 "visible", TRUE,
                                 NULL);
    g_signal_connect(priv->overlay, "get-child-position",
                     G_CALLBACK(get_child_position),
                     pane);
-   gtk_container_add(GTK_CONTAINER(pane), priv->overlay);
+   gtk_container_add_with_properties(GTK_CONTAINER(pane), priv->overlay,
+                                     "height", 1,
+                                     "left-attach", 0,
+                                     "top-attach", 1,
+                                     "width", 1,
+                                     NULL);
 
    priv->scroller = g_object_new(GTK_TYPE_SCROLLED_WINDOW,
                                  "hexpand", TRUE,
@@ -528,83 +551,6 @@ gb_source_pane_init (GbSourcePane *pane)
    if (gtk_widget_get_direction(priv->view) == GTK_TEXT_DIR_RTL) {
       gtk_widget_set_halign(priv->ruler, GTK_ALIGN_START);
    }
-
-   priv->search_revealer = g_object_new(GTK_TYPE_REVEALER,
-                                        "halign", GTK_ALIGN_END,
-                                        "margin-right", 32,
-                                        "reveal-child", FALSE,
-                                        "valign", GTK_ALIGN_START,
-                                        "vexpand", FALSE,
-                                        "visible", TRUE,
-                                        NULL);
-   gtk_overlay_add_overlay(GTK_OVERLAY(priv->overlay), priv->search_revealer);
-
-   frame_ = g_object_new(GTK_TYPE_FRAME,
-                         "visible", TRUE,
-                         NULL);
-   gtk_style_context_add_class(gtk_widget_get_style_context(frame_),
-                               "gedit-search-slider");
-   gtk_container_add(GTK_CONTAINER(priv->search_revealer), frame_);
-
-   /* HACK: Belongs in theme. */
-   {
-      GdkRGBA rgba;
-      gdk_rgba_parse(&rgba, "#eeeeec");
-      gtk_widget_override_background_color(frame_, GTK_STATE_FLAG_NORMAL, &rgba);
-   }
-
-   hbox = g_object_new(GTK_TYPE_BOX,
-                       "border-width", 6,
-                       "orientation", GTK_ORIENTATION_HORIZONTAL,
-                       "vexpand", FALSE,
-                       "visible", TRUE,
-                       NULL);
-   gtk_style_context_add_class(gtk_widget_get_style_context(hbox),
-                               GTK_STYLE_CLASS_LINKED);
-   gtk_container_add(GTK_CONTAINER(frame_), hbox);
-
-   priv->search_entry = g_object_new(GTK_TYPE_SEARCH_ENTRY,
-                                     "halign", GTK_ALIGN_END,
-                                     "placeholder-text", _("Search"),
-                                     "valign", GTK_ALIGN_START,
-                                     "visible", TRUE,
-                                     "width-chars", 25,
-                                     NULL);
-   g_signal_connect(priv->search_entry, "key-press-event",
-                    G_CALLBACK(gb_source_pane_search_entry_key_press),
-                    pane);
-   gtk_container_add(GTK_CONTAINER(hbox), priv->search_entry);
-
-   if (gtk_widget_get_direction(priv->search_entry) == GTK_TEXT_DIR_RTL) {
-      gtk_widget_set_margin_left(priv->search_revealer, 32);
-      gtk_widget_set_margin_right(priv->search_revealer, 0);
-   }
-
-   image = g_object_new(GTK_TYPE_IMAGE,
-                        "icon-size", GTK_ICON_SIZE_MENU,
-                        "icon-name", "go-up-symbolic",
-                        "visible", TRUE,
-                        NULL);
-   button = g_object_new(GTK_TYPE_BUTTON,
-                         "can-focus", FALSE,
-                         "image", image,
-                         "vexpand", FALSE,
-                         "visible", TRUE,
-                         NULL);
-   gtk_container_add(GTK_CONTAINER(hbox), button);
-
-   image = g_object_new(GTK_TYPE_IMAGE,
-                        "icon-size", GTK_ICON_SIZE_MENU,
-                        "icon-name", "go-down-symbolic",
-                        "visible", TRUE,
-                        NULL);
-   button = g_object_new(GTK_TYPE_BUTTON,
-                         "can-focus", FALSE,
-                         "image", image,
-                         "vexpand", FALSE,
-                         "visible", TRUE,
-                         NULL);
-   gtk_container_add(GTK_CONTAINER(hbox), button);
 
    gutter = gtk_source_view_get_gutter(GTK_SOURCE_VIEW(priv->view),
                                        GTK_TEXT_WINDOW_LEFT);
