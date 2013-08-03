@@ -34,8 +34,6 @@ struct _GbWorkspacePrivate
 {
    GbProject *project;
 
-   GtkAccelGroup *accel_group;
-
    GtkWidget *edit;
    GtkWidget *layout;
    GtkWidget *notebook;
