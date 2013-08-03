@@ -241,7 +241,7 @@ gb_application_command_line (GApplication *application,
       argv[i] = args[i];
    }
 
-   context = g_option_context_new(_("- Build applications for Gnome."));
+   context = g_option_context_new(_("- Build applications for GNOME."));
    g_option_context_add_group(context, gtk_get_option_group(TRUE));
    g_option_context_add_group(context, g_irepository_get_option_group());
    if (!g_option_context_parse(context, &argc, &argv, &error)) {
