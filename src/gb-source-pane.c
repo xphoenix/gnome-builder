@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <gd/gd-revealer.h>
 #include <glib/gi18n.h>
 #include <gtksourceview/gtksourcebuffer.h>
 #include <gtksourceview/gtksourcegutter.h>
@@ -530,7 +529,7 @@ gb_source_pane_init (GbSourcePane *pane)
       gtk_widget_set_halign(priv->ruler, GTK_ALIGN_START);
    }
 
-   priv->search_revealer = g_object_new(GD_TYPE_REVEALER,
+   priv->search_revealer = g_object_new(GTK_TYPE_REVEALER,
                                         "halign", GTK_ALIGN_END,
                                         "margin-right", 32,
                                         "reveal-child", FALSE,
