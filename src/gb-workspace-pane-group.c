@@ -147,8 +147,6 @@ gb_workspace_pane_group_grab_focus (GtkWidget *widget)
 
    g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
 
-   g_print("Grab focus\n");
-
    children = gtk_container_get_children(GTK_CONTAINER(group->priv->notebook));
    for (iter = children; iter; iter = iter->next) {
       if (gtk_widget_get_visible(iter->data)) {
