@@ -25,22 +25,22 @@ G_DEFINE_TYPE(GbWorkspacePane, gb_workspace_pane, GTK_TYPE_GRID)
 struct _GbWorkspacePanePrivate
 {
    gchar *icon_name;
-   gboolean modified;
+   gboolean can_save;
    gchar *title;
 };
 
 enum
 {
    PROP_0,
+   PROP_CAN_SAVE,
    PROP_ICON_NAME,
-   PROP_MODIFIED,
    PROP_TITLE,
    LAST_PROP
 };
 
 enum
 {
-   MODIFIED_CHANGED,
+   CAN_SAVE_CHANGED,
    LAST_SIGNAL
 };
 
@@ -66,23 +66,23 @@ gb_workspace_pane_set_icon_name (GbWorkspacePane *pane,
 }
 
 gboolean
-gb_workspace_pane_get_modified (GbWorkspacePane *pane)
+gb_workspace_pane_get_can_save (GbWorkspacePane *pane)
 {
    g_return_val_if_fail(GB_IS_WORKSPACE_PANE(pane), FALSE);
-   return pane->priv->modified;
+   return pane->priv->can_save;
 }
 
 void
-gb_workspace_pane_set_modified (GbWorkspacePane *pane,
-                                gboolean         modified)
+gb_workspace_pane_set_can_save (GbWorkspacePane *pane,
+                                gboolean         can_save)
 {
    g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
 
-   if (pane->priv->modified != modified) {
-      pane->priv->modified = modified;
+   if (pane->priv->can_save != can_save) {
+      pane->priv->can_save = can_save;
       g_object_notify_by_pspec(G_OBJECT(pane),
-                               gParamSpecs[PROP_MODIFIED]);
-      g_signal_emit(pane, gSignals[MODIFIED_CHANGED], 0);
+                               gParamSpecs[PROP_CAN_SAVE]);
+      g_signal_emit(pane, gSignals[CAN_SAVE_CHANGED], 0);
    }
 }
 
@@ -108,6 +108,42 @@ gb_workspace_pane_set_title (GbWorkspacePane *pane,
    g_object_notify_by_pspec(G_OBJECT(pane), gParamSpecs[PROP_TITLE]);
 }
 
+void
+gb_workspace_pane_save_async (GbWorkspacePane     *pane,
+                              GCancellable        *cancellable,
+                              GAsyncReadyCallback  callback,
+                              gpointer             user_data)
+{
+   GbWorkspacePaneClass *klass;
+
+   g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
+   g_return_if_fail(!cancellable || G_IS_CANCELLABLE(cancellable));
+   g_return_if_fail(callback);
+
+   klass = GB_WORKSPACE_PANE_GET_CLASS(pane);
+   if (klass->save_async) {
+      klass->save_async(pane, cancellable, callback, user_data);
+   }
+}
+
+gboolean
+gb_workspace_pane_save_finish (GbWorkspacePane  *pane,
+                               GAsyncResult     *result,
+                               GError          **error)
+{
+   GbWorkspacePaneClass *klass;
+
+   g_return_val_if_fail(GB_IS_WORKSPACE_PANE(pane), FALSE);
+   g_return_val_if_fail(G_IS_ASYNC_RESULT(result), FALSE);
+
+   klass = GB_WORKSPACE_PANE_GET_CLASS(pane);
+   if (klass->save_finish) {
+      return klass->save_finish(pane, result, error);
+   }
+
+   return TRUE;
+}
+
 static void
 gb_workspace_pane_finalize (GObject *object)
 {
@@ -130,8 +166,8 @@ gb_workspace_pane_get_property (GObject    *object,
    case PROP_ICON_NAME:
       g_value_set_string(value, gb_workspace_pane_get_icon_name(pane));
       break;
-   case PROP_MODIFIED:
-      g_value_set_boolean(value, gb_workspace_pane_get_modified(pane));
+   case PROP_CAN_SAVE:
+      g_value_set_boolean(value, gb_workspace_pane_get_can_save(pane));
       break;
    case PROP_TITLE:
       g_value_set_string(value, gb_workspace_pane_get_title(pane));
@@ -153,8 +189,8 @@ gb_workspace_pane_set_property (GObject      *object,
    case PROP_ICON_NAME:
       gb_workspace_pane_set_icon_name(pane, g_value_get_string(value));
       break;
-   case PROP_MODIFIED:
-      gb_workspace_pane_set_modified(pane, g_value_get_boolean(value));
+   case PROP_CAN_SAVE:
+      gb_workspace_pane_set_can_save(pane, g_value_get_boolean(value));
       break;
    case PROP_TITLE:
       gb_workspace_pane_set_title(pane, g_value_get_string(value));
@@ -184,14 +220,14 @@ gb_workspace_pane_class_init (GbWorkspacePaneClass *klass)
    g_object_class_install_property(object_class, PROP_ICON_NAME,
                                    gParamSpecs[PROP_ICON_NAME]);
 
-   gParamSpecs[PROP_MODIFIED] =
-      g_param_spec_boolean("modified",
+   gParamSpecs[PROP_CAN_SAVE] =
+      g_param_spec_boolean("can-save",
                           _("Modified"),
                           _("If the panes contents have been modified."),
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-   g_object_class_install_property(object_class, PROP_MODIFIED,
-                                   gParamSpecs[PROP_MODIFIED]);
+   g_object_class_install_property(object_class, PROP_CAN_SAVE,
+                                   gParamSpecs[PROP_CAN_SAVE]);
 
    gParamSpecs[PROP_TITLE] =
       g_param_spec_string("title",
@@ -202,7 +238,7 @@ gb_workspace_pane_class_init (GbWorkspacePaneClass *klass)
    g_object_class_install_property(object_class, PROP_TITLE,
                                    gParamSpecs[PROP_TITLE]);
 
-   gSignals[MODIFIED_CHANGED] = g_signal_new("modified-changed",
+   gSignals[CAN_SAVE_CHANGED] = g_signal_new("can_save-changed",
                                              GB_TYPE_WORKSPACE_PANE,
                                              G_SIGNAL_RUN_FIRST,
                                              0,

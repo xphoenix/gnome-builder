@@ -240,7 +240,7 @@ gb_source_pane_emit_modified_changed (GbSourcePane *pane)
 
    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(pane->priv->view));
    modified = gtk_text_buffer_get_modified(buffer);
-   gb_workspace_pane_set_modified(GB_WORKSPACE_PANE(pane), modified);
+   gb_workspace_pane_set_can_save(GB_WORKSPACE_PANE(pane), modified);
 }
 
 static void

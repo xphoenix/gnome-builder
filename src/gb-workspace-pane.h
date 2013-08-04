@@ -46,16 +46,31 @@ struct _GbWorkspacePane
 struct _GbWorkspacePaneClass
 {
    GtkGridClass parent_class;
+
+   void     (*save_async)  (GbWorkspacePane      *pane,
+                            GCancellable         *cancellable,
+                            GAsyncReadyCallback   callback,
+                            gpointer              user_data);
+   gboolean (*save_finish) (GbWorkspacePane      *pane,
+                            GAsyncResult         *result,
+                            GError              **error);
 };
 
+gboolean     gb_workspace_pane_get_can_save  (GbWorkspacePane      *pane);
+const gchar *gb_workspace_pane_get_icon_name (GbWorkspacePane      *pane);
+const gchar *gb_workspace_pane_get_title     (GbWorkspacePane      *pane);
 GType        gb_workspace_pane_get_type      (void) G_GNUC_CONST;
-const gchar *gb_workspace_pane_get_title     (GbWorkspacePane *pane);
-const gchar *gb_workspace_pane_get_icon_name (GbWorkspacePane *pane);
-void         gb_workspace_pane_set_title     (GbWorkspacePane *pane,
-                                              const gchar     *title);
-gboolean     gb_workspace_pane_get_modified  (GbWorkspacePane *pane);
-void         gb_workspace_pane_set_modified  (GbWorkspacePane *pane,
-                                              gboolean         modified);
+void         gb_workspace_pane_set_can_save  (GbWorkspacePane      *pane,
+                                              gboolean              can_save);
+void         gb_workspace_pane_set_title     (GbWorkspacePane      *pane,
+                                              const gchar          *title);
+void         gb_workspace_pane_save_async    (GbWorkspacePane      *pane,
+                                              GCancellable         *cancellable,
+                                              GAsyncReadyCallback   callback,
+                                              gpointer              user_data);
+gboolean     gb_workspace_pane_save_finish   (GbWorkspacePane      *pane,
+                                              GAsyncResult         *result,
+                                              GError              **error);
 
 G_END_DECLS
 
