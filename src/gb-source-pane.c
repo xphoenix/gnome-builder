@@ -47,6 +47,7 @@ struct _GbSourcePanePrivate
 
    GtkWidget *highlight;
    GtkWidget *overlay;
+   GtkWidget *progress;
    GtkWidget *ruler;
    GtkWidget *scroller;
    GtkWidget *search_bar;
@@ -508,6 +509,13 @@ gb_source_pane_init (GbSourcePane *pane)
                                      "top-attach", 1,
                                      "width", 1,
                                      NULL);
+
+   priv->progress = gtk_progress_bar_new();
+   gtk_style_context_add_class(gtk_widget_get_style_context(priv->progress),
+                               GTK_STYLE_CLASS_OSD);
+   gtk_widget_set_halign(priv->progress, GTK_ALIGN_FILL);
+   gtk_widget_set_valign(priv->progress, GTK_ALIGN_START);
+   gtk_overlay_add_overlay(GTK_OVERLAY(priv->overlay), priv->progress);
 
    priv->scroller = g_object_new(GTK_TYPE_SCROLLED_WINDOW,
                                  "hexpand", TRUE,
