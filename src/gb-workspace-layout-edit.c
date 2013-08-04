@@ -71,6 +71,22 @@ gb_workspace_layout_edit_add (GtkContainer *container,
 }
 
 static void
+gb_workspace_layout_edit_grab_focus (GtkWidget *widget)
+{
+   GbWorkspaceLayoutEdit *edit = (GbWorkspaceLayoutEdit *)widget;
+   GList *iter;
+
+   g_return_if_fail(GB_IS_WORKSPACE_LAYOUT_EDIT(edit));
+
+   for (iter = edit->priv->groups; iter; iter = iter->next) {
+      gtk_widget_grab_focus(iter->data);
+      return;
+   }
+
+   GTK_WIDGET_CLASS(gb_workspace_layout_edit_parent_class)->grab_focus(widget);
+}
+
+static void
 gb_workspace_layout_edit_finalize (GObject *object)
 {
    G_OBJECT_CLASS(gb_workspace_layout_edit_parent_class)->finalize(object);
@@ -81,12 +97,16 @@ gb_workspace_layout_edit_class_init (GbWorkspaceLayoutEditClass *klass)
 {
    GbWorkspaceLayoutClass *layout_class;
    GtkContainerClass *container_class;
+   GtkWidgetClass *widget_class;
    GObjectClass *object_class;
 
    object_class = G_OBJECT_CLASS(klass);
    object_class->finalize = gb_workspace_layout_edit_finalize;
    g_type_class_add_private(object_class,
                             sizeof(GbWorkspaceLayoutEditPrivate));
+
+   widget_class = GTK_WIDGET_CLASS(klass);
+   widget_class->grab_focus = gb_workspace_layout_edit_grab_focus;
 
    container_class = GTK_CONTAINER_CLASS(klass);
    container_class->add = gb_workspace_layout_edit_add;

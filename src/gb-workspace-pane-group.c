@@ -139,6 +139,28 @@ combo_changed (GtkComboBox          *combo_box,
 }
 
 static void
+gb_workspace_pane_group_grab_focus (GtkWidget *widget)
+{
+   GbWorkspacePaneGroup *group = (GbWorkspacePaneGroup *)widget;
+   GList *children;
+   GList *iter;
+
+   g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
+
+   g_print("Grab focus\n");
+
+   children = gtk_container_get_children(GTK_CONTAINER(group->priv->notebook));
+   for (iter = children; iter; iter = iter->next) {
+      if (gtk_widget_get_visible(iter->data)) {
+         gtk_widget_grab_focus(iter->data);
+         break;
+      }
+   }
+
+   g_list_free(children);
+}
+
+static void
 gb_workspace_pane_group_finalize (GObject *object)
 {
    GbWorkspacePaneGroupPrivate *priv = GB_WORKSPACE_PANE_GROUP(object)->priv;
@@ -180,6 +202,7 @@ static void
 gb_workspace_pane_group_class_init (GbWorkspacePaneGroupClass *klass)
 {
    GObjectClass *object_class;
+   GtkWidgetClass *widget_class;
    GtkContainerClass *container_class;
 
    object_class = G_OBJECT_CLASS(klass);
@@ -187,6 +210,9 @@ gb_workspace_pane_group_class_init (GbWorkspacePaneGroupClass *klass)
    object_class->get_property = gb_workspace_pane_group_get_property;
    object_class->set_property = gb_workspace_pane_group_set_property;
    g_type_class_add_private(object_class, sizeof(GbWorkspacePaneGroupPrivate));
+
+   widget_class = GTK_WIDGET_CLASS(klass);
+   widget_class->grab_focus = gb_workspace_pane_group_grab_focus;
 
    container_class = GTK_CONTAINER_CLASS(klass);
    container_class->add = gb_workspace_pane_group_add;
