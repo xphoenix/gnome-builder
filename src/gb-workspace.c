@@ -19,6 +19,7 @@
 #include <gd/gd-header-bar.h>
 #include <glib/gi18n.h>
 
+#include "gb-action.h"
 #include "gb-application.h"
 #include "gb-search-provider.h"
 #include "gb-workspace.h"
@@ -32,6 +33,7 @@ struct _GbWorkspacePrivate
 {
    GbProject *project;
 
+   GtkWidget *current_pane;
    GtkWidget *edit;
    GtkWidget *layout;
    GtkWidget *notebook;
@@ -181,36 +183,57 @@ gb_workspace_pane_search (GSimpleAction *action,
                           GVariant      *parameter,
                           gpointer       user_data)
 {
+   GbWorkspacePrivate *priv;
+   GbSearchProvider *provider;
    GbWorkspace *workspace = user_data;
    GtkWidget *widget;
 
    g_return_if_fail(GB_IS_WORKSPACE(workspace));
    g_return_if_fail(G_IS_ACTION(action));
 
-   for (widget = gtk_window_get_focus(GTK_WINDOW(workspace));
-        widget;
-        widget = gtk_widget_get_parent(widget)) {
-      if (GB_IS_SEARCH_PROVIDER(widget)) {
-         gb_search_provider_focus_search(GB_SEARCH_PROVIDER(widget));
-         return;
+   priv = workspace->priv;
+
+   if (GB_IS_WORKSPACE_PANE(priv->current_pane)) {
+      if (GB_IS_SEARCH_PROVIDER(priv->current_pane)) {
+         provider = GB_SEARCH_PROVIDER(priv->current_pane);
+         gb_search_provider_focus_search(provider);
+      }
+   }
+}
+
+static void
+gb_workspace_update_actions (GbWorkspace *workspace)
+{
+   GbWorkspacePrivate *priv;
+   GAction *action;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+
+   priv = workspace->priv;
+
+   action = g_action_map_lookup_action(G_ACTION_MAP(workspace), "pane-search");
+   g_simple_action_set_enabled(G_SIMPLE_ACTION(action),
+                               GB_IS_WORKSPACE_PANE(priv->current_pane));
+}
+
+static void
+gb_workspace_set_focus (GtkWindow *window,
+                        GtkWidget *widget)
+{
+   GbWorkspace *workspace = (GbWorkspace *)window;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+
+   GTK_WINDOW_CLASS(gb_workspace_parent_class)->set_focus(window, widget);
+
+   for (; widget; widget = gtk_widget_get_parent(widget)) {
+      if (GB_IS_WORKSPACE_PANE(widget)) {
+         workspace->priv->current_pane = widget;
+         break;
       }
    }
 
-   /*
-    * If we failed to find a search provider in the current focus chain,
-    * modify the focused widget and try again.
-    */
-
-   gtk_widget_grab_focus(workspace->priv->layout);
-
-   for (widget = gtk_window_get_focus(GTK_WINDOW(workspace));
-        widget;
-        widget = gtk_widget_get_parent(widget)) {
-      if (GB_IS_SEARCH_PROVIDER(widget)) {
-         gb_search_provider_focus_search(GB_SEARCH_PROVIDER(widget));
-         return;
-      }
-   }
+   gb_workspace_update_actions(workspace);
 }
 
 static void
@@ -257,6 +280,7 @@ static void
 gb_workspace_class_init (GbWorkspaceClass *klass)
 {
    GObjectClass *object_class;
+   GtkWindowClass *window_class;
    GtkContainerClass *container_class;
 
    object_class = G_OBJECT_CLASS(klass);
@@ -266,6 +290,9 @@ gb_workspace_class_init (GbWorkspaceClass *klass)
 
    container_class = GTK_CONTAINER_CLASS(klass);
    container_class->add = gb_workspace_add;
+
+   window_class = GTK_WINDOW_CLASS(klass);
+   window_class->set_focus = gb_workspace_set_focus;
 
    g_io_extension_point_register("org.gnome.Builder.Workspace");
 }
