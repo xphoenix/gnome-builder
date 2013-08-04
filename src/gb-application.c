@@ -114,7 +114,7 @@ on_open_activated (GSimpleAction *action,
                          "transient-for", parent,
                          NULL);
 
-   projects_path = g_build_filename(g_get_home_dir(), "Projects", NULL);
+   projects_path = g_build_filename(g_get_home_dir(), _("Projects"), NULL);
    if (g_file_test(projects_path, G_FILE_TEST_IS_DIR)) {
       gtk_file_chooser_add_shortcut_folder(GTK_FILE_CHOOSER(dialog),
                                            projects_path, NULL);
