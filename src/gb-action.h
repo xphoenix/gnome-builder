@@ -68,6 +68,8 @@ GType          gb_action_get_type        (void) G_GNUC_CONST;
 GbApplication *gb_action_get_application (GbAction    *action);
 GbProject     *gb_action_get_project     (GbAction    *action);
 GbWorkspace   *gb_action_get_workspace   (GbAction    *action);
+void           gb_action_set_enabled     (GbAction    *action,
+                                          gboolean     enabled);
 
 G_END_DECLS
 

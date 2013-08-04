@@ -197,7 +197,7 @@ gb_action_get_enabled (GAction *action)
    return GB_ACTION(action)->priv->enabled;
 }
 
-static void
+void
 gb_action_set_enabled (GbAction *action,
                        gboolean  enabled)
 {
