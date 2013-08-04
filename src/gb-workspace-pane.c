@@ -38,14 +38,7 @@ enum
    LAST_PROP
 };
 
-enum
-{
-   CAN_SAVE_CHANGED,
-   LAST_SIGNAL
-};
-
 static GParamSpec *gParamSpecs[LAST_PROP];
-static guint       gSignals[LAST_SIGNAL];
 
 const gchar *
 gb_workspace_pane_get_icon_name (GbWorkspacePane *pane)
@@ -82,7 +75,6 @@ gb_workspace_pane_set_can_save (GbWorkspacePane *pane,
       pane->priv->can_save = can_save;
       g_object_notify_by_pspec(G_OBJECT(pane),
                                gParamSpecs[PROP_CAN_SAVE]);
-      g_signal_emit(pane, gSignals[CAN_SAVE_CHANGED], 0);
    }
 }
 
@@ -237,16 +229,6 @@ gb_workspace_pane_class_init (GbWorkspacePaneClass *klass)
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
    g_object_class_install_property(object_class, PROP_TITLE,
                                    gParamSpecs[PROP_TITLE]);
-
-   gSignals[CAN_SAVE_CHANGED] = g_signal_new("can_save-changed",
-                                             GB_TYPE_WORKSPACE_PANE,
-                                             G_SIGNAL_RUN_FIRST,
-                                             0,
-                                             NULL,
-                                             NULL,
-                                             g_cclosure_marshal_VOID__VOID,
-                                             G_TYPE_NONE,
-                                             0);
 }
 
 static void

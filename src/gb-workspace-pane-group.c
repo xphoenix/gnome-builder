@@ -63,7 +63,7 @@ gb_workspace_pane_group_add (GtkContainer *container,
       gtk_widget_set_sensitive(priv->combo, TRUE);
       gtk_widget_set_sensitive(priv->close, TRUE);
       gtk_combo_box_set_active_iter(GTK_COMBO_BOX(priv->combo), &iter);
-      g_signal_connect_swapped(child, "modified-changed",
+      g_signal_connect_swapped(child, "notify::can-save",
                                G_CALLBACK(gtk_widget_queue_draw),
                                priv->combo);
    } else {
@@ -87,7 +87,7 @@ combo_text_func (GtkCellLayout   *cell_layout,
    gtk_tree_model_get(tree_model, iter, 0, &pane, -1);
    g_object_get(pane,
                 "title", &title,
-                "modified", &modified,
+                "can-save", &modified,
                 NULL);
 
    if (modified) {
