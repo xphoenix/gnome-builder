@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <gtk/gtk.h>
+
 #include "gb-search-provider.h"
 
 void
@@ -55,7 +57,7 @@ gb_search_provider_get_type (void)
                                         "GbSearchProvider",
                                         &g_type_info,
                                         0);
-      g_type_interface_add_prerequisite(_type_id, G_TYPE_OBJECT);
+      g_type_interface_add_prerequisite(_type_id, GTK_TYPE_WIDGET);
       g_once_init_leave((gsize *)&type_id, _type_id);
    }
 
