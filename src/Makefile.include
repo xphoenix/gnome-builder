@@ -134,7 +134,6 @@ NOGIR_C_FILES += $(top_srcdir)/src/main.c
 NOGIR_C_FILES += $(top_srcdir)/src/gd/gd-header-bar.c
 NOGIR_C_FILES += $(top_srcdir)/src/nautilus/nautilus-floating-bar.c
 NOGIR_C_FILES += $(top_builddir)/src/gb-application-resource.c
-NOGIR_C_FILES += $(top_builddir)/src/gb-source-actions.c
 
 gnome_builder_SOURCES =
 gnome_builder_SOURCES += $(GIR_C_FILES)

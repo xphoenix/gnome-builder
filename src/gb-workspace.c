@@ -28,8 +28,6 @@
 #include "gb-workspace-layout-switcher.h"
 #include "gb-workspace-pane.h"
 
-G_DEFINE_TYPE(GbWorkspace, gb_workspace, GTK_TYPE_APPLICATION_WINDOW)
-
 struct _GbWorkspacePrivate
 {
    GbProject *project;
@@ -50,6 +48,8 @@ enum
 };
 
 //static GParamSpec *gParamSpecs[LAST_PROP];
+
+G_DEFINE_TYPE_WITH_PRIVATE(GbWorkspace, gb_workspace, GTK_TYPE_APPLICATION_WINDOW)
 
 /**
  * gb_workspace_get_project:
@@ -177,8 +177,51 @@ gb_workspace_add (GtkContainer *container,
 }
 
 static void
+gb_workspace_pane_search (GSimpleAction *action,
+                          GVariant      *parameter,
+                          gpointer       user_data)
+{
+   GbWorkspace *workspace = user_data;
+   GtkWidget *widget;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+   g_return_if_fail(G_IS_ACTION(action));
+
+   for (widget = gtk_window_get_focus(GTK_WINDOW(workspace));
+        widget;
+        widget = gtk_widget_get_parent(widget)) {
+      if (GB_IS_SEARCH_PROVIDER(widget)) {
+         gb_search_provider_focus_search(GB_SEARCH_PROVIDER(widget));
+         return;
+      }
+   }
+
+   /*
+    * If we failed to find a search provider in the current focus chain,
+    * modify the focused widget and try again.
+    */
+
+   gtk_widget_grab_focus(workspace->priv->layout);
+
+   for (widget = gtk_window_get_focus(GTK_WINDOW(workspace));
+        widget;
+        widget = gtk_widget_get_parent(widget)) {
+      if (GB_IS_SEARCH_PROVIDER(widget)) {
+         gb_search_provider_focus_search(GB_SEARCH_PROVIDER(widget));
+         return;
+      }
+   }
+}
+
+static void
 gb_workspace_finalize (GObject *object)
 {
+   GbWorkspacePrivate *priv;
+
+   priv = GB_WORKSPACE(object)->priv;
+
+   g_clear_object(&priv->project);
+
    G_OBJECT_CLASS(gb_workspace_parent_class)->finalize(object);
 }
 
@@ -220,12 +263,29 @@ gb_workspace_class_init (GbWorkspaceClass *klass)
    object_class->finalize = gb_workspace_finalize;
    object_class->get_property = gb_workspace_get_property;
    object_class->set_property = gb_workspace_set_property;
-   g_type_class_add_private(object_class, sizeof(GbWorkspacePrivate));
 
    container_class = GTK_CONTAINER_CLASS(klass);
    container_class->add = gb_workspace_add;
 
    g_io_extension_point_register("org.gnome.Builder.Workspace");
+}
+
+static void
+gb_workspace_init_actions (GbWorkspace *workspace)
+{
+   GbWorkspacePrivate *priv;
+   static const GActionEntry entries[] = {
+      { "pane-search", gb_workspace_pane_search },
+   };
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+
+   priv = workspace->priv;
+
+   g_action_map_add_action_entries(G_ACTION_MAP(workspace),
+                                   entries,
+                                   G_N_ELEMENTS(entries),
+                                   workspace);
 }
 
 static void
@@ -242,6 +302,8 @@ gb_workspace_init (GbWorkspace *workspace)
                                                  GbWorkspacePrivate);
 
    priv = workspace->priv;
+
+   gb_workspace_init_actions(workspace);
 
    g_object_set(workspace,
                 "hide-titlebar-when-maximized", TRUE,
@@ -284,15 +346,14 @@ gb_workspace_init (GbWorkspace *workspace)
                          NULL);
    gd_header_bar_pack_end(GD_HEADER_BAR(priv->toolbar), button);
 
-
    builder = gtk_builder_new();
    gtk_builder_add_from_string(builder,
                                "<interface>"
                                "  <menu id='menubar'>"
                                "    <section>"
                                "      <item>"
-                               "        <attribute name='label' translatable='yes'>_Focus Search</attribute>"
-                               "        <attribute name='action'>app.focus-search</attribute>"
+                               "        <attribute name='label' translatable='yes'>_Find</attribute>"
+                               "        <attribute name='action'>win.pane-search</attribute>"
                                "        <attribute name='accel'>&lt;Primary&gt;f</attribute>"
                                "      </item>"
                                "    </section>"
