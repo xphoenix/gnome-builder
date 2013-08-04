@@ -273,19 +273,21 @@ gb_workspace_class_init (GbWorkspaceClass *klass)
 static void
 gb_workspace_init_actions (GbWorkspace *workspace)
 {
-   GbWorkspacePrivate *priv;
    static const GActionEntry entries[] = {
       { "pane-search", gb_workspace_pane_search },
    };
 
    g_return_if_fail(GB_IS_WORKSPACE(workspace));
 
-   priv = workspace->priv;
-
    g_action_map_add_action_entries(G_ACTION_MAP(workspace),
                                    entries,
                                    G_N_ELEMENTS(entries),
                                    workspace);
+
+   gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
+                                   "<Primary>f",
+                                   "win.pane-search",
+                                   NULL);
 }
 
 static void
