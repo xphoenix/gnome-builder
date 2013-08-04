@@ -97,12 +97,15 @@ gb_source_view_update_search (GbSourceView *view,
    GtkTextBuffer *buffer;
    GtkTextIter begin;
    GtkTextIter end;
+   GtkTextIter iter;
    GMatchInfo *match_info = NULL;
    GtkTextTag *search_tag;
    gboolean has_matches = FALSE;
    GRegex *regex = NULL;
    gchar *text;
    gchar *escaped;
+   gint curpos = -1;
+   gint newpos = -1;
 
    g_assert(GB_IS_SOURCE_VIEW(view));
 
@@ -131,6 +134,10 @@ gb_source_view_update_search (GbSourceView *view,
       g_free(escaped);
    }
 
+   gtk_text_buffer_get_iter_at_mark(buffer, &iter,
+                                    gtk_text_buffer_get_insert(buffer));
+   curpos = gtk_text_iter_get_offset(&iter);
+
    if (regex) {
       text = gtk_text_buffer_get_text(buffer, &begin, &end, TRUE);
       if (g_regex_match(regex, text, 0, &match_info)) {
@@ -147,6 +154,10 @@ gb_source_view_update_search (GbSourceView *view,
                   gtk_text_buffer_get_iter_at_offset(buffer, &end, end_pos);
                   gtk_text_buffer_apply_tag(buffer, search_tag, &begin, &end);
                   has_matches = TRUE;
+
+                  if ((newpos == -1) || (newpos < curpos)) {
+                     newpos = begin_pos;
+                  }
                }
             }
          } while (g_match_info_next(match_info, NULL));
@@ -154,6 +165,12 @@ gb_source_view_update_search (GbSourceView *view,
       g_match_info_free(match_info);
       g_regex_unref(regex);
       g_free(text);
+   }
+
+   if (newpos != -1) {
+      gtk_text_buffer_get_iter_at_offset(buffer, &iter, newpos);
+      gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view), &iter,
+                                   FALSE, FALSE, 0, 0);
    }
 
 cleanup:
