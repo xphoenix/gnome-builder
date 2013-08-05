@@ -254,9 +254,12 @@ gb_workspace_get_property (GObject    *object,
                            GValue     *value,
                            GParamSpec *pspec)
 {
-   //GbWorkspace *workspace = GB_WORKSPACE(object);
+   GbWorkspace *workspace = GB_WORKSPACE(object);
 
    switch (prop_id) {
+   case PROP_PROJECT:
+      g_value_set_object(value, gb_workspace_get_project(workspace));
+      break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
    }
@@ -268,9 +271,12 @@ gb_workspace_set_property (GObject      *object,
                            const GValue *value,
                            GParamSpec   *pspec)
 {
-   //GbWorkspace *workspace = GB_WORKSPACE(object);
+   GbWorkspace *workspace = GB_WORKSPACE(object);
 
    switch (prop_id) {
+   case PROP_PROJECT:
+      gb_workspace_set_project(workspace, g_value_get_object(value));
+      break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
    }
@@ -293,6 +299,15 @@ gb_workspace_class_init (GbWorkspaceClass *klass)
 
    window_class = GTK_WINDOW_CLASS(klass);
    window_class->set_focus = gb_workspace_set_focus;
+
+   gParamSpecs[PROP_PROJECT] =
+      g_param_spec_object("project",
+                          _("Project"),
+                          _("The project we are working with."),
+                          GB_TYPE_PROJECT,
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_PROJECT,
+                                   gParamSpecs[PROP_PROJECT]);
 
    g_io_extension_point_register("org.gnome.Builder.Workspace");
 }
