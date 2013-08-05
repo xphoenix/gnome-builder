@@ -46,12 +46,15 @@ struct _GbWorkspacePrivate
 enum
 {
    PROP_0,
+   PROP_PROJECT,
    LAST_PROP
 };
 
-//static GParamSpec *gParamSpecs[LAST_PROP];
+static GParamSpec *gParamSpecs[LAST_PROP];
 
-G_DEFINE_TYPE_WITH_PRIVATE(GbWorkspace, gb_workspace, GTK_TYPE_APPLICATION_WINDOW)
+G_DEFINE_TYPE_WITH_PRIVATE(GbWorkspace,
+                           gb_workspace,
+                           GTK_TYPE_APPLICATION_WINDOW)
 
 /**
  * gb_workspace_get_project:
@@ -175,6 +178,49 @@ gb_workspace_add (GtkContainer *container,
       gtk_container_add(GTK_CONTAINER(priv->layout), child);
    } else {
       GTK_CONTAINER_CLASS(gb_workspace_parent_class)->add(container, child);
+   }
+}
+
+static void
+gb_workspace_pane_save_cb (GbWorkspacePane *pane,
+                           GAsyncResult    *result,
+                           gpointer         user_data)
+{
+   GbWorkspace *workspace = user_data;
+   GError *error = NULL;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+
+   if (!gb_workspace_pane_save_finish(pane, result, &error)) {
+      g_printerr("%s\n", error->message);
+      g_error_free(error);
+   }
+
+   g_object_unref(workspace);
+}
+
+static void
+gb_workspace_pane_save (GSimpleAction *action,
+                        GVariant      *parameter,
+                        gpointer       user_data)
+{
+   GbWorkspacePrivate *priv;
+   GbWorkspacePane *pane;
+   GbWorkspace *workspace = user_data;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+   g_return_if_fail(G_IS_ACTION(action));
+
+   priv = workspace->priv;
+
+   if (GB_IS_WORKSPACE_PANE(priv->current_pane)) {
+      pane = GB_WORKSPACE_PANE(priv->current_pane);
+      if (gb_workspace_pane_get_can_save(pane)) {
+         gb_workspace_pane_save_async(pane,
+                                      NULL, /* TODO: Cancellable */
+                                      (GAsyncReadyCallback)gb_workspace_pane_save_cb,
+                                      g_object_ref(workspace));
+      }
    }
 }
 
@@ -316,6 +362,7 @@ static void
 gb_workspace_init_actions (GbWorkspace *workspace)
 {
    static const GActionEntry entries[] = {
+      { "pane-save", gb_workspace_pane_save },
       { "pane-search", gb_workspace_pane_search },
    };
 
@@ -327,9 +374,9 @@ gb_workspace_init_actions (GbWorkspace *workspace)
                                    workspace);
 
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
-                                   "<Primary>f",
-                                   "win.pane-search",
-                                   NULL);
+                                   "<Primary>f", "win.pane-search", NULL);
+   gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
+                                   "<Primary>s", "win.pane-save", NULL);
 }
 
 static void
@@ -394,6 +441,13 @@ gb_workspace_init (GbWorkspace *workspace)
    gtk_builder_add_from_string(builder,
                                "<interface>"
                                "  <menu id='menubar'>"
+                               "    <section>"
+                               "      <item>"
+                               "        <attribute name='label' translatable='yes'>_Save</attribute>"
+                               "        <attribute name='action'>win.pane-save</attribute>"
+                               "        <attribute name='accel'>&lt;Primary&gt;s</attribute>"
+                               "      </item>"
+                               "    </section>"
                                "    <section>"
                                "      <item>"
                                "        <attribute name='label' translatable='yes'>_Find</attribute>"
