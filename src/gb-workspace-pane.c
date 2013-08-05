@@ -24,14 +24,16 @@ G_DEFINE_TYPE(GbWorkspacePane, gb_workspace_pane, GTK_TYPE_GRID)
 
 struct _GbWorkspacePanePrivate
 {
-   gchar *icon_name;
-   gboolean can_save;
-   gchar *title;
+   gboolean  can_save;
+   gboolean  busy;
+   gchar    *icon_name;
+   gchar    *title;
 };
 
 enum
 {
    PROP_0,
+   PROP_BUSY,
    PROP_CAN_SAVE,
    PROP_ICON_NAME,
    PROP_TITLE,
@@ -75,6 +77,29 @@ gb_workspace_pane_set_can_save (GbWorkspacePane *pane,
       pane->priv->can_save = can_save;
       g_object_notify_by_pspec(G_OBJECT(pane),
                                gParamSpecs[PROP_CAN_SAVE]);
+   }
+}
+
+gboolean
+gb_workspace_pane_get_busy (GbWorkspacePane *pane)
+{
+   g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
+   return pane->priv->busy;
+}
+
+void
+gb_workspace_pane_set_busy (GbWorkspacePane *pane,
+                            gboolean         busy)
+{
+   GbWorkspacePanePrivate *priv;
+
+   g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
+
+   priv = pane->priv;
+
+   if (priv->busy != busy) {
+      priv->busy = busy;
+      g_object_notify_by_pspec(G_OBJECT(pane), gParamSpecs[PROP_BUSY]);
    }
 }
 
@@ -155,11 +180,14 @@ gb_workspace_pane_get_property (GObject    *object,
    GbWorkspacePane *pane = GB_WORKSPACE_PANE(object);
 
    switch (prop_id) {
-   case PROP_ICON_NAME:
-      g_value_set_string(value, gb_workspace_pane_get_icon_name(pane));
+   case PROP_BUSY:
+      g_value_set_boolean(value, gb_workspace_pane_get_busy(pane));
       break;
    case PROP_CAN_SAVE:
       g_value_set_boolean(value, gb_workspace_pane_get_can_save(pane));
+      break;
+   case PROP_ICON_NAME:
+      g_value_set_string(value, gb_workspace_pane_get_icon_name(pane));
       break;
    case PROP_TITLE:
       g_value_set_string(value, gb_workspace_pane_get_title(pane));
@@ -178,11 +206,14 @@ gb_workspace_pane_set_property (GObject      *object,
    GbWorkspacePane *pane = GB_WORKSPACE_PANE(object);
 
    switch (prop_id) {
-   case PROP_ICON_NAME:
-      gb_workspace_pane_set_icon_name(pane, g_value_get_string(value));
+   case PROP_BUSY:
+      gb_workspace_pane_set_busy(pane, g_value_get_boolean(value));
       break;
    case PROP_CAN_SAVE:
       gb_workspace_pane_set_can_save(pane, g_value_get_boolean(value));
+      break;
+   case PROP_ICON_NAME:
+      gb_workspace_pane_set_icon_name(pane, g_value_get_string(value));
       break;
    case PROP_TITLE:
       gb_workspace_pane_set_title(pane, g_value_get_string(value));
@@ -203,12 +234,21 @@ gb_workspace_pane_class_init (GbWorkspacePaneClass *klass)
    object_class->set_property = gb_workspace_pane_set_property;
    g_type_class_add_private(object_class, sizeof(GbWorkspacePanePrivate));
 
+   gParamSpecs[PROP_BUSY] =
+      g_param_spec_boolean("busy",
+                           _("Busy"),
+                           _("If the workspace pane busy indicator should be set."),
+                           FALSE,
+                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_BUSY,
+                                   gParamSpecs[PROP_BUSY]);
+
    gParamSpecs[PROP_ICON_NAME] =
       g_param_spec_string("icon-name",
                           _("Icon Name"),
                           _("The name of the icon to display."),
                           NULL,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_ICON_NAME,
                                    gParamSpecs[PROP_ICON_NAME]);
 
@@ -217,7 +257,7 @@ gb_workspace_pane_class_init (GbWorkspacePaneClass *klass)
                           _("Modified"),
                           _("If the panes contents have been modified."),
                           FALSE,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_CAN_SAVE,
                                    gParamSpecs[PROP_CAN_SAVE]);
 
@@ -226,7 +266,7 @@ gb_workspace_pane_class_init (GbWorkspacePaneClass *klass)
                           _("Title"),
                           _("The title of the pane."),
                           NULL,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_TITLE,
                                    gParamSpecs[PROP_TITLE]);
 }

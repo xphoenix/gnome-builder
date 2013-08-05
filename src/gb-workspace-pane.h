@@ -56,10 +56,13 @@ struct _GbWorkspacePaneClass
                             GError              **error);
 };
 
+gboolean     gb_workspace_pane_get_busy      (GbWorkspacePane      *pane);
 gboolean     gb_workspace_pane_get_can_save  (GbWorkspacePane      *pane);
 const gchar *gb_workspace_pane_get_icon_name (GbWorkspacePane      *pane);
 const gchar *gb_workspace_pane_get_title     (GbWorkspacePane      *pane);
 GType        gb_workspace_pane_get_type      (void) G_GNUC_CONST;
+void         gb_workspace_pane_set_busy      (GbWorkspacePane      *pane,
+                                              gboolean              busy);
 void         gb_workspace_pane_set_can_save  (GbWorkspacePane      *pane,
                                               gboolean              can_save);
 void         gb_workspace_pane_set_title     (GbWorkspacePane      *pane,
