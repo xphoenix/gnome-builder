@@ -65,6 +65,8 @@ void         gb_workspace_pane_set_busy      (GbWorkspacePane      *pane,
                                               gboolean              busy);
 void         gb_workspace_pane_set_can_save  (GbWorkspacePane      *pane,
                                               gboolean              can_save);
+void         gb_workspace_pane_set_icon_name (GbWorkspacePane      *pane,
+                                              const gchar          *icon_name);
 void         gb_workspace_pane_set_title     (GbWorkspacePane      *pane,
                                               const gchar          *title);
 void         gb_workspace_pane_save_async    (GbWorkspacePane      *pane,
