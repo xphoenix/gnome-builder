@@ -170,7 +170,7 @@ gb_source_view_update_search (GbSourceView *view,
    if (newpos != -1) {
       gtk_text_buffer_get_iter_at_offset(buffer, &iter, newpos);
       gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view), &iter,
-                                   FALSE, FALSE, 0, 0);
+                                   0.0, TRUE, 0.0, 0.5);
    }
 
 cleanup:
