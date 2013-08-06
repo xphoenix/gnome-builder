@@ -398,24 +398,24 @@ gb_workspace_init (GbWorkspace *workspace)
 
    builder = gtk_builder_new();
    gtk_builder_add_from_string(builder,
-                               "<interface>"
-                               "  <menu id='menubar'>"
-                               "    <section>"
-                               "      <item>"
-                               "        <attribute name='label' translatable='yes'>_Save</attribute>"
-                               "        <attribute name='action'>win.pane-save</attribute>"
-                               "        <attribute name='accel'>&lt;Primary&gt;s</attribute>"
-                               "      </item>"
-                               "    </section>"
-                               "    <section>"
-                               "      <item>"
-                               "        <attribute name='label' translatable='yes'>_Find</attribute>"
-                               "        <attribute name='action'>win.pane-search</attribute>"
-                               "        <attribute name='accel'>&lt;Primary&gt;f</attribute>"
-                               "      </item>"
-                               "    </section>"
-                               "  </menu>"
-                               "</interface>", -1, NULL);
+         "<interface>"
+         "  <menu id='menubar'>"
+         "    <section>"
+         "      <item>"
+         "        <attribute name='label' translatable='yes'>_Save</attribute>"
+         "        <attribute name='action'>win.pane-save</attribute>"
+         "        <attribute name='accel'>&lt;Primary&gt;s</attribute>"
+         "      </item>"
+         "    </section>"
+         "    <section>"
+         "      <item>"
+         "        <attribute name='label' translatable='yes'>_Find</attribute>"
+         "        <attribute name='action'>win.pane-search</attribute>"
+         "        <attribute name='accel'>&lt;Primary&gt;f</attribute>"
+         "      </item>"
+         "    </section>"
+         "  </menu>"
+         "</interface>", -1, NULL);
 
    menu = G_MENU_MODEL(gtk_builder_get_object(builder, "menubar"));
 
@@ -431,8 +431,11 @@ gb_workspace_init (GbWorkspace *workspace)
                              "menu-model", menu,
                              "visible", FALSE,
                              NULL);
-   gtk_menu_button_set_direction(GTK_MENU_BUTTON(priv->menu), GTK_ARROW_DOWN);
    gtk_header_bar_pack_end(GTK_HEADER_BAR(priv->header), priv->menu);
+
+   gtk_widget_set_halign(
+         GTK_WIDGET(gtk_menu_button_get_popup(GTK_MENU_BUTTON(priv->menu))),
+         GTK_ALIGN_END);
 
    box = g_object_new(GTK_TYPE_BOX,
                       "hexpand", FALSE,
