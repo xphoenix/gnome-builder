@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <gd/gd-header-bar.h>
 #include <glib/gi18n.h>
 
 #include "gb-project.h"
@@ -167,37 +166,10 @@ gb_workspace_layout_splash_init (GbWorkspaceLayoutSplash *splash)
    GtkWidget *frame_;
    GtkWidget *row;
    GtkWidget *viewport;
-   GtkWidget *header;
-   GtkWidget *sep;
 
    splash->priv = G_TYPE_INSTANCE_GET_PRIVATE(splash,
                                               GB_TYPE_WORKSPACE_LAYOUT_SPLASH,
                                               GbWorkspaceLayoutSplashPrivate);
-
-   header = g_object_new(GD_TYPE_HEADER_BAR,
-                         "height-request", 48,
-                         "hexpand", FALSE,
-                         "title", _("Select a Project"),
-                         "vexpand", FALSE,
-                         "visible", TRUE,
-                         NULL);
-   gtk_container_add_with_properties(GTK_CONTAINER(splash), header,
-                                     "left-attach", 0,
-                                     "top-attach", 0,
-                                     "width", 1,
-                                     "height", 1,
-                                     NULL);
-
-   sep = g_object_new(GTK_TYPE_SEPARATOR,
-                      "orientation", GTK_ORIENTATION_HORIZONTAL,
-                      "visible", TRUE,
-                      NULL);
-   gtk_container_add_with_properties(GTK_CONTAINER(splash), sep,
-                                     "left-attach", 0,
-                                     "top-attach", 1,
-                                     "width", 1,
-                                     "height", 1,
-                                     NULL);
 
    align = g_object_new(GTK_TYPE_ALIGNMENT,
                         "hexpand", TRUE,

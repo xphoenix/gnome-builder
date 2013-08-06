@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <gd/gd-header-bar.h>
 #include <glib/gi18n.h>
 
 #include "gb-action.h"
@@ -33,13 +32,17 @@ struct _GbWorkspacePrivate
 {
    GbProject *project;
 
+   GtkWidget *build;
    GtkWidget *current_pane;
    GtkWidget *edit;
+   GtkWidget *header;
    GtkWidget *layout;
+   GtkWidget *menu;
    GtkWidget *notebook;
+   GtkWidget *run;
+   GtkWidget *search;
    GtkWidget *splash;
    GtkWidget *switcher;
-   GtkWidget *toolbar;
    GtkWidget *vbox;
 };
 
@@ -95,57 +98,25 @@ gb_workspace_set_project (GbWorkspace *workspace,
 
    if (project) {
       priv->project = g_object_ref(project);
+      gtk_widget_show(priv->build);
+      gtk_widget_show(priv->menu);
+      gtk_widget_show(priv->run);
+      gtk_widget_show(priv->search);
+      gtk_header_bar_set_custom_title(GTK_HEADER_BAR(priv->header),
+                                      priv->switcher);
+   } else {
+      gtk_widget_hide(priv->build);
+      gtk_widget_hide(priv->menu);
+      gtk_widget_hide(priv->run);
+      gtk_widget_hide(priv->search);
+      gtk_header_bar_set_title(GTK_HEADER_BAR(priv->header),
+                               _("Select a Project"));
    }
 
    if (priv->layout && priv->project && klass->load) {
       klass->load(GB_WORKSPACE_LAYOUT(priv->layout), priv->project);
    }
 }
-
-#if 0
-void
-gb_workspace_set_layout (GbWorkspace       *workspace,
-                         GbWorkspaceLayout *layout)
-{
-   GbWorkspaceLayoutClass *klass;
-   GbWorkspacePrivate *priv;
-
-   g_return_if_fail(GB_IS_WORKSPACE(workspace));
-   g_return_if_fail(!layout || GB_IS_WORKSPACE_LAYOUT(layout));
-
-   priv = workspace->priv;
-
-   g_object_set(priv->toolbar, "visible", !!layout, NULL);
-
-   if (!layout) {
-      layout = g_object_new(GB_TYPE_WORKSPACE_LAYOUT_SPLASH,
-                            "visible", TRUE,
-                            NULL);
-   }
-
-   if (priv->layout && priv->project) {
-      klass = GB_WORKSPACE_LAYOUT_GET_CLASS(priv->layout);
-      if (klass->unload) {
-         klass->unload(GB_WORKSPACE_LAYOUT(priv->layout), priv->project);
-      }
-   }
-
-   if (priv->layout) {
-      gtk_container_remove(GTK_CONTAINER(priv->vbox), priv->layout);
-   }
-
-   priv->layout = GTK_WIDGET(layout);
-
-   gtk_container_add(GTK_CONTAINER(priv->vbox), priv->layout);
-
-   if (priv->project) {
-      klass = GB_WORKSPACE_LAYOUT_GET_CLASS(layout);
-      if (klass->load) {
-         klass->load(layout, priv->project);
-      }
-   }
-}
-#endif
 
 void
 gb_workspace_set_mode (GbWorkspace     *workspace,
@@ -159,13 +130,8 @@ gb_workspace_set_mode (GbWorkspace     *workspace,
 
    gtk_notebook_set_current_page(GTK_NOTEBOOK(priv->notebook),
                                  (guint)mode);
-
    priv->layout = gtk_notebook_get_nth_page(GTK_NOTEBOOK(priv->notebook),
                                             (guint)mode);
-
-   g_object_set(priv->toolbar,
-                "visible", (mode != GB_WORKSPACE_SPLASH),
-                NULL);
 }
 
 static void
@@ -385,8 +351,8 @@ gb_workspace_init (GbWorkspace *workspace)
    GbWorkspacePrivate *priv;
    GMenuModel *menu;
    GtkBuilder *builder;
+   GtkWidget *box;
    GtkWidget *image;
-   GtkWidget *button;
 
    workspace->priv = G_TYPE_INSTANCE_GET_PRIVATE(workspace,
                                                  GB_TYPE_WORKSPACE,
@@ -396,46 +362,39 @@ gb_workspace_init (GbWorkspace *workspace)
 
    gb_workspace_init_actions(workspace);
 
-   g_object_set(workspace,
-                "hide-titlebar-when-maximized", TRUE,
-                NULL);
+   gtk_window_set_hide_titlebar_when_maximized(GTK_WINDOW(workspace), FALSE);
 
-   priv->vbox =
-      g_object_new(GTK_TYPE_BOX,
-                   "orientation", GTK_ORIENTATION_VERTICAL,
-                   "vexpand", TRUE,
-                   "visible", TRUE,
-                   NULL);
+   priv->header = g_object_new(GTK_TYPE_HEADER_BAR,
+                               "title", _("Select a Project"),
+                               "name", "workspace-header-bar",
+                               "height-request", 48,
+                               "vexpand", FALSE,
+                               "visible", TRUE,
+                               NULL);
+   gtk_window_set_titlebar(GTK_WINDOW(workspace), priv->header);
+
+   priv->vbox = g_object_new(GTK_TYPE_BOX,
+                             "orientation", GTK_ORIENTATION_VERTICAL,
+                             "vexpand", TRUE,
+                             "visible", TRUE,
+                             NULL);
    gtk_container_add(GTK_CONTAINER(workspace), priv->vbox);
 
-   priv->switcher =
-      g_object_new(GB_TYPE_WORKSPACE_LAYOUT_SWITCHER,
-                   "visible", TRUE,
-                   NULL);
-
-   priv->toolbar =
-      g_object_new(GD_TYPE_HEADER_BAR,
-                   "custom-title", workspace->priv->switcher,
-                   "name", "GbHeaderBar",
-                   "height-request", 48,
-                   "vexpand", FALSE,
-                   "visible", TRUE,
-                   NULL);
-   gtk_style_context_add_class(gtk_widget_get_style_context(priv->toolbar),
-                               "builder-header");
-   gtk_container_add(GTK_CONTAINER(priv->vbox), priv->toolbar);
+   priv->switcher = g_object_new(GB_TYPE_WORKSPACE_LAYOUT_SWITCHER,
+                                 "visible", TRUE,
+                                 NULL);
 
    image = g_object_new(GTK_TYPE_IMAGE,
                         "icon-name", "edit-find-symbolic",
                         "icon-size", GTK_ICON_SIZE_MENU,
                         "visible", TRUE,
                         NULL);
-   button = g_object_new(GTK_TYPE_TOGGLE_BUTTON,
-                         "image", image,
-                         "hexpand", FALSE,
-                         "visible", TRUE,
-                         NULL);
-   gd_header_bar_pack_end(GD_HEADER_BAR(priv->toolbar), button);
+   priv->search = g_object_new(GTK_TYPE_TOGGLE_BUTTON,
+                               "image", image,
+                               "hexpand", FALSE,
+                               "visible", FALSE,
+                               NULL);
+   gtk_header_bar_pack_end(GTK_HEADER_BAR(priv->header), priv->search);
 
    builder = gtk_builder_new();
    gtk_builder_add_from_string(builder,
@@ -465,60 +424,55 @@ gb_workspace_init (GbWorkspace *workspace)
                         "icon-size", GTK_ICON_SIZE_MENU,
                         "visible", TRUE,
                         NULL);
-   button = g_object_new(GTK_TYPE_MENU_BUTTON,
-                         "direction", GTK_ARROW_DOWN,
-                         "image", image,
-                         "hexpand", FALSE,
-                         "menu-model", menu,
-                         "visible", TRUE,
-                         NULL);
-   gd_header_bar_pack_end(GD_HEADER_BAR(priv->toolbar), button);
+   priv->menu = g_object_new(GTK_TYPE_MENU_BUTTON,
+                             "direction", GTK_ARROW_DOWN,
+                             "image", image,
+                             "hexpand", FALSE,
+                             "menu-model", menu,
+                             "visible", FALSE,
+                             NULL);
+   gtk_header_bar_pack_end(GTK_HEADER_BAR(priv->header), priv->menu);
 
-   {
-      GtkWidget *box;
+   box = g_object_new(GTK_TYPE_BOX,
+                      "hexpand", FALSE,
+                      "orientation", GTK_ORIENTATION_HORIZONTAL,
+                      "visible", TRUE,
+                      NULL);
+   gtk_style_context_add_class(gtk_widget_get_style_context(box),
+                               "linked");
+   gtk_header_bar_pack_start(GTK_HEADER_BAR(priv->header), box);
 
-      box = g_object_new(GTK_TYPE_BOX,
-                         "hexpand", FALSE,
-                         "orientation", GTK_ORIENTATION_HORIZONTAL,
-                         "visible", TRUE,
-                         NULL);
-      gtk_style_context_add_class(gtk_widget_get_style_context(box),
-                                  "linked");
-      gd_header_bar_pack_start(GD_HEADER_BAR(priv->toolbar), box);
+   priv->build = g_object_new(GTK_TYPE_BUTTON,
+                              "label", _("Build"),
+                              "hexpand", FALSE,
+                              "visible", FALSE,
+                              "width-request", 75,
+                              NULL);
+   gtk_style_context_add_class(gtk_widget_get_style_context(priv->build),
+                               "suggested-action");
+   gtk_container_add(GTK_CONTAINER(box), priv->build);
 
-      button = g_object_new(GTK_TYPE_BUTTON,
-                            "label", _("Build"),
-                            "hexpand", FALSE,
-                            "visible", TRUE,
-                            "width-request", 75,
-                            NULL);
-      gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                                  "suggested-action");
-      gtk_container_add(GTK_CONTAINER(box), button);
-
-      image = g_object_new(GTK_TYPE_IMAGE,
-                           "icon-name", "media-playback-start",
-                           "icon-size", GTK_ICON_SIZE_MENU,
-                           "visible", TRUE,
-                           NULL);
-      button = g_object_new(GTK_TYPE_BUTTON,
+   image = g_object_new(GTK_TYPE_IMAGE,
+                        "icon-name", "media-playback-start",
+                        "icon-size", GTK_ICON_SIZE_MENU,
+                        "visible", TRUE,
+                        NULL);
+   priv->run = g_object_new(GTK_TYPE_BUTTON,
                             "child", image,
                             "hexpand", FALSE,
-                            "visible", TRUE,
+                            "visible", FALSE,
                             NULL);
-      gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                                  "suggested-action");
-      gtk_container_add(GTK_CONTAINER(box), button);
-   }
+   gtk_style_context_add_class(gtk_widget_get_style_context(priv->run),
+                               "suggested-action");
+   gtk_container_add(GTK_CONTAINER(box), priv->run);
 
-   priv->notebook =
-      g_object_new(GTK_TYPE_NOTEBOOK,
-                   "hexpand", TRUE,
-                   "show-tabs", FALSE,
-                   "show-border", FALSE,
-                   "vexpand", TRUE,
-                   "visible", TRUE,
-                   NULL);
+   priv->notebook = g_object_new(GTK_TYPE_NOTEBOOK,
+                                 "hexpand", TRUE,
+                                 "show-tabs", FALSE,
+                                 "show-border", FALSE,
+                                 "vexpand", TRUE,
+                                 "visible", TRUE,
+                                 NULL);
    gtk_container_add(GTK_CONTAINER(priv->vbox), priv->notebook);
 
    priv->splash = g_object_new(GB_TYPE_WORKSPACE_LAYOUT_SPLASH,

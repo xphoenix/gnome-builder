@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <gd/gd-header-bar.h>
 #include <glib/gi18n.h>
 
 #include "gb-source-pane.h"
