@@ -431,6 +431,7 @@ gb_workspace_init (GbWorkspace *workspace)
                              "menu-model", menu,
                              "visible", FALSE,
                              NULL);
+   gtk_menu_button_set_direction(GTK_MENU_BUTTON(priv->menu), GTK_ARROW_DOWN);
    gtk_header_bar_pack_end(GTK_HEADER_BAR(priv->header), priv->menu);
 
    box = g_object_new(GTK_TYPE_BOX,
