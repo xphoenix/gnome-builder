@@ -39,24 +39,34 @@ enum
 static GParamSpec *gParamSpecs[LAST_PROP];
 #endif
 
-static void
-gb_workspace_pane_group_close_clicked (GtkButton            *button,
-                                       GbWorkspacePaneGroup *group)
+void
+gb_workspace_pane_group_close (GbWorkspacePaneGroup *group,
+                               GbWorkspacePane      *pane)
 {
-   GbWorkspacePaneGroupPrivate *priv;
-   GtkWidget *child;
-
-   g_return_if_fail(GTK_IS_WIDGET(button));
    g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
-
-   priv = group->priv;
+   g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
 
    /*
     * TODO: Check can-save.
     */
 
-   child = g_object_get_data(G_OBJECT(button), "child");
-   gtk_container_remove(GTK_CONTAINER(priv->notebook), child);
+   gtk_container_remove(GTK_CONTAINER(group->priv->notebook),
+                        GTK_WIDGET(pane));
+}
+
+static void
+gb_workspace_pane_group_close_clicked (GtkButton            *button,
+                                       GbWorkspacePaneGroup *group)
+{
+   GbWorkspacePane *pane;
+
+   g_return_if_fail(GTK_IS_WIDGET(button));
+   g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
+
+   pane = g_object_get_data(G_OBJECT(button), "child");
+   if (GB_IS_WORKSPACE_PANE(pane)) {
+      gb_workspace_pane_group_close(group, pane);
+   }
 }
 
 static void

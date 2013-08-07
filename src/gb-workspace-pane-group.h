@@ -21,6 +21,8 @@
 
 #include <gtk/gtk.h>
 
+#include "gb-workspace-pane.h"
+
 G_BEGIN_DECLS
 
 #define GB_TYPE_WORKSPACE_PANE_GROUP            (gb_workspace_pane_group_get_type())
@@ -49,6 +51,8 @@ struct _GbWorkspacePaneGroupClass
 };
 
 GType gb_workspace_pane_group_get_type (void) G_GNUC_CONST;
+void  gb_workspace_pane_group_close    (GbWorkspacePaneGroup *group,
+                                        GbWorkspacePane      *pane);
 
 G_END_DECLS
 

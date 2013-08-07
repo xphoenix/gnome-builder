@@ -27,6 +27,7 @@
 #include "gb-workspace-layout-splash.h"
 #include "gb-workspace-layout-switcher.h"
 #include "gb-workspace-pane.h"
+#include "gb-workspace-pane-group.h"
 
 struct _GbWorkspacePrivate
 {
@@ -166,6 +167,34 @@ gb_workspace_pane_save_cb (GbWorkspacePane *pane,
 }
 
 static void
+gb_workspace_close_pane (GSimpleAction *action,
+                         GVariant      *parameter,
+                         gpointer       user_data)
+{
+   GbWorkspacePrivate *priv;
+   GbWorkspacePane *pane;
+   GbWorkspace *workspace = user_data;
+   GtkWidget *parent;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+   g_return_if_fail(G_IS_ACTION(action));
+
+   priv = workspace->priv;
+
+   if (GB_IS_WORKSPACE_PANE(priv->current_pane)) {
+      pane = GB_WORKSPACE_PANE(priv->current_pane);
+      for (parent = gtk_widget_get_parent(priv->current_pane);
+           parent;
+           parent = gtk_widget_get_parent(parent)) {
+         if (GB_IS_WORKSPACE_PANE_GROUP(parent)) {
+            gb_workspace_pane_group_close(GB_WORKSPACE_PANE_GROUP(parent),
+                                          pane);
+         }
+      }
+   }
+}
+
+static void
 gb_workspace_pane_save (GSimpleAction *action,
                         GVariant      *parameter,
                         gpointer       user_data)
@@ -217,6 +246,7 @@ void
 gb_workspace_update_actions (GbWorkspace *workspace)
 {
    GbWorkspacePrivate *priv;
+   GbWorkspacePane *pane;
    GActionMap *map;
    gboolean has_pane;
    gboolean is_modified = FALSE;
@@ -228,15 +258,19 @@ gb_workspace_update_actions (GbWorkspace *workspace)
 
    map = G_ACTION_MAP(workspace);
    has_pane = GB_IS_WORKSPACE_PANE(priv->current_pane);
+   pane = has_pane ? GB_WORKSPACE_PANE(priv->current_pane) : NULL;
 
    if ((action = g_action_map_lookup_action(map, "pane-search"))) {
       g_simple_action_set_enabled(G_SIMPLE_ACTION(action), has_pane);
    }
 
+   if ((action = g_action_map_lookup_action(map, "close-pane"))) {
+      g_simple_action_set_enabled(G_SIMPLE_ACTION(action), has_pane);
+   }
+
    if ((action = g_action_map_lookup_action(map, "pane-save"))) {
       if (has_pane) {
-         is_modified = gb_workspace_pane_get_can_save(
-               GB_WORKSPACE_PANE(priv->current_pane));
+         is_modified = gb_workspace_pane_get_can_save(pane);
       }
       g_simple_action_set_enabled(G_SIMPLE_ACTION(action),
                                   has_pane && is_modified);
@@ -345,6 +379,7 @@ static void
 gb_workspace_init_actions (GbWorkspace *workspace)
 {
    static const GActionEntry entries[] = {
+      { "close-pane", gb_workspace_close_pane },
       { "pane-save", gb_workspace_pane_save },
       { "pane-search", gb_workspace_pane_search },
    };
@@ -356,6 +391,8 @@ gb_workspace_init_actions (GbWorkspace *workspace)
                                    G_N_ELEMENTS(entries),
                                    workspace);
 
+   gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
+                                   "<Primary>w", "win.close-pane", NULL);
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
                                    "<Primary>f", "win.pane-search", NULL);
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
@@ -430,6 +467,13 @@ gb_workspace_init (GbWorkspace *workspace)
          "        <attribute name='label' translatable='yes'>_Find</attribute>"
          "        <attribute name='action'>win.pane-search</attribute>"
          "        <attribute name='accel'>&lt;Primary&gt;f</attribute>"
+         "      </item>"
+         "    </section>"
+         "    <section>"
+         "      <item>"
+         "        <attribute name='label' translatable='yes'>_Close</attribute>"
+         "        <attribute name='action'>win.close-pane</attribute>"
+         "        <attribute name='accel'>&lt;Primary&gt;w</attribute>"
          "      </item>"
          "    </section>"
          "  </menu>"
