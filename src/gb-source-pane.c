@@ -473,7 +473,7 @@ gb_source_pane_init (GbSourcePane *pane)
    priv = pane->priv;
 
    g_object_set(pane,
-                "icon-name", "gtk-file",
+                "icon-name", "text-x-generic",
                 "title", _("Unnamed File"),
                 NULL);
 
