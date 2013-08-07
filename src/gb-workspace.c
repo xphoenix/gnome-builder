@@ -217,15 +217,19 @@ static void
 gb_workspace_update_actions (GbWorkspace *workspace)
 {
    GbWorkspacePrivate *priv;
+   GActionMap *map;
    GAction *action;
 
    g_return_if_fail(GB_IS_WORKSPACE(workspace));
 
    priv = workspace->priv;
 
-   action = g_action_map_lookup_action(G_ACTION_MAP(workspace), "pane-search");
-   g_simple_action_set_enabled(G_SIMPLE_ACTION(action),
-                               GB_IS_WORKSPACE_PANE(priv->current_pane));
+   map = G_ACTION_MAP(workspace);
+
+   if ((action = g_action_map_lookup_action(map, "pane-search"))) {
+      g_simple_action_set_enabled(G_SIMPLE_ACTION(action),
+                                  GB_IS_WORKSPACE_PANE(priv->current_pane));
+   }
 }
 
 static void
@@ -245,7 +249,9 @@ gb_workspace_set_focus (GtkWindow *window,
       }
    }
 
-   gb_workspace_update_actions(workspace);
+   if (widget) {
+      gb_workspace_update_actions(workspace);
+   }
 }
 
 static void
