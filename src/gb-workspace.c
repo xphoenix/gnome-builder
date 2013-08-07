@@ -213,12 +213,13 @@ gb_workspace_pane_search (GSimpleAction *action,
    }
 }
 
-static void
+void
 gb_workspace_update_actions (GbWorkspace *workspace)
 {
    GbWorkspacePrivate *priv;
    GActionMap *map;
    gboolean has_pane;
+   gboolean is_modified = FALSE;
    GAction *action;
 
    g_return_if_fail(GB_IS_WORKSPACE(workspace));
@@ -233,7 +234,12 @@ gb_workspace_update_actions (GbWorkspace *workspace)
    }
 
    if ((action = g_action_map_lookup_action(map, "pane-save"))) {
-      g_simple_action_set_enabled(G_SIMPLE_ACTION(action), has_pane);
+      if (has_pane) {
+         is_modified = gb_workspace_pane_get_can_save(
+               GB_WORKSPACE_PANE(priv->current_pane));
+      }
+      g_simple_action_set_enabled(G_SIMPLE_ACTION(action),
+                                  has_pane && is_modified);
    }
 }
 

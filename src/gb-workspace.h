@@ -62,12 +62,13 @@ struct _GbWorkspaceClass
    GtkApplicationWindowClass parent_class;
 };
 
-GbProject *gb_workspace_get_project (GbWorkspace     *workspace);
-GType      gb_workspace_get_type    (void) G_GNUC_CONST;
-void       gb_workspace_set_mode    (GbWorkspace     *workspace,
-                                     GbWorkspaceMode  mode);
-void       gb_workspace_set_project (GbWorkspace     *workspace,
-                                     GbProject       *project);
+GbProject *gb_workspace_get_project    (GbWorkspace     *workspace);
+GType      gb_workspace_get_type       (void) G_GNUC_CONST;
+void       gb_workspace_set_mode       (GbWorkspace     *workspace,
+                                        GbWorkspaceMode  mode);
+void       gb_workspace_set_project    (GbWorkspace     *workspace,
+                                        GbProject       *project);
+void       gb_workspace_update_actions (GbWorkspace     *workspace);
 
 G_END_DECLS
 
