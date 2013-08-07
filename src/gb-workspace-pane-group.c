@@ -18,6 +18,7 @@
 
 #include <glib/gi18n.h>
 
+#include "gb-workspace.h"
 #include "gb-workspace-pane.h"
 #include "gb-workspace-pane-group.h"
 
@@ -59,6 +60,21 @@ gb_workspace_pane_group_close_clicked (GtkButton            *button,
 }
 
 static void
+gb_workspace_pane_group_notify_can_save (GbWorkspacePane      *pane,
+                                         GParamSpec           *pspec,
+                                         GbWorkspacePaneGroup *group)
+{
+   GbWorkspace *workspace;
+
+   g_assert(GB_IS_WORKSPACE_PANE(pane));
+   g_assert(GB_IS_WORKSPACE_PANE_GROUP(group));
+
+   if ((workspace = GB_WORKSPACE(gtk_widget_get_toplevel(GTK_WIDGET(pane))))) {
+      gb_workspace_update_actions(workspace);
+   }
+}
+
+static void
 gb_workspace_pane_group_add (GtkContainer *container,
                              GtkWidget    *child)
 {
@@ -77,6 +93,10 @@ gb_workspace_pane_group_add (GtkContainer *container,
    priv = group->priv;
 
    if (GB_IS_WORKSPACE_PANE(child)) {
+      g_signal_connect(child, "notify::can-save",
+                       G_CALLBACK(gb_workspace_pane_group_notify_can_save),
+                       group);
+
       hbox = g_object_new(GTK_TYPE_BOX,
                           "orientation", GTK_ORIENTATION_HORIZONTAL,
                           "spacing", 0,
