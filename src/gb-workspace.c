@@ -368,6 +368,7 @@ gb_workspace_init (GbWorkspace *workspace)
                                "title", _("Select a Project"),
                                "name", "workspace-header-bar",
                                "height-request", 48,
+                               "show-close-button", TRUE,
                                "vexpand", FALSE,
                                "visible", TRUE,
                                NULL);
