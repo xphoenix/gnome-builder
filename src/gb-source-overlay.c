@@ -53,22 +53,33 @@ subtract_region (cairo_region_t *region,
                  GtkTextView    *view,
                  GtkTextBuffer  *buffer,
                  GtkTextIter    *begin,
-                 GtkTextIter    *end)
+                 GtkTextIter    *end,
+                 gint            min_x)
 {
    cairo_rectangle_int_t r;
    GdkRectangle rect;
    GdkRectangle rect2;
+   gint diff;
 
    gtk_text_view_get_iter_location(view, begin, &rect);
    gtk_text_view_get_iter_location(view, end, &rect2);
 
-   gtk_text_view_buffer_to_window_coords(view, GTK_TEXT_WINDOW_WIDGET, rect.x, rect.y, &rect.x, &rect.y);
-   gtk_text_view_buffer_to_window_coords(view, GTK_TEXT_WINDOW_WIDGET, rect2.x, rect2.y, &rect2.x, &rect2.y);
+   gtk_text_view_buffer_to_window_coords(view, GTK_TEXT_WINDOW_WIDGET, rect.x,
+                                         rect.y, &rect.x, &rect.y);
+   gtk_text_view_buffer_to_window_coords(view, GTK_TEXT_WINDOW_WIDGET, rect2.x,
+                                         rect2.y, &rect2.x, &rect2.y);
 
    r.x = MIN(rect.x, rect2.x);
    r.y = MIN(rect.y, rect2.y);
    r.width = MAX(rect.x + rect.width, rect2.x) - r.x;
    r.height = MAX(rect.y + rect.height, rect2.y + rect2.height) - r.y;
+
+   if (r.x < min_x) {
+      diff = min_x - r.x;
+      r.x += diff;
+      r.width = ((r.width - diff) >= 0) ? r.width - diff : 0;
+   }
+
    cairo_region_subtract_rectangle(region, &r);
 }
 
@@ -128,8 +139,10 @@ draw_bevel (GbSourceOverlay *overlay,
    gtk_text_view_get_iter_location(view, begin, &rect);
    gtk_text_view_get_iter_location(view, end, &rect2);
 
-   gtk_text_view_buffer_to_window_coords(view, GTK_TEXT_WINDOW_WIDGET, rect.x, rect.y, &rect.x, &rect.y);
-   gtk_text_view_buffer_to_window_coords(view, GTK_TEXT_WINDOW_WIDGET, rect2.x, rect2.y, &rect2.x, &rect2.y);
+   gtk_text_view_buffer_to_window_coords(view, GTK_TEXT_WINDOW_WIDGET, rect.x,
+                                         rect.y, &rect.x, &rect.y);
+   gtk_text_view_buffer_to_window_coords(view, GTK_TEXT_WINDOW_WIDGET, rect2.x,
+                                         rect2.y, &rect2.x, &rect2.y);
 
    r.x = MIN(rect.x, rect2.x);
    r.y = MIN(rect.y, rect2.y);
@@ -153,7 +166,8 @@ get_visible_bounds (GtkTextView   *view,
 
    gtk_text_view_get_visible_rect(view, &rect);
    gtk_text_view_get_iter_at_position(view, begin, NULL, rect.x, rect.y);
-   gtk_text_view_get_iter_at_position(view, end, NULL, rect.x + rect.width, rect.y + rect.height);
+   gtk_text_view_get_iter_at_position(view, end, NULL, rect.x + rect.width,
+                                      rect.y + rect.height);
 }
 
 static void
@@ -187,7 +201,8 @@ draw_bevels (GbSourceOverlay *overlay,
          gtk_text_iter_assign(&end, &iter);
          draw_bevel(overlay, cr, 2, &begin, &end);
       }
-   } while (gtk_text_iter_forward_to_tag_toggle(&iter, tag) && gtk_text_iter_compare(&iter, &end_vis) < 0);
+   } while (gtk_text_iter_forward_to_tag_toggle(&iter, tag) &&
+            gtk_text_iter_compare(&iter, &end_vis) < 0);
 
    cairo_fill(cr);
 
@@ -206,7 +221,8 @@ draw_bevels (GbSourceOverlay *overlay,
          gtk_text_iter_assign(&end, &iter);
          draw_bevel(overlay, cr, 1, &begin, &end);
       }
-   } while (gtk_text_iter_forward_to_tag_toggle(&iter, tag) && gtk_text_iter_compare(&iter, &end_vis) < 0);
+   } while (gtk_text_iter_forward_to_tag_toggle(&iter, tag) &&
+            gtk_text_iter_compare(&iter, &end_vis) < 0);
 
    cairo_fill(cr);
 }
@@ -227,6 +243,7 @@ gb_source_overlay_draw (GtkWidget *widget,
    GtkTextIter begin;
    GtkTextIter end;
    GdkWindow *window;
+   gint min_x;
    gint n_rectangles;
    gint i;
 
@@ -234,6 +251,15 @@ gb_source_overlay_draw (GtkWidget *widget,
    g_assert(cr);
 
    priv = overlay->priv;
+
+   {
+      GdkWindow *win;
+
+      win = gtk_text_view_get_window(GTK_TEXT_VIEW(priv->widget),
+                                     GTK_TEXT_WINDOW_LEFT);
+      gdk_window_get_position(win, &min_x, NULL);
+      min_x += gdk_window_get_width(win) + 1;
+   }
 
    window = gtk_widget_get_window(widget);
    if (!gtk_cairo_should_draw_window(cr, window)) {
@@ -283,7 +309,8 @@ gb_source_overlay_draw (GtkWidget *widget,
       }
 
       gtk_text_iter_assign(&end, &iter);
-      subtract_region(region, GTK_TEXT_VIEW(priv->widget), buffer, &begin, &end);
+      subtract_region(region, GTK_TEXT_VIEW(priv->widget), buffer, &begin,
+                      &end, min_x);
    } while (gtk_text_iter_forward_char(&iter));
 
    cairo_save(cr);
