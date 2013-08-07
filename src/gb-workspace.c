@@ -149,7 +149,7 @@ gb_workspace_add (GtkContainer *container,
 }
 
 static void
-gb_workspace_pane_save_cb (GbWorkspacePane *pane,
+gb_workspace_save_pane_cb (GbWorkspacePane *pane,
                            GAsyncResult    *result,
                            gpointer         user_data)
 {
@@ -195,7 +195,7 @@ gb_workspace_close_pane (GSimpleAction *action,
 }
 
 static void
-gb_workspace_pane_save (GSimpleAction *action,
+gb_workspace_save_pane (GSimpleAction *action,
                         GVariant      *parameter,
                         gpointer       user_data)
 {
@@ -213,14 +213,14 @@ gb_workspace_pane_save (GSimpleAction *action,
       if (gb_workspace_pane_get_can_save(pane)) {
          gb_workspace_pane_save_async(pane,
                                       NULL, /* TODO: Cancellable */
-                                      (GAsyncReadyCallback)gb_workspace_pane_save_cb,
+                                      (GAsyncReadyCallback)gb_workspace_save_pane_cb,
                                       g_object_ref(workspace));
       }
    }
 }
 
 static void
-gb_workspace_pane_search (GSimpleAction *action,
+gb_workspace_search_pane (GSimpleAction *action,
                           GVariant      *parameter,
                           gpointer       user_data)
 {
@@ -260,7 +260,7 @@ gb_workspace_update_actions (GbWorkspace *workspace)
    has_pane = GB_IS_WORKSPACE_PANE(priv->current_pane);
    pane = has_pane ? GB_WORKSPACE_PANE(priv->current_pane) : NULL;
 
-   if ((action = g_action_map_lookup_action(map, "pane-search"))) {
+   if ((action = g_action_map_lookup_action(map, "search-pane"))) {
       g_simple_action_set_enabled(G_SIMPLE_ACTION(action), has_pane);
    }
 
@@ -268,7 +268,7 @@ gb_workspace_update_actions (GbWorkspace *workspace)
       g_simple_action_set_enabled(G_SIMPLE_ACTION(action), has_pane);
    }
 
-   if ((action = g_action_map_lookup_action(map, "pane-save"))) {
+   if ((action = g_action_map_lookup_action(map, "save-pane"))) {
       if (has_pane) {
          is_modified = gb_workspace_pane_get_can_save(pane);
       }
@@ -380,8 +380,8 @@ gb_workspace_init_actions (GbWorkspace *workspace)
 {
    static const GActionEntry entries[] = {
       { "close-pane", gb_workspace_close_pane },
-      { "pane-save", gb_workspace_pane_save },
-      { "pane-search", gb_workspace_pane_search },
+      { "save-pane", gb_workspace_save_pane },
+      { "search-pane", gb_workspace_search_pane },
    };
 
    g_return_if_fail(GB_IS_WORKSPACE(workspace));
@@ -394,9 +394,9 @@ gb_workspace_init_actions (GbWorkspace *workspace)
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
                                    "<Primary>w", "win.close-pane", NULL);
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
-                                   "<Primary>f", "win.pane-search", NULL);
+                                   "<Primary>f", "win.search-pane", NULL);
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
-                                   "<Primary>s", "win.pane-save", NULL);
+                                   "<Primary>s", "win.save-pane", NULL);
 }
 
 static void
@@ -458,14 +458,14 @@ gb_workspace_init (GbWorkspace *workspace)
          "    <section>"
          "      <item>"
          "        <attribute name='label' translatable='yes'>_Save</attribute>"
-         "        <attribute name='action'>win.pane-save</attribute>"
+         "        <attribute name='action'>win.save-pane</attribute>"
          "        <attribute name='accel'>&lt;Primary&gt;s</attribute>"
          "      </item>"
          "    </section>"
          "    <section>"
          "      <item>"
          "        <attribute name='label' translatable='yes'>_Find</attribute>"
-         "        <attribute name='action'>win.pane-search</attribute>"
+         "        <attribute name='action'>win.search-pane</attribute>"
          "        <attribute name='accel'>&lt;Primary&gt;f</attribute>"
          "      </item>"
          "    </section>"
