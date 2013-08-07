@@ -469,7 +469,7 @@ gb_workspace_init (GbWorkspace *workspace)
    gtk_container_add(GTK_CONTAINER(box), priv->build);
 
    image = g_object_new(GTK_TYPE_IMAGE,
-                        "icon-name", "media-playback-start",
+                        "icon-name", "media-playback-start-symbolic",
                         "icon-size", GTK_ICON_SIZE_MENU,
                         "visible", TRUE,
                         NULL);
