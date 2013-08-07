@@ -330,14 +330,16 @@ gb_source_pane_dispose (GObject *object)
    GbSourcePanePrivate *priv = GB_SOURCE_PANE(object)->priv;
    GtkTextBuffer *buffer;
 
-   if ((buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(priv->view)))) {
-      if (priv->insert_text_handler) {
-         g_signal_handler_disconnect(buffer, priv->insert_text_handler);
-         priv->insert_text_handler = 0;
-      }
-      if (priv->delete_range_handler) {
-         g_signal_handler_disconnect(buffer, priv->delete_range_handler);
-         priv->delete_range_handler = 0;
+   if (priv->view) {
+      if ((buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(priv->view)))) {
+         if (priv->insert_text_handler) {
+            g_signal_handler_disconnect(buffer, priv->insert_text_handler);
+            priv->insert_text_handler = 0;
+         }
+         if (priv->delete_range_handler) {
+            g_signal_handler_disconnect(buffer, priv->delete_range_handler);
+            priv->delete_range_handler = 0;
+         }
       }
    }
 
@@ -533,6 +535,7 @@ gb_source_pane_init (GbSourcePane *pane)
                              "buffer", buffer,
                              "visible", TRUE,
                              NULL);
+   g_object_add_weak_pointer(G_OBJECT(priv->view), (gpointer *)&priv->view);
    g_signal_connect(priv->view, "key-press-event",
                     G_CALLBACK(gb_source_pane_view_key_press),
                     pane);
