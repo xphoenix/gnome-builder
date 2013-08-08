@@ -146,8 +146,6 @@ icon_drag_data_get (GtkWidget            *event_box,
 
    priv = group->priv;
 
-   g_print("%s\n", G_STRFUNC);
-
    if ((pane = gb_workspace_pane_group_get_current_pane(group))) {
       if ((uri = gb_workspace_pane_get_uri(pane))) {
          gtk_selection_data_set_text(selection_data, uri, -1);
