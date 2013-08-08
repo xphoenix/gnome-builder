@@ -132,7 +132,7 @@ gb_workspace_layout_switcher_init (GbWorkspaceLayoutSwitcher *switcher)
       b = g_object_new(GTK_TYPE_RADIO_BUTTON,
                        "draw-indicator", FALSE,
                        "group", b,
-                       "label", _("Edit"),
+                       "label", _("Code"),
                        "visible", TRUE,
                        NULL);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
