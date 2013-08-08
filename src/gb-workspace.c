@@ -28,6 +28,7 @@
 #include "gb-workspace-layout-switcher.h"
 #include "gb-workspace-pane.h"
 #include "gb-workspace-pane-group.h"
+#include "gb-zoomable.h"
 
 struct _GbWorkspacePrivate
 {
@@ -242,6 +243,50 @@ gb_workspace_search_pane (GSimpleAction *action,
    }
 }
 
+static void
+gb_workspace_zoom_pane_in (GSimpleAction *action,
+                           GVariant      *parameter,
+                           gpointer       user_data)
+{
+   GbWorkspacePrivate *priv;
+   GbWorkspacePane *pane;
+   GbWorkspace *workspace = user_data;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+   g_return_if_fail(G_IS_ACTION(action));
+
+   priv = workspace->priv;
+
+   if (GB_IS_WORKSPACE_PANE(priv->current_pane)) {
+      pane = GB_WORKSPACE_PANE(priv->current_pane);
+      if (GB_IS_ZOOMABLE(pane)) {
+         gb_zoomable_zoom_in(GB_ZOOMABLE(pane));
+      }
+   }
+}
+
+static void
+gb_workspace_zoom_pane_out (GSimpleAction *action,
+                            GVariant      *parameter,
+                            gpointer       user_data)
+{
+   GbWorkspacePrivate *priv;
+   GbWorkspacePane *pane;
+   GbWorkspace *workspace = user_data;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+   g_return_if_fail(G_IS_ACTION(action));
+
+   priv = workspace->priv;
+
+   if (GB_IS_WORKSPACE_PANE(priv->current_pane)) {
+      pane = GB_WORKSPACE_PANE(priv->current_pane);
+      if (GB_IS_ZOOMABLE(pane)) {
+         gb_zoomable_zoom_out(GB_ZOOMABLE(pane));
+      }
+   }
+}
+
 void
 gb_workspace_update_actions (GbWorkspace *workspace)
 {
@@ -250,6 +295,7 @@ gb_workspace_update_actions (GbWorkspace *workspace)
    GActionMap *map;
    gboolean has_pane;
    gboolean is_modified = FALSE;
+   gboolean is_zoomable;
    GAction *action;
 
    g_return_if_fail(GB_IS_WORKSPACE(workspace));
@@ -259,6 +305,7 @@ gb_workspace_update_actions (GbWorkspace *workspace)
    map = G_ACTION_MAP(workspace);
    has_pane = GB_IS_WORKSPACE_PANE(priv->current_pane);
    pane = has_pane ? GB_WORKSPACE_PANE(priv->current_pane) : NULL;
+   is_zoomable = GB_IS_ZOOMABLE(priv->current_pane);
 
    if ((action = g_action_map_lookup_action(map, "search-pane"))) {
       g_simple_action_set_enabled(G_SIMPLE_ACTION(action), has_pane);
@@ -266,6 +313,14 @@ gb_workspace_update_actions (GbWorkspace *workspace)
 
    if ((action = g_action_map_lookup_action(map, "close-pane"))) {
       g_simple_action_set_enabled(G_SIMPLE_ACTION(action), has_pane);
+   }
+
+   if ((action = g_action_map_lookup_action(map, "zoom-pane-in"))) {
+      g_simple_action_set_enabled(G_SIMPLE_ACTION(action), is_zoomable);
+   }
+
+   if ((action = g_action_map_lookup_action(map, "zoom-pane-out"))) {
+      g_simple_action_set_enabled(G_SIMPLE_ACTION(action), is_zoomable);
    }
 
    if ((action = g_action_map_lookup_action(map, "save-pane"))) {
@@ -382,6 +437,8 @@ gb_workspace_init_actions (GbWorkspace *workspace)
       { "close-pane", gb_workspace_close_pane },
       { "save-pane", gb_workspace_save_pane },
       { "search-pane", gb_workspace_search_pane },
+      { "zoom-pane-in", gb_workspace_zoom_pane_in },
+      { "zoom-pane-out", gb_workspace_zoom_pane_out },
    };
 
    g_return_if_fail(GB_IS_WORKSPACE(workspace));
@@ -397,6 +454,10 @@ gb_workspace_init_actions (GbWorkspace *workspace)
                                    "<Primary>f", "win.search-pane", NULL);
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
                                    "<Primary>s", "win.save-pane", NULL);
+   gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
+                                   "<Primary>plus", "win.zoom-pane-in", NULL);
+   gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
+                                   "<Primary>minus", "win.zoom-pane-out", NULL);
 }
 
 static void
@@ -467,6 +528,18 @@ gb_workspace_init (GbWorkspace *workspace)
          "        <attribute name='label' translatable='yes'>_Find</attribute>"
          "        <attribute name='action'>win.search-pane</attribute>"
          "        <attribute name='accel'>&lt;Primary&gt;f</attribute>"
+         "      </item>"
+         "    </section>"
+         "    <section>"
+         "      <item>"
+         "        <attribute name='label' translatable='yes'>Zoom In</attribute>"
+         "        <attribute name='action'>win.zoom-pane-in</attribute>"
+         "        <attribute name='accel'>&lt;Primary&gt;plus</attribute>"
+         "      </item>"
+         "      <item>"
+         "        <attribute name='label' translatable='yes'>Zoom Out</attribute>"
+         "        <attribute name='action'>win.zoom-pane-out</attribute>"
+         "        <attribute name='accel'>&lt;Primary&gt;minus</attribute>"
          "      </item>"
          "    </section>"
          "    <section>"
