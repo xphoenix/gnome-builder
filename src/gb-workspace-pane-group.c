@@ -35,6 +35,12 @@ enum
    LAST_PROP
 };
 
+enum
+{
+   TARGET_STRING,
+   TARGET_URL,
+};
+
 #if 0
 static GParamSpec *gParamSpecs[LAST_PROP];
 #endif
@@ -75,6 +81,7 @@ gb_workspace_pane_group_notify_can_save (GbWorkspacePane      *pane,
                                          GbWorkspacePaneGroup *group)
 {
    GbWorkspace *workspace;
+   GtkWidget *tab;
 
    g_assert(GB_IS_WORKSPACE_PANE(pane));
    g_assert(GB_IS_WORKSPACE_PANE_GROUP(group));
@@ -82,6 +89,24 @@ gb_workspace_pane_group_notify_can_save (GbWorkspacePane      *pane,
    if ((workspace = GB_WORKSPACE(gtk_widget_get_toplevel(GTK_WIDGET(pane))))) {
       gb_workspace_update_actions(workspace);
    }
+}
+
+static GbWorkspacePane *
+gb_workspace_pane_group_get_current_pane (GbWorkspacePaneGroup *group)
+{
+   GbWorkspacePaneGroupPrivate *priv;
+   GbWorkspacePane *pane = NULL;
+   gint page;
+
+   g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
+
+   priv = group->priv;
+
+   if (-1 != (page = gtk_notebook_get_current_page(GTK_NOTEBOOK(priv->notebook)))) {
+      pane = GB_WORKSPACE_PANE(gtk_notebook_get_nth_page(GTK_NOTEBOOK(priv->notebook), page));
+   }
+
+   return pane;
 }
 
 static gboolean
@@ -104,12 +129,49 @@ can_save_transform_to (GBinding     *binding,
 }
 
 static void
+icon_drag_data_get (GtkWidget            *event_box,
+                    GdkDragContext       *context,
+                    GtkSelectionData     *selection_data,
+                    guint                 info,
+                    guint                 time_,
+                    GbWorkspacePaneGroup *group)
+{
+   GbWorkspacePaneGroupPrivate *priv;
+   GbWorkspacePane *pane;
+   const gchar *uri;
+   gchar **uris;
+
+   g_return_if_fail(GTK_IS_EVENT_BOX(event_box));
+   g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
+
+   priv = group->priv;
+
+   g_print("%s\n", G_STRFUNC);
+
+   if ((pane = gb_workspace_pane_group_get_current_pane(group))) {
+      if ((uri = gb_workspace_pane_get_uri(pane))) {
+         gtk_selection_data_set_text(selection_data, uri, -1);
+         uris = g_new0(gchar*, 2);
+         uris[0] = g_strdup(uri);
+         uris[1] = NULL;
+         gtk_selection_data_set_uris(selection_data, uris);
+         g_strfreev(uris);
+      }
+   }
+}
+
+static void
 gb_workspace_pane_group_add (GtkContainer *container,
                              GtkWidget    *child)
 {
+   static const GtkTargetEntry drag_targets[] = {
+      { (char *)"text/plain", 0, TARGET_STRING },
+      { (char *)"text/uri-list", 0, TARGET_URL },
+   };
    GbWorkspacePaneGroupPrivate *priv;
    GbWorkspacePaneGroup *group = (GbWorkspacePaneGroup *)container;
    GtkTreeIter iter;
+   GtkWidget *event;
    GtkWidget *hbox;
    GtkWidget *close_button;
    GtkWidget *icon;
@@ -127,6 +189,7 @@ gb_workspace_pane_group_add (GtkContainer *container,
                        group);
 
       hbox = g_object_new(GTK_TYPE_BOX,
+                          "hexpand", TRUE,
                           "orientation", GTK_ORIENTATION_HORIZONTAL,
                           "spacing", 0,
                           "visible", TRUE,
@@ -145,6 +208,23 @@ gb_workspace_pane_group_add (GtkContainer *container,
                                         "padding", 3,
                                         NULL);
 
+      event = g_object_new(GTK_TYPE_EVENT_BOX,
+                           "above-child", FALSE,
+                           "visible", TRUE,
+                           "visible-window", FALSE,
+                           NULL);
+      gtk_drag_source_set(event,
+                          GDK_BUTTON1_MASK,
+                          drag_targets,
+                          G_N_ELEMENTS(drag_targets),
+                          (GDK_ACTION_COPY | GDK_ACTION_LINK));
+      g_signal_connect(event, "drag-data-get",
+                       G_CALLBACK(icon_drag_data_get),
+                       group);
+      gtk_container_add_with_properties(GTK_CONTAINER(hbox), event,
+                                        "padding", 3,
+                                        NULL);
+
       icon = g_object_new(GTK_TYPE_IMAGE,
                           "hexpand", FALSE,
                           "icon-name", "text-x-generic",
@@ -153,9 +233,7 @@ gb_workspace_pane_group_add (GtkContainer *container,
                           NULL);
       g_object_bind_property(child, "icon-name", icon, "icon-name",
                              G_BINDING_SYNC_CREATE);
-      gtk_container_add_with_properties(GTK_CONTAINER(hbox), icon,
-                                        "padding", 3,
-                                        NULL);
+      gtk_container_add(GTK_CONTAINER(event), icon);
 
       label = g_object_new(GTK_TYPE_LABEL,
                            "ellipsize", PANGO_ELLIPSIZE_END,
