@@ -28,6 +28,7 @@ struct _GbWorkspacePanePrivate
    gboolean  busy;
    gchar    *icon_name;
    gchar    *title;
+   gchar    *uri;
 };
 
 enum
@@ -37,6 +38,7 @@ enum
    PROP_CAN_SAVE,
    PROP_ICON_NAME,
    PROP_TITLE,
+   PROP_URI,
    LAST_PROP
 };
 
@@ -58,6 +60,24 @@ gb_workspace_pane_set_icon_name (GbWorkspacePane *pane,
    g_free(pane->priv->icon_name);
    pane->priv->icon_name = g_strdup(icon_name);
    g_object_notify_by_pspec(G_OBJECT(pane), gParamSpecs[PROP_ICON_NAME]);
+}
+
+const gchar *
+gb_workspace_pane_get_uri (GbWorkspacePane *pane)
+{
+   g_return_val_if_fail(GB_IS_WORKSPACE_PANE(pane), NULL);
+   return pane->priv->uri;
+}
+
+void
+gb_workspace_pane_set_uri (GbWorkspacePane *pane,
+                           const gchar     *uri)
+{
+   g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
+
+   g_free(pane->priv->uri);
+   pane->priv->uri = g_strdup(uri);
+   g_object_notify_by_pspec(G_OBJECT(pane), gParamSpecs[PROP_URI]);
 }
 
 gboolean
@@ -166,7 +186,9 @@ gb_workspace_pane_finalize (GObject *object)
 {
    GbWorkspacePanePrivate *priv = GB_WORKSPACE_PANE(object)->priv;
 
+   g_clear_pointer(&priv->icon_name, g_free);
    g_clear_pointer(&priv->title, g_free);
+   g_clear_pointer(&priv->uri, g_free);
 
    G_OBJECT_CLASS(gb_workspace_pane_parent_class)->finalize(object);
 }
@@ -191,6 +213,9 @@ gb_workspace_pane_get_property (GObject    *object,
       break;
    case PROP_TITLE:
       g_value_set_string(value, gb_workspace_pane_get_title(pane));
+      break;
+   case PROP_URI:
+      g_value_set_string(value, gb_workspace_pane_get_uri(pane));
       break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -217,6 +242,9 @@ gb_workspace_pane_set_property (GObject      *object,
       break;
    case PROP_TITLE:
       gb_workspace_pane_set_title(pane, g_value_get_string(value));
+      break;
+   case PROP_URI:
+      gb_workspace_pane_set_uri(pane, g_value_get_string(value));
       break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -269,6 +297,15 @@ gb_workspace_pane_class_init (GbWorkspacePaneClass *klass)
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_TITLE,
                                    gParamSpecs[PROP_TITLE]);
+
+   gParamSpecs[PROP_URI] =
+      g_param_spec_string("uri",
+                          _("Uri"),
+                          _("The uri of the document."),
+                          NULL,
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_URI,
+                                   gParamSpecs[PROP_URI]);
 }
 
 static void
