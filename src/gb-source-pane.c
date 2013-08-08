@@ -31,15 +31,19 @@
 #include "gb-source-overlay.h"
 #include "gb-source-pane.h"
 #include "gb-source-view.h"
+#include "gb-zoomable.h"
 
 static void gb_search_provider_init (GbSearchProviderIface *iface);
+static void gb_zoomable_init        (GbZoomableInterface *iface);
 
 G_DEFINE_TYPE_EXTENDED(GbSourcePane,
                        gb_source_pane,
                        GB_TYPE_WORKSPACE_PANE,
                        0,
                        G_IMPLEMENT_INTERFACE(GB_TYPE_SEARCH_PROVIDER,
-                                             gb_search_provider_init))
+                                             gb_search_provider_init)
+                       G_IMPLEMENT_INTERFACE(GB_TYPE_ZOOMABLE,
+                                             gb_zoomable_init))
 
 struct _GbSourcePanePrivate
 {
@@ -395,6 +399,44 @@ gb_source_pane_search_entry_key_press (GtkSearchEntry *search_entry,
 }
 
 static void
+gb_source_pane_zoom_by (GbSourcePane *pane,
+                        gdouble       fraction)
+{
+   PangoFontDescription *font = NULL;
+   GbSourcePanePrivate *priv;
+   GtkStyleContext *style_context;
+   gint font_size;
+
+   g_return_if_fail(GB_IS_SOURCE_PANE(pane));
+
+   priv = pane->priv;
+
+   style_context = gtk_widget_get_style_context(priv->view);
+   gtk_style_context_get(style_context, GTK_STATE_FLAG_NORMAL,
+                         "font", &font,
+                         NULL);
+
+   font_size = pango_font_description_get_size(font);
+   font_size *= fraction;
+   pango_font_description_set_size(font, font_size);
+
+   gtk_widget_override_font(priv->view, font);
+   pango_font_description_free(font);
+}
+
+static void
+gb_source_pane_zoom_in (GbZoomable *zoomable)
+{
+   gb_source_pane_zoom_by(GB_SOURCE_PANE(zoomable), PANGO_SCALE_LARGE);
+}
+
+static void
+gb_source_pane_zoom_out (GbZoomable *zoomable)
+{
+   gb_source_pane_zoom_by(GB_SOURCE_PANE(zoomable), PANGO_SCALE_SMALL);
+}
+
+static void
 gb_source_pane_finalize (GObject *object)
 {
    GbSourcePanePrivate *priv = GB_SOURCE_PANE(object)->priv;
@@ -609,4 +651,11 @@ static void
 gb_search_provider_init (GbSearchProviderIface *iface)
 {
    iface->focus_search = gb_source_pane_focus_search;
+}
+
+static void
+gb_zoomable_init (GbZoomableInterface *iface)
+{
+   iface->zoom_in = gb_source_pane_zoom_in;
+   iface->zoom_out = gb_source_pane_zoom_out;
 }
