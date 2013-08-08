@@ -64,6 +64,7 @@ INST_H_FILES += $(top_srcdir)/src/gb-workspace-layout-splash.h
 INST_H_FILES += $(top_srcdir)/src/gb-workspace-layout-switcher.h
 INST_H_FILES += $(top_srcdir)/src/gb-workspace-pane-group.h
 INST_H_FILES += $(top_srcdir)/src/gb-workspace-pane.h
+INST_H_FILES += $(top_srcdir)/src/gb-zoomable.h
 
 NOINST_H_FILES =
 NOINST_H_FILES += $(top_srcdir)/src/nautilus/nautilus-floating-bar.h
@@ -127,6 +128,7 @@ GIR_C_FILES += $(top_srcdir)/src/gb-workspace-layout-splash.c
 GIR_C_FILES += $(top_srcdir)/src/gb-workspace-layout-switcher.c
 GIR_C_FILES += $(top_srcdir)/src/gb-workspace-pane.c
 GIR_C_FILES += $(top_srcdir)/src/gb-workspace-pane-group.c
+GIR_C_FILES += $(top_srcdir)/src/gb-zoomable.c
 
 NOGIR_C_FILES =
 NOGIR_C_FILES += $(top_srcdir)/src/main.c
