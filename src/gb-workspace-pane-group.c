@@ -84,6 +84,25 @@ gb_workspace_pane_group_notify_can_save (GbWorkspacePane      *pane,
    }
 }
 
+static gboolean
+can_save_transform_to (GBinding     *binding,
+                       const GValue *src_value,
+                       GValue       *dst_value,
+                       gpointer      user_data)
+{
+   PangoAttrList *attrs;
+   PangoAttribute *attr;
+
+   if (g_value_get_boolean(src_value)) {
+      attrs = pango_attr_list_new();
+      attr = pango_attr_style_new(PANGO_STYLE_ITALIC);
+      pango_attr_list_insert(attrs, attr);
+      g_value_take_boxed(dst_value, attrs);
+   } else {
+      g_value_set_boxed(dst_value, NULL);
+   }
+}
+
 static void
 gb_workspace_pane_group_add (GtkContainer *container,
                              GtkWidget    *child)
@@ -150,6 +169,12 @@ gb_workspace_pane_group_add (GtkContainer *container,
                            NULL);
       g_object_bind_property(child, "title", label, "label",
                              G_BINDING_SYNC_CREATE);
+      g_object_bind_property_full(child, "can-save", label, "attributes",
+                                  G_BINDING_SYNC_CREATE,
+                                  can_save_transform_to,
+                                  NULL,
+                                  child,
+                                  NULL);
       gtk_container_add(GTK_CONTAINER(hbox), label);
 
       close_button = g_object_new(GTK_TYPE_BUTTON,
