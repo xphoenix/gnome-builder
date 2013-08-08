@@ -179,6 +179,7 @@ gb_source_pane_load_async (GbSourcePane        *pane,
    GError *error = NULL;
    gchar *contents;
    gchar *path;
+   gchar *uri;
    gsize length;
 
    g_return_if_fail(GB_IS_SOURCE_PANE(pane));
@@ -196,6 +197,11 @@ gb_source_pane_load_async (GbSourcePane        *pane,
    if (!(path = g_file_get_path(file))) {
       g_warning("Only local files are currently supported.");
       return;
+   }
+
+   if ((uri = g_file_get_uri(file))) {
+      gb_workspace_pane_set_uri(GB_WORKSPACE_PANE(pane), uri);
+      g_free(uri);
    }
 
    if (!g_file_get_contents(path, &contents, &length, &error)) {
