@@ -25,6 +25,7 @@
 #include <gtksourceview/gtksourcestylescheme.h>
 #include <nautilus/nautilus-floating-bar.h>
 
+#include "gb-animation.h"
 #include "gb-search-provider.h"
 #include "gb-source-gutter-renderer-compiler.h"
 #include "gb-source-gutter-renderer-diff.h"
@@ -399,6 +400,114 @@ gb_source_pane_search_entry_key_press (GtkSearchEntry *search_entry,
 }
 
 static void
+gb_source_pane_save_async (GbWorkspacePane     *pane,
+                           GCancellable        *cancellable,
+                           GAsyncReadyCallback  callback,
+                           gpointer             user_data)
+{
+   GbSourcePanePrivate *priv;
+   GOutputStream *output_stream;
+   GtkTextBuffer *buffer;
+   GtkTextIter begin;
+   GtkTextIter end;
+   GtkDialog *dialog;
+   GError *error = NULL;
+   gsize written;
+   GFile *file;
+   gchar *uri;
+   gchar *text = NULL;
+   gsize length = 0;
+
+   g_return_if_fail(GB_IS_SOURCE_PANE(pane));
+   g_return_if_fail(!cancellable || G_IS_CANCELLABLE(cancellable));
+   g_return_if_fail(callback);
+
+   /*
+    * TODO: Make this all async.
+    */
+
+   priv = GB_SOURCE_PANE(pane)->priv;
+
+   gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(priv->progress), 0.0);
+   gtk_widget_show(priv->progress);
+
+   gb_workspace_pane_set_busy(pane, TRUE);
+
+   /*
+    * If we do not yet have a filename, we need to prompt the user for the
+    * target filename.
+    */
+   if (!priv->file) {
+      dialog = g_object_new(GTK_TYPE_FILE_CHOOSER_DIALOG,
+                            "action", GTK_FILE_CHOOSER_ACTION_SAVE,
+                            "title", _("Save"),
+                            NULL);
+      gtk_dialog_add_buttons(dialog,
+                             GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                             GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+                             NULL);
+      if (gtk_dialog_run(dialog) != GTK_RESPONSE_ACCEPT) {
+         gtk_widget_destroy(GTK_WIDGET(dialog));
+         return;
+      }
+      gtk_widget_destroy(GTK_WIDGET(dialog));
+      uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));
+      file = g_file_new_for_uri(uri);
+      g_free(uri);
+   } else {
+      file = g_object_ref(priv->file);
+   }
+
+   output_stream = G_OUTPUT_STREAM(g_file_replace(file, NULL, TRUE,
+                                                  G_FILE_CREATE_NONE,
+                                                  NULL, &error));
+   g_object_unref(file);
+
+   if (!output_stream) {
+      g_printerr("Failed to open file: %s\n", error->message);
+      g_error_free(error);
+      return;
+   }
+
+   buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(priv->view));
+   gtk_text_buffer_get_bounds(buffer, &begin, &end);
+   text = gtk_text_buffer_get_text(buffer, &begin, &end, FALSE);
+   length = strlen(text);
+
+   if (!g_output_stream_write_all(output_stream, text, length, &written,
+                                  NULL, &error)) {
+      g_printerr("Failed to write to file: %s\n", error->message);
+      g_object_unref(output_stream);
+      g_error_free(error);
+      g_free(text);
+      return;
+   }
+
+   g_free(text);
+   g_object_unref(output_stream);
+
+   gtk_text_buffer_set_modified(buffer, FALSE);
+
+   gb_object_animate_full(priv->progress,
+                          GB_ANIMATION_EASE_IN_OUT_QUAD,
+                          2000,
+                          60,
+                          (GDestroyNotify)gtk_widget_hide,
+                          priv->progress,
+                          "fraction", 1.0,
+                          NULL);
+
+   gb_workspace_pane_set_busy(pane, FALSE);
+}
+
+static gboolean
+gb_source_pane_save_finish (GbWorkspacePane  *pane,
+                            GAsyncResult     *result,
+                            GError          **error)
+{
+}
+
+static void
 gb_source_pane_zoom_by (GbSourcePane *pane,
                         gdouble       fraction)
 {
@@ -483,8 +592,9 @@ gb_source_pane_set_property (GObject      *object,
 static void
 gb_source_pane_class_init (GbSourcePaneClass *klass)
 {
-   GObjectClass *object_class;
+   GbWorkspacePaneClass *workspace_pane_class;
    GtkWidgetClass *widget_class;
+   GObjectClass *object_class;
 
    object_class = G_OBJECT_CLASS(klass);
    object_class->dispose = gb_source_pane_dispose;
@@ -495,6 +605,10 @@ gb_source_pane_class_init (GbSourcePaneClass *klass)
 
    widget_class = GTK_WIDGET_CLASS(klass);
    widget_class->grab_focus = gb_source_pane_grab_focus;
+
+   workspace_pane_class = GB_WORKSPACE_PANE_CLASS(klass);
+   workspace_pane_class->save_async = gb_source_pane_save_async;
+   workspace_pane_class->save_finish = gb_source_pane_save_finish;
 
    gParamSpecs[PROP_FILE] =
       g_param_spec_object("file",
