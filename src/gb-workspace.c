@@ -21,6 +21,7 @@
 #include "gb-action.h"
 #include "gb-application.h"
 #include "gb-search-provider.h"
+#include "gb-source-pane.h"
 #include "gb-workspace.h"
 #include "gb-workspace-layout.h"
 #include "gb-workspace-layout-edit.h"
@@ -287,6 +288,24 @@ gb_workspace_zoom_pane_out (GSimpleAction *action,
    }
 }
 
+static void
+gb_workspace_new_file (GSimpleAction *action,
+                       GVariant      *parameter,
+                       gpointer       user_data)
+{
+   GbWorkspacePane *pane;
+   GbWorkspace *workspace = user_data;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+   g_return_if_fail(G_IS_ACTION(action));
+
+   pane = g_object_new(GB_TYPE_SOURCE_PANE,
+                       "icon-name", "text-x-generic",
+                       "visible", TRUE,
+                       NULL);
+   gtk_container_add(GTK_CONTAINER(workspace), GTK_WIDGET(pane));
+}
+
 void
 gb_workspace_update_actions (GbWorkspace *workspace)
 {
@@ -435,6 +454,7 @@ gb_workspace_init_actions (GbWorkspace *workspace)
 {
    static const GActionEntry entries[] = {
       { "close-pane", gb_workspace_close_pane },
+      { "new-file", gb_workspace_new_file },
       { "save-pane", gb_workspace_save_pane },
       { "search-pane", gb_workspace_search_pane },
       { "zoom-pane-in", gb_workspace_zoom_pane_in },
