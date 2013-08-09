@@ -411,6 +411,7 @@ gb_source_pane_save_async (GbWorkspacePane     *pane,
    GtkTextIter begin;
    GtkTextIter end;
    GtkDialog *dialog;
+   GtkWidget *toplevel;
    GError *error = NULL;
    gsize written;
    GFile *file;
@@ -438,8 +439,10 @@ gb_source_pane_save_async (GbWorkspacePane     *pane,
     * target filename.
     */
    if (!priv->file) {
+      toplevel = gtk_widget_get_toplevel(GTK_WIDGET(pane));
       dialog = g_object_new(GTK_TYPE_FILE_CHOOSER_DIALOG,
                             "action", GTK_FILE_CHOOSER_ACTION_SAVE,
+                            "transient-for", toplevel,
                             "title", _("Save"),
                             NULL);
       gtk_dialog_add_buttons(dialog,
