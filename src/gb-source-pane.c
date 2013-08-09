@@ -455,6 +455,7 @@ gb_source_pane_save_async (GbWorkspacePane     *pane,
       }
       uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));
       file = g_file_new_for_uri(uri);
+      gb_source_pane_set_file(pane, file);
       g_free(uri);
       gtk_widget_destroy(GTK_WIDGET(dialog));
    } else {
