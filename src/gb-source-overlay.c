@@ -180,16 +180,12 @@ draw_bevels (GbSourceOverlay *overlay,
    GtkTextIter end;
    GtkTextIter end_vis;
    GtkTextIter iter;
-   GdkRGBA rgba;
+   GdkRGBA *rgba;
 
    get_visible_bounds(GTK_TEXT_VIEW(overlay->priv->widget), &iter, &end_vis);
 
-   /*
-    * TODO: Make the highlight colors configurable.
-    */
-
-   gdk_rgba_parse(&rgba, "#edd400");
-   gdk_cairo_set_source_rgba(cr, &rgba);
+   g_object_get(tag, "background-rgba", &rgba, NULL);
+   gdk_cairo_set_source_rgba(cr, rgba);
 
    do {
       if (gtk_text_iter_forward_to_tag_toggle(&iter, tag)) {
@@ -208,8 +204,12 @@ draw_bevels (GbSourceOverlay *overlay,
 
    get_visible_bounds(GTK_TEXT_VIEW(overlay->priv->widget), &iter, &end_vis);
 
-   gdk_rgba_parse(&rgba, "#fce94f");
-   gdk_cairo_set_source_rgba(cr, &rgba);
+   /*
+    * TODO: Add shade function to darken outer rectangle.
+    */
+
+   gdk_rgba_parse(rgba, "#fce94f");
+   gdk_cairo_set_source_rgba(cr, rgba);
 
    do {
       if (gtk_text_iter_forward_to_tag_toggle(&iter, tag)) {
@@ -225,6 +225,8 @@ draw_bevels (GbSourceOverlay *overlay,
             gtk_text_iter_compare(&iter, &end_vis) < 0);
 
    cairo_fill(cr);
+
+   gdk_rgba_free(rgba);
 }
 
 static gboolean
