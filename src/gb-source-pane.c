@@ -453,10 +453,10 @@ gb_source_pane_save_async (GbWorkspacePane     *pane,
          gtk_widget_destroy(GTK_WIDGET(dialog));
          return;
       }
-      gtk_widget_destroy(GTK_WIDGET(dialog));
       uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));
       file = g_file_new_for_uri(uri);
       g_free(uri);
+      gtk_widget_destroy(GTK_WIDGET(dialog));
    } else {
       file = g_object_ref(priv->file);
    }
