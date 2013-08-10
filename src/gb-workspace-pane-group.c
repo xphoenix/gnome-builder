@@ -109,16 +109,6 @@ gb_workspace_pane_group_get_current_pane (GbWorkspacePaneGroup *group)
    return pane;
 }
 
-static gboolean
-transform_boolean_invert (GBinding     *binding,
-                          const GValue *src_value,
-                          GValue       *dst_value,
-                          gpointer      user_data)
-{
-   g_value_set_boolean(dst_value, !g_value_get_boolean(src_value));
-   return TRUE;
-}
-
 static void
 icon_drag_data_get (GtkWidget            *event_box,
                     GdkDragContext       *context,
@@ -207,12 +197,8 @@ gb_workspace_pane_group_add (GtkContainer *container,
                           drag_targets,
                           G_N_ELEMENTS(drag_targets),
                           (GDK_ACTION_COPY | GDK_ACTION_LINK));
-      g_object_bind_property_full(child, "busy", event, "visible",
-                                  G_BINDING_SYNC_CREATE,
-                                  transform_boolean_invert,
-                                  NULL,
-                                  NULL,
-                                  NULL);
+      g_object_bind_property(child, "busy", event, "visible",
+                             G_BINDING_SYNC_CREATE | G_BINDING_INVERT_BOOLEAN);
       g_signal_connect(event, "drag-data-get",
                        G_CALLBACK(icon_drag_data_get),
                        group);
