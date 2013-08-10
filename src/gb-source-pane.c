@@ -451,6 +451,8 @@ gb_source_pane_save_async (GbWorkspacePane     *pane,
                              NULL);
       if (gtk_dialog_run(dialog) != GTK_RESPONSE_ACCEPT) {
          gtk_widget_destroy(GTK_WIDGET(dialog));
+         gb_workspace_pane_set_busy(pane, FALSE);
+         gtk_widget_hide(priv->progress);
          return;
       }
       uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));
