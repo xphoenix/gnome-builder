@@ -446,8 +446,8 @@ gb_source_pane_save_async (GbWorkspacePane     *pane,
                             "title", _("Save File..."),
                             NULL);
       gtk_dialog_add_buttons(dialog,
-                             "cancel", GTK_RESPONSE_CANCEL,
-                             "save", GTK_RESPONSE_ACCEPT,
+                             _("Cancel"), GTK_RESPONSE_CANCEL,
+                             _("Save"), GTK_RESPONSE_ACCEPT,
                              NULL);
       if (gtk_dialog_run(dialog) != GTK_RESPONSE_ACCEPT) {
          gtk_widget_destroy(GTK_WIDGET(dialog));
