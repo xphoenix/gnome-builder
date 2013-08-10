@@ -443,11 +443,11 @@ gb_source_pane_save_async (GbWorkspacePane     *pane,
       dialog = g_object_new(GTK_TYPE_FILE_CHOOSER_DIALOG,
                             "action", GTK_FILE_CHOOSER_ACTION_SAVE,
                             "transient-for", toplevel,
-                            "title", _("Save"),
+                            "title", _("Save File..."),
                             NULL);
       gtk_dialog_add_buttons(dialog,
-                             GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                             GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+                             "cancel", GTK_RESPONSE_CANCEL,
+                             "save", GTK_RESPONSE_ACCEPT,
                              NULL);
       if (gtk_dialog_run(dialog) != GTK_RESPONSE_ACCEPT) {
          gtk_widget_destroy(GTK_WIDGET(dialog));
@@ -457,7 +457,7 @@ gb_source_pane_save_async (GbWorkspacePane     *pane,
       }
       uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));
       file = g_file_new_for_uri(uri);
-      gb_source_pane_set_file(pane, file);
+      gb_source_pane_set_file(GB_SOURCE_PANE(pane), file);
       g_free(uri);
       gtk_widget_destroy(GTK_WIDGET(dialog));
    } else {
