@@ -19,6 +19,7 @@
 #include <glib/gi18n.h>
 
 #include "gb-workspace-pane.h"
+#include "gb-workspace-pane-group.h"
 
 G_DEFINE_TYPE(GbWorkspacePane, gb_workspace_pane, GTK_TYPE_GRID)
 
@@ -49,6 +50,23 @@ gb_workspace_pane_get_icon_name (GbWorkspacePane *pane)
 {
    g_return_val_if_fail(GB_IS_WORKSPACE_PANE(pane), NULL);
    return pane->priv->icon_name;
+}
+
+void
+gb_workspace_pane_close (GbWorkspacePane *pane)
+{
+   GtkWidget *parent;
+
+   g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
+
+   for (parent = gtk_widget_get_parent(GTK_WIDGET(pane));
+        parent;
+        parent = gtk_widget_get_parent(parent)) {
+      if (GB_IS_WORKSPACE_PANE_GROUP(parent)) {
+         gb_workspace_pane_group_close(GB_WORKSPACE_PANE_GROUP(parent), pane);
+         break;
+      }
+   }
 }
 
 void

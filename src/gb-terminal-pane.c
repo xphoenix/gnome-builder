@@ -94,17 +94,10 @@ gb_terminal_pane_class_init (GbTerminalPaneClass *klass)
 }
 
 static void
-size_allocate (GtkWidget     *widget,
-               GtkAllocation *alloc)
+child_exited (VteTerminal    *vte,
+              GbTerminalPane *pane)
 {
-#if 0
-   if (alloc->y < 0) {
-      alloc->y = ABS(0);
-   }
-
-   g_print("%u %u %u %u\n",
-           alloc->x, alloc->y, alloc->width, alloc->height);
-#endif
+   gb_workspace_pane_close(GB_WORKSPACE_PANE(pane));
 }
 
 static gboolean
@@ -144,8 +137,8 @@ gb_terminal_pane_init (GbTerminalPane *pane)
                                   "vexpand", TRUE,
                                   "visible", TRUE,
                                   NULL);
-   g_signal_connect(pane->priv->vte, "size-allocate",
-                    G_CALLBACK(size_allocate), NULL);
+   g_signal_connect(pane->priv->vte, "child-exited",
+                    G_CALLBACK(child_exited), pane);
    g_object_bind_property(pane->priv->vte, "window-title",
                           pane, "title",
                           G_BINDING_SYNC_CREATE);

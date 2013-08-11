@@ -56,6 +56,7 @@ struct _GbWorkspacePaneClass
                             GError              **error);
 };
 
+void         gb_workspace_pane_close         (GbWorkspacePane      *pane);
 gboolean     gb_workspace_pane_get_busy      (GbWorkspacePane      *pane);
 gboolean     gb_workspace_pane_get_can_save  (GbWorkspacePane      *pane);
 const gchar *gb_workspace_pane_get_icon_name (GbWorkspacePane      *pane);
