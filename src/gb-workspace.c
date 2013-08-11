@@ -374,6 +374,40 @@ gb_workspace_set_focus (GtkWindow *window,
 }
 
 static void
+gb_workspace_select_pane (GSimpleAction *action,
+                          GVariant      *parameter,
+                          gpointer       user_data)
+{
+   GbWorkspacePrivate *priv;
+   GbWorkspace *workspace = user_data;
+   GtkWidget *widget;
+   gint idx = -1;
+
+   g_return_if_fail(G_IS_SIMPLE_ACTION(action));
+   g_return_if_fail(parameter);
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+
+   priv = workspace->priv;
+
+   g_variant_get(parameter, "i", &idx);
+   if (idx == -1) {
+      return;
+   }
+
+   widget = priv->current_pane;
+
+   for (widget = priv->current_pane;
+        widget;
+        widget = gtk_widget_get_parent(widget)) {
+      if (GB_IS_WORKSPACE_PANE_GROUP(widget)) {
+         gb_workspace_pane_group_set_page(
+               GB_WORKSPACE_PANE_GROUP(widget),
+               idx);
+      }
+   }
+}
+
+static void
 gb_workspace_finalize (GObject *object)
 {
    GbWorkspacePrivate *priv;
@@ -457,6 +491,7 @@ gb_workspace_init_actions (GbWorkspace *workspace)
       { "new-file", gb_workspace_new_file },
       { "save-pane", gb_workspace_save_pane },
       { "search-pane", gb_workspace_search_pane },
+      { "select-pane", gb_workspace_select_pane, "i" },
       { "zoom-pane-in", gb_workspace_zoom_pane_in },
       { "zoom-pane-out", gb_workspace_zoom_pane_out },
    };
@@ -478,6 +513,26 @@ gb_workspace_init_actions (GbWorkspace *workspace)
                                    "<Primary>plus", "win.zoom-pane-in", NULL);
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
                                    "<Primary>minus", "win.zoom-pane-out", NULL);
+
+#define ADD_PANE_ACCEL(n, k) G_STMT_START { \
+   GVariant *v; \
+   v = g_variant_new("i", n); \
+   gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT), \
+                                   "<Alt>"#k, "win.select-pane", v); \
+   g_variant_unref(v); \
+} G_STMT_END
+
+   ADD_PANE_ACCEL(0, 1);
+   ADD_PANE_ACCEL(1, 2);
+   ADD_PANE_ACCEL(2, 3);
+   ADD_PANE_ACCEL(3, 4);
+   ADD_PANE_ACCEL(4, 5);
+   ADD_PANE_ACCEL(5, 6);
+   ADD_PANE_ACCEL(6, 7);
+   ADD_PANE_ACCEL(7, 8);
+   ADD_PANE_ACCEL(8, 9);
+
+#undef ADD_PANE_ACCEL
 }
 
 static void

@@ -109,6 +109,24 @@ gb_workspace_pane_group_get_current_pane (GbWorkspacePaneGroup *group)
    return pane;
 }
 
+void
+gb_workspace_pane_group_set_page (GbWorkspacePaneGroup *group,
+                                  gint                  page_num)
+{
+   GbWorkspacePaneGroupPrivate *priv;
+   GtkNotebook *notebook;
+
+   g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
+
+   priv = group->priv;
+
+   notebook = GTK_NOTEBOOK(priv->notebook);
+
+   if ((page_num >= 0) && (page_num < gtk_notebook_get_n_pages(notebook))) {
+      gtk_notebook_set_current_page(notebook, page_num);
+   }
+}
+
 static void
 icon_drag_data_get (GtkWidget            *event_box,
                     GdkDragContext       *context,
@@ -156,6 +174,7 @@ gb_workspace_pane_group_add (GtkContainer *container,
    GtkWidget *icon;
    GtkWidget *label;
    GtkWidget *spinner;
+   gint page;
 
    g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
    g_return_if_fail(GTK_IS_WIDGET(child));
