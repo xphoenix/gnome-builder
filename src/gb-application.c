@@ -141,7 +141,8 @@ on_open_activated (GSimpleAction *action,
                              "visible", TRUE,
                              NULL);
          gtk_container_add(GTK_CONTAINER(parent), pane);
-         gb_source_pane_load_async(GB_SOURCE_PANE(pane), file, NULL, NULL, NULL);
+         gb_source_pane_load_async(GB_SOURCE_PANE(pane), file,
+                                   NULL, NULL, NULL);
          g_object_unref(file);
          gtk_widget_grab_focus(pane);
       }
@@ -165,34 +166,22 @@ gb_application_activate (GApplication *application)
 
    priv = GB_APPLICATION(application)->priv;
 
-   {
-      GtkCssProvider *provider;
-      GError *error = NULL;
-      GBytes *bytes;
-
-      bytes = g_resource_lookup_data(gb_application_get_resource(), "/org/gnome/Builder/data/css/overrides.css", 0, NULL);
-      if (bytes) {
-         provider = gtk_css_provider_new();
-         if (!gtk_css_provider_load_from_data(provider, g_bytes_get_data(bytes, NULL), g_bytes_get_size(bytes), &error)) {
-            g_printerr("%s\n", error->message);
-            g_clear_error(&error);
-         } else {
-            gtk_style_context_add_provider_for_screen(gdk_screen_get_default(), GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-         }
-         g_object_unref(provider);
-         g_bytes_unref(bytes);
-      }
-   }
-
-   g_action_map_add_action_entries(G_ACTION_MAP(application), app_entries, G_N_ELEMENTS(app_entries), application);
+   g_action_map_add_action_entries(G_ACTION_MAP(application),
+                                   app_entries,
+                                   G_N_ELEMENTS(app_entries),
+                                   application);
 
    {
       GtkBuilder *builder;
       GMenuModel *model;
       GError *error = NULL;
 
+#define GB_APPLICATION_MENU_PATH \
+   "/org/gnome/Builder/data/ui/gb-application-menu.ui"
+
       builder = gtk_builder_new();
-      if (!gtk_builder_add_from_resource(builder, "/org/gnome/Builder/data/ui/gb-application-menu.ui", &error)) {
+      if (!gtk_builder_add_from_resource(builder, GB_APPLICATION_MENU_PATH,
+                                         &error)) {
          g_error("%s", error->message);
       }
 

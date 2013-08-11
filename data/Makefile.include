@@ -3,7 +3,6 @@ GLIB_COMPILE_RESOURCE = glib-compile-resources
 
 RESOURCE_FILES =
 RESOURCE_FILES += $(top_srcdir)/data/gb-application.gresource.xml
-RESOURCE_FILES += $(top_srcdir)/data/css/overrides.css
 RESOURCE_FILES += $(top_srcdir)/data/ui/gb-application-menu.ui
 RESOURCE_FILES += $(top_srcdir)/data/style-schemes/solarized-dark.xml
 RESOURCE_FILES += $(top_srcdir)/data/style-schemes/solarized-light.xml
