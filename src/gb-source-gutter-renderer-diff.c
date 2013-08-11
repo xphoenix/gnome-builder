@@ -28,6 +28,9 @@ G_DEFINE_TYPE(GbSourceGutterRendererDiff,
 struct _GbSourceGutterRendererDiffPrivate
 {
    GbSourceDiff *diff;
+   guint         changed_handler;
+   GdkRGBA       rgba_added;
+   GdkRGBA       rgba_changed;
 };
 
 enum
@@ -38,6 +41,15 @@ enum
 };
 
 static GParamSpec *gParamSpecs[LAST_PROP];
+
+static void
+gb_source_gutter_renderer_diff_changed (GbSourceDiff               *diff,
+                                        GbSourceGutterRendererDiff *renderer)
+{
+   g_assert(GB_IS_SOURCE_DIFF(diff));
+   g_assert(GB_IS_SOURCE_GUTTER_RENDERER_DIFF(renderer));
+   gtk_source_gutter_renderer_queue_draw(GTK_SOURCE_GUTTER_RENDERER(renderer));
+}
 
 GbSourceDiff *
 gb_source_gutter_renderer_diff_get_diff (GbSourceGutterRendererDiff *diff)
@@ -50,23 +62,84 @@ void
 gb_source_gutter_renderer_diff_set_diff (GbSourceGutterRendererDiff *renderer,
                                          GbSourceDiff               *diff)
 {
-   g_return_if_fail(GB_IS_SOURCE_GUTTER_RENDERER_DIFF(diff));
+   GbSourceGutterRendererDiffPrivate *priv;
 
-   g_clear_object(&renderer->priv->diff);
-   renderer->priv->diff = diff ? g_object_ref(diff) : NULL;
+   g_return_if_fail(GB_IS_SOURCE_GUTTER_RENDERER_DIFF(renderer));
+   g_return_if_fail(!diff || GB_IS_SOURCE_DIFF(diff));
+
+   priv = renderer->priv;
+
+   if (priv->diff != diff) {
+      if (priv->changed_handler) {
+         g_signal_handler_disconnect(priv->diff, priv->changed_handler);
+         priv->changed_handler = 0;
+      }
+      g_clear_object(&priv->diff);
+      if (diff) {
+         priv->diff = g_object_ref(diff);
+         priv->changed_handler =
+            g_signal_connect(priv->diff, "changed",
+                             G_CALLBACK(gb_source_gutter_renderer_diff_changed),
+                             renderer);
+      }
+   }
+
    g_object_notify_by_pspec(G_OBJECT(renderer), gParamSpecs[PROP_DIFF]);
 }
 
 static void
-gb_source_gutter_renderer_diff_finalize (GObject *object)
+gb_source_gutter_renderer_diff_draw (GtkSourceGutterRenderer      *renderer,
+                                     cairo_t                      *cr,
+                                     GdkRectangle                 *bg_area,
+                                     GdkRectangle                 *cell_area,
+                                     GtkTextIter                  *begin,
+                                     GtkTextIter                  *end,
+                                     GtkSourceGutterRendererState  state)
+{
+   GbSourceGutterRendererDiffPrivate *priv;
+   GbSourceGutterRendererDiff *diff = (GbSourceGutterRendererDiff *)renderer;
+   GbSourceDiffState line_state;
+   gint line;
+
+   g_return_if_fail(GB_IS_SOURCE_GUTTER_RENDERER_DIFF(diff));
+
+   priv = diff->priv;
+
+   line = gtk_text_iter_get_line(begin);
+   line_state = gb_source_diff_get_line_state(priv->diff, line + 1);
+
+   switch (line_state) {
+   case GB_SOURCE_DIFF_ADDED:
+      gdk_cairo_rectangle(cr, cell_area);
+      gdk_cairo_set_source_rgba(cr, &priv->rgba_added);
+      cairo_fill(cr);
+      break;
+   case GB_SOURCE_DIFF_CHANGED:
+      gdk_cairo_rectangle(cr, cell_area);
+      gdk_cairo_set_source_rgba(cr, &priv->rgba_changed);
+      cairo_fill(cr);
+      break;
+   case GB_SOURCE_DIFF_SAME:
+   default:
+      break;
+   }
+}
+
+static void
+gb_source_gutter_renderer_diff_dispose (GObject *object)
 {
    GbSourceGutterRendererDiffPrivate *priv;
 
    priv = GB_SOURCE_GUTTER_RENDERER_DIFF(object)->priv;
 
+   if (priv->changed_handler) {
+      g_signal_handler_disconnect(priv->diff, priv->changed_handler);
+      priv->changed_handler = 0;
+   }
+
    g_clear_object(&priv->diff);
 
-   G_OBJECT_CLASS(gb_source_gutter_renderer_diff_parent_class)->finalize(object);
+   G_OBJECT_CLASS(gb_source_gutter_renderer_diff_parent_class)->dispose(object);
 }
 
 static void
@@ -107,12 +180,16 @@ static void
 gb_source_gutter_renderer_diff_class_init (GbSourceGutterRendererDiffClass *klass)
 {
    GObjectClass *object_class;
+   GtkSourceGutterRendererClass *renderer_class;
 
    object_class = G_OBJECT_CLASS(klass);
-   object_class->finalize = gb_source_gutter_renderer_diff_finalize;
+   object_class->dispose = gb_source_gutter_renderer_diff_dispose;
    object_class->get_property = gb_source_gutter_renderer_diff_get_property;
    object_class->set_property = gb_source_gutter_renderer_diff_set_property;
    g_type_class_add_private(object_class, sizeof(GbSourceGutterRendererDiffPrivate));
+
+   renderer_class = GTK_SOURCE_GUTTER_RENDERER_CLASS(klass);
+   renderer_class->draw = gb_source_gutter_renderer_diff_draw;
 
    gParamSpecs[PROP_DIFF] =
       g_param_spec_object("diff",
@@ -131,4 +208,10 @@ gb_source_gutter_renderer_diff_init (GbSourceGutterRendererDiff *diff)
       G_TYPE_INSTANCE_GET_PRIVATE(diff,
                                   GB_TYPE_SOURCE_GUTTER_RENDERER_DIFF,
                                   GbSourceGutterRendererDiffPrivate);
+
+   /*
+    * TODO: Make these colors configurable?
+    */
+   gdk_rgba_parse(&diff->priv->rgba_added, "#8ae234");
+   gdk_rgba_parse(&diff->priv->rgba_changed, "#fcaf3e");
 }

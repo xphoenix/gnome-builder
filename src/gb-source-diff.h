@@ -19,7 +19,7 @@
 #ifndef GB_SOURCE_DIFF_H
 #define GB_SOURCE_DIFF_H
 
-#include <glib-object.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
@@ -34,6 +34,14 @@ G_BEGIN_DECLS
 typedef struct _GbSourceDiff        GbSourceDiff;
 typedef struct _GbSourceDiffClass   GbSourceDiffClass;
 typedef struct _GbSourceDiffPrivate GbSourceDiffPrivate;
+typedef enum   _GbSourceDiffState   GbSourceDiffState;
+
+enum _GbSourceDiffState
+{
+   GB_SOURCE_DIFF_SAME    = 0,
+   GB_SOURCE_DIFF_ADDED   = 1,
+   GB_SOURCE_DIFF_CHANGED = 2,
+};
 
 struct _GbSourceDiff
 {
@@ -48,7 +56,17 @@ struct _GbSourceDiffClass
    GObjectClass parent_class;
 };
 
-GType gb_source_diff_get_type (void) G_GNUC_CONST;
+GtkTextBuffer     *gb_source_diff_get_buffer     (GbSourceDiff  *diff);
+GFile             *gb_source_diff_get_file       (GbSourceDiff  *diff);
+GbSourceDiffState  gb_source_diff_get_line_state (GbSourceDiff  *diff,
+                                                  guint         line);
+GType              gb_source_diff_get_type       (void) G_GNUC_CONST;
+GbSourceDiff      *gb_source_diff_new            (GFile         *file,
+                                                  GtkTextBuffer *buffer);
+void               gb_source_diff_set_file       (GbSourceDiff  *diff,
+                                                  GFile         *file);
+void               gb_source_diff_set_buffer     (GbSourceDiff  *diff,
+                                                  GtkTextBuffer *buffer);
 
 G_END_DECLS
 

@@ -27,6 +27,7 @@
 
 #include "gb-animation.h"
 #include "gb-search-provider.h"
+#include "gb-source-diff.h"
 #include "gb-source-gutter-renderer-compiler.h"
 #include "gb-source-gutter-renderer-diff.h"
 #include "gb-source-overlay.h"
@@ -48,7 +49,8 @@ G_DEFINE_TYPE_EXTENDED(GbSourcePane,
 
 struct _GbSourcePanePrivate
 {
-   GFile *file;
+   GFile        *file;
+   GbSourceDiff *diff;
 
    GtkWidget *highlight;
    GtkWidget *overlay;
@@ -165,6 +167,8 @@ gb_source_pane_set_file (GbSourcePane *pane,
    title = g_file_get_basename(file);
    g_object_set(pane, "title", title, NULL);
    g_free(title);
+
+   gb_source_diff_set_file(priv->diff, file);
 
    gb_source_pane_guess_language(pane, file);
 
@@ -340,6 +344,8 @@ gb_source_pane_dispose (GObject *object)
 {
    GbSourcePanePrivate *priv = GB_SOURCE_PANE(object)->priv;
    GtkTextBuffer *buffer;
+
+   g_clear_object(&priv->diff);
 
    if (priv->view) {
       if ((buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(priv->view)))) {
@@ -710,6 +716,8 @@ gb_source_pane_init (GbSourcePane *pane)
    gtk_container_add(GTK_CONTAINER(priv->scroller), priv->view);
    g_object_unref(buffer);
 
+   priv->diff = gb_source_diff_new(NULL, GTK_TEXT_BUFFER(buffer));
+
    priv->highlight = g_object_new(GB_TYPE_SOURCE_OVERLAY,
                                   "hexpand", TRUE,
                                   "tag", "Tag::Search",
@@ -739,8 +747,10 @@ gb_source_pane_init (GbSourcePane *pane)
    gtk_source_gutter_renderer_set_size(renderer, 14);
    gtk_source_gutter_insert(gutter, renderer, -30);
 
-   renderer = g_object_new(GB_TYPE_SOURCE_GUTTER_RENDERER_DIFF, NULL);
-   gtk_source_gutter_renderer_set_size(renderer, 1);
+   renderer = g_object_new(GB_TYPE_SOURCE_GUTTER_RENDERER_DIFF,
+                           "diff", priv->diff,
+                           NULL);
+   gtk_source_gutter_renderer_set_size(renderer, 2);
    gtk_source_gutter_renderer_set_padding(renderer, 2, 0);
    gtk_source_gutter_insert(gutter, renderer, -10);
 
