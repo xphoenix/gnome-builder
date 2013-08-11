@@ -168,7 +168,7 @@ gb_workspace_pane_group_add (GtkContainer *container,
                        group);
 
       hbox = g_object_new(GTK_TYPE_BOX,
-                          "hexpand", TRUE,
+                          "hexpand", FALSE,
                           "orientation", GTK_ORIENTATION_HORIZONTAL,
                           "spacing", 0,
                           "visible", TRUE,
@@ -228,9 +228,10 @@ gb_workspace_pane_group_add (GtkContainer *container,
       gtk_container_add(GTK_CONTAINER(hbox), label);
 
       label = g_object_new(GTK_TYPE_LABEL,
-                           "ellipsize", PANGO_ELLIPSIZE_END,
+                           "ellipsize", PANGO_ELLIPSIZE_START,
                            "hexpand", TRUE,
                            "single-line-mode", TRUE,
+                           "width-chars", 15,
                            "visible", TRUE,
                            "xalign", 0.0,
                            "xpad", 0,
