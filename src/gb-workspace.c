@@ -22,6 +22,7 @@
 #include "gb-application.h"
 #include "gb-search-provider.h"
 #include "gb-source-pane.h"
+#include "gb-terminal-pane.h"
 #include "gb-workspace.h"
 #include "gb-workspace-layout.h"
 #include "gb-workspace-layout-edit.h"
@@ -306,6 +307,23 @@ gb_workspace_new_file (GSimpleAction *action,
    gtk_container_add(GTK_CONTAINER(workspace), GTK_WIDGET(pane));
 }
 
+static void
+gb_workspace_new_terminal (GSimpleAction *action,
+                           GVariant      *parameter,
+                           gpointer       user_data)
+{
+   GbWorkspacePane *pane;
+   GbWorkspace *workspace = user_data;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+   g_return_if_fail(G_IS_ACTION(action));
+
+   pane = g_object_new(GB_TYPE_TERMINAL_PANE,
+                       "visible", TRUE,
+                       NULL);
+   gtk_container_add(GTK_CONTAINER(workspace), GTK_WIDGET(pane));
+}
+
 void
 gb_workspace_update_actions (GbWorkspace *workspace)
 {
@@ -489,6 +507,7 @@ gb_workspace_init_actions (GbWorkspace *workspace)
    static const GActionEntry entries[] = {
       { "close-pane", gb_workspace_close_pane },
       { "new-file", gb_workspace_new_file },
+      { "new-terminal", gb_workspace_new_terminal },
       { "save-pane", gb_workspace_save_pane },
       { "search-pane", gb_workspace_search_pane },
       { "select-pane", gb_workspace_select_pane, "i" },
@@ -512,7 +531,11 @@ gb_workspace_init_actions (GbWorkspace *workspace)
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
                                    "<Primary>plus", "win.zoom-pane-in", NULL);
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
-                                   "<Primary>minus", "win.zoom-pane-out", NULL);
+                                   "<Primary>minus", "win.zoom-pane-out",
+                                   NULL);
+   gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
+                                   "<Primary><Shift>t", "win.new-terminal",
+                                   NULL);
 
 #define ADD_PANE_ACCEL(n, k) G_STMT_START { \
    GVariant *v; \

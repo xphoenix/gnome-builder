@@ -61,7 +61,7 @@ gb_workspace_layout_edit_add (GtkContainer *container,
 
    priv = edit->priv;
 
-   if (GB_IS_SOURCE_PANE(child)) {
+   if (GB_IS_SOURCE_PANE(child) || GB_IS_TERMINAL_PANE(child)) {
       gtk_container_add(GTK_CONTAINER(priv->groups->data), child);
    } else {
       GTK_CONTAINER_CLASS(gb_workspace_layout_edit_parent_class)->
