@@ -263,7 +263,9 @@ gb_workspace_pane_group_add (GtkContainer *container,
                           NULL);
       gtk_container_add(GTK_CONTAINER(close_button), icon);
 
-      gtk_notebook_append_page(GTK_NOTEBOOK(priv->notebook), child, hbox);
+      page = gtk_notebook_append_page(GTK_NOTEBOOK(priv->notebook),
+                                      child, hbox);
+      gtk_notebook_set_current_page(GTK_NOTEBOOK(priv->notebook), page);
    } else {
       GTK_CONTAINER_CLASS(gb_workspace_pane_group_parent_class)->
          add(container, child);
