@@ -563,6 +563,7 @@ gb_source_pane_finalize (GObject *object)
    GbSourcePanePrivate *priv = GB_SOURCE_PANE(object)->priv;
 
    g_clear_object(&priv->file);
+   g_clear_object(&priv->diff);
 
    G_OBJECT_CLASS(gb_source_pane_parent_class)->finalize(object);
 }
