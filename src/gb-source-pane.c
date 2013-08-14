@@ -116,7 +116,7 @@ gb_source_pane_load_scheme (GbSourcePane *pane)
 {
    static const gchar *schemes[] = {
       "solarized-light",
-      "solarized-dark",
+      "solarizeddark",
       "tango",
       NULL
    };
