@@ -315,11 +315,16 @@ gb_animation_get_offset (GbAnimation *animation)
  * Side effects: The property of @target is updated.
  */
 static void
-gb_animation_update_property (GbAnimation *animation,
-                               gpointer      target,
-                               Tween        *tween,
-                               const GValue *value)
+gb_animation_update_property (GbAnimation  *animation,
+                              gpointer      target,
+                              Tween        *tween,
+                              const GValue *value)
 {
+   g_assert(GB_IS_ANIMATION(animation));
+   g_assert(G_IS_OBJECT(target));
+   g_assert(tween);
+   g_assert(value);
+
    g_object_set_property(target, tween->pspec->name, value);
 }
 
@@ -342,7 +347,14 @@ gb_animation_update_child_property (GbAnimation  *animation,
                                     Tween        *tween,
                                     const GValue *value)
 {
-   GtkWidget *parent = gtk_widget_get_parent(GTK_WIDGET(target));
+   GtkWidget *parent;
+
+   g_assert(GB_IS_ANIMATION(animation));
+   g_assert(G_IS_OBJECT(target));
+   g_assert(tween);
+   g_assert(value);
+
+   parent = gtk_widget_get_parent(GTK_WIDGET(target));
    gtk_container_child_set_property(GTK_CONTAINER(parent),
                                     target,
                                     tween->pspec->name,
