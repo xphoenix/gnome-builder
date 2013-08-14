@@ -152,8 +152,8 @@ on_open_activated (GSimpleAction *action,
 }
 
 static GActionEntry app_entries[] = {
-   { "open", on_open_activated, NULL, NULL, NULL },
-   { "quit", on_quit_activated, NULL, NULL, NULL },
+   { "open", on_open_activated },
+   { "quit", on_quit_activated },
 };
 
 static void
