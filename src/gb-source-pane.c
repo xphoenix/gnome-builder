@@ -510,6 +510,8 @@ gb_source_pane_save_async (GbWorkspacePane     *pane,
                           NULL);
 
    gb_workspace_pane_set_busy(pane, FALSE);
+
+   gb_source_diff_queue_parse(priv->diff);
 }
 
 static gboolean

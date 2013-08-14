@@ -373,7 +373,7 @@ gb_source_diff_parse_timeout (gpointer data)
    return FALSE;
 }
 
-static inline void
+void
 gb_source_diff_queue_parse (GbSourceDiff *diff)
 {
    GbSourceDiffPrivate *priv = diff->priv;

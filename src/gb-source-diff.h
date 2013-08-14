@@ -63,6 +63,7 @@ GbSourceDiffState  gb_source_diff_get_line_state (GbSourceDiff  *diff,
 GType              gb_source_diff_get_type       (void) G_GNUC_CONST;
 GbSourceDiff      *gb_source_diff_new            (GFile         *file,
                                                   GtkTextBuffer *buffer);
+void               gb_source_diff_queue_parse    (GbSourceDiff  *diff);
 void               gb_source_diff_set_file       (GbSourceDiff  *diff,
                                                   GFile         *file);
 void               gb_source_diff_set_buffer     (GbSourceDiff  *diff,
