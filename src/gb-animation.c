@@ -230,11 +230,13 @@ gb_animation_load_begin_values (GbAnimation *animation)
       g_value_reset(&tween->begin);
       if (tween->is_child) {
          container = GTK_CONTAINER(gtk_widget_get_parent(priv->target));
-         gtk_container_child_get_property(container, priv->target,
+         gtk_container_child_get_property(container,
+                                          priv->target,
                                           tween->pspec->name,
                                           &tween->begin);
       } else {
-         g_object_get_property(priv->target, tween->pspec->name,
+         g_object_get_property(priv->target,
+                               tween->pspec->name,
                                &tween->begin);
       }
    }
@@ -335,14 +337,16 @@ gb_animation_update_property (GbAnimation *animation,
  * Side effects: The property of @target<!-- -->'s parent widget is updated.
  */
 static void
-gb_animation_update_child_property (GbAnimation *animation,
-                                     gpointer      target,
-                                     Tween        *tween,
-                                     const GValue *value)
+gb_animation_update_child_property (GbAnimation  *animation,
+                                    gpointer      target,
+                                    Tween        *tween,
+                                    const GValue *value)
 {
    GtkWidget *parent = gtk_widget_get_parent(GTK_WIDGET(target));
-   gtk_container_child_set_property(GTK_CONTAINER(parent), target,
-                                    tween->pspec->name, value);
+   gtk_container_child_set_property(GTK_CONTAINER(parent),
+                                    target,
+                                    tween->pspec->name,
+                                    value);
 }
 
 
@@ -425,11 +429,15 @@ gb_animation_tick (GbAnimation *animation)
       g_value_init(&value, tween->pspec->value_type);
       gb_animation_get_value_at_offset(animation, alpha, tween, &value);
       if (!tween->is_child) {
-         gb_animation_update_property(animation, priv->target,
-                                       tween, &value);
+         gb_animation_update_property(animation,
+                                      priv->target,
+                                      tween,
+                                      &value);
       } else {
-         gb_animation_update_child_property(animation, priv->target,
-                                             tween, &value);
+         gb_animation_update_child_property(animation,
+                                            priv->target,
+                                            tween,
+                                            &value);
       }
       g_value_unset(&value);
    }
@@ -712,7 +720,7 @@ gb_animation_class_init (GbAnimationClass *klass)
                         0,
                         G_MAXUINT,
                         250,
-                        G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY);
+                        (G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
    g_object_class_install_property(object_class, PROP_DURATION,
                                    gParamSpecs[PROP_DURATION]);
 
