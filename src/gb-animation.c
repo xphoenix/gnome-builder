@@ -24,6 +24,8 @@
 #include "gb-animation.h"
 #include "gb-frame-source.h"
 
+#define FALLBACK_FRAME_RATE 60
+
 G_DEFINE_TYPE(GbAnimation, gb_animation, G_TYPE_INITIALLY_UNOWNED)
 
 typedef gdouble (*AlphaFunc) (gdouble       offset);
@@ -49,8 +51,6 @@ struct _GbAnimationPrivate
    guint     mode;          /* Tween mode */
    guint     tween_handler; /* GSource performing tweens */
    GArray   *tweens;        /* Array of tweens to perform */
-   guint     frame_rate;    /* The frame-rate to use */
-   guint     frame_count;   /* Counter for debugging frames rendered */
 };
 
 
@@ -58,7 +58,6 @@ enum
 {
    PROP_0,
    PROP_DURATION,
-   PROP_FRAME_RATE,
    PROP_MODE,
    PROP_TARGET,
    LAST_PROP
@@ -286,17 +285,22 @@ static gdouble
 gb_animation_get_offset (GbAnimation *animation)
 {
    GbAnimationPrivate *priv;
-   GTimeVal now;
-   guint64 msec;
+   GdkFrameClock *frame_clock;
    gdouble offset;
+   gint64 frame_msec;
 
    g_return_val_if_fail(GB_IS_ANIMATION(animation), 0.0);
 
    priv = animation->priv;
 
-   g_get_current_time(&now);
-   msec = TIMEVAL_TO_MSEC(now);
-   offset = (gdouble)(msec - priv->begin_msec)
+   if (GTK_IS_WIDGET(priv->target)) {
+      frame_clock = gtk_widget_get_frame_clock(priv->target);
+      frame_msec = gdk_frame_clock_get_frame_time(frame_clock) / 1000UL;
+   } else {
+      frame_msec = g_get_monotonic_time() / 1000UL;
+   }
+
+   offset = (gdouble)(frame_msec - priv->begin_msec)
           / (gdouble)priv->duration_msec;
    return CLAMP(offset, 0.0, 1.0);
 }
@@ -429,7 +433,6 @@ gb_animation_tick (GbAnimation *animation)
 
    priv = animation->priv;
 
-   priv->frame_count++;
    offset = gb_animation_get_offset(animation);
    alpha = gAlphaFuncs[priv->mode](offset);
 
@@ -473,8 +476,8 @@ gb_animation_tick (GbAnimation *animation)
 
 
 /**
- * gb_animation_timeout:
- * @data: (in): A #GbAnimation.
+ * gb_animation_timeout_cb:
+ * @user_data: (in): A #GbAnimation.
  *
  * Timeout from the main loop to move to the next step of the animation.
  *
@@ -482,9 +485,25 @@ gb_animation_tick (GbAnimation *animation)
  * Side effects: None.
  */
 static gboolean
-gb_animation_timeout (gpointer data)
+gb_animation_timeout_cb (gpointer user_data)
 {
-   GbAnimation *animation = (GbAnimation *)data;
+   GbAnimation *animation = user_data;
+   gboolean ret;
+
+   if (!(ret = gb_animation_tick(animation))) {
+      gb_animation_stop(animation);
+   }
+
+   return ret;
+}
+
+
+static gboolean
+gb_animation_widget_tick_cb (GtkWidget     *widget,
+                             GdkFrameClock *frame_clock,
+                             gpointer       user_data)
+{
+   GbAnimation *animation = user_data;
    gboolean ret;
 
    if (!(ret = gb_animation_tick(animation))) {
@@ -509,21 +528,30 @@ void
 gb_animation_start (GbAnimation *animation)
 {
    GbAnimationPrivate *priv;
-   GTimeVal now;
+   GdkFrameClock *frame_clock;
 
    g_return_if_fail(GB_IS_ANIMATION(animation));
    g_return_if_fail(!animation->priv->tween_handler);
 
    priv = animation->priv;
 
-   g_get_current_time(&now);
    g_object_ref_sink(animation);
    gb_animation_load_begin_values(animation);
 
-   priv->begin_msec = TIMEVAL_TO_MSEC(now);
-   priv->tween_handler = gb_frame_source_add(priv->frame_rate,
-                                             gb_animation_timeout,
-                                             animation);
+   if (GTK_IS_WIDGET(priv->target)) {
+      frame_clock = gtk_widget_get_frame_clock(priv->target);
+      priv->begin_msec = gdk_frame_clock_get_frame_time(frame_clock) / 1000UL;
+      priv->tween_handler =
+         gtk_widget_add_tick_callback(priv->target,
+                                      gb_animation_widget_tick_cb,
+                                      g_object_ref(animation),
+                                      g_object_unref);
+   } else {
+      priv->begin_msec = g_get_monotonic_time() / 1000UL;
+      priv->tween_handler = gb_frame_source_add(FALLBACK_FRAME_RATE,
+                                                gb_animation_timeout_cb,
+                                                animation);
+   }
 }
 
 
@@ -547,7 +575,11 @@ gb_animation_stop (GbAnimation *animation)
    priv = animation->priv;
 
    if (priv->tween_handler) {
-      g_source_remove(priv->tween_handler);
+      if (GTK_IS_WIDGET(priv->target)) {
+         gtk_widget_remove_tick_callback(priv->target, priv->tween_handler);
+      } else {
+         g_source_remove(priv->tween_handler);
+      }
       priv->tween_handler = 0;
       gb_animation_unload_begin_values(animation);
       g_object_unref(animation);
@@ -652,11 +684,6 @@ gb_animation_finalize (GObject *object)
 
    g_array_unref(priv->tweens);
 
-   if (gDebug) {
-      g_print("Rendered %d frames in %d msec animation.\n",
-              priv->frame_count, priv->duration_msec);
-   }
-
    G_OBJECT_CLASS(gb_animation_parent_class)->finalize(object);
 }
 
@@ -681,9 +708,6 @@ gb_animation_set_property (GObject      *object,
    switch (prop_id) {
    case PROP_DURATION:
       animation->priv->duration_msec = g_value_get_uint(value);
-      break;
-   case PROP_FRAME_RATE:
-      animation->priv->frame_rate = g_value_get_uint(value);
       break;
    case PROP_MODE:
       animation->priv->mode = g_value_get_enum(value);
@@ -732,7 +756,9 @@ gb_animation_class_init (GbAnimationClass *klass)
                         0,
                         G_MAXUINT,
                         250,
-                        (G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+                        (G_PARAM_WRITABLE |
+                         G_PARAM_CONSTRUCT_ONLY |
+                         G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_DURATION,
                                    gParamSpecs[PROP_DURATION]);
 
@@ -749,7 +775,9 @@ gb_animation_class_init (GbAnimationClass *klass)
                         _("The animation mode"),
                         GB_TYPE_ANIMATION_MODE,
                         GB_ANIMATION_LINEAR,
-                        G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY);
+                        (G_PARAM_WRITABLE |
+                         G_PARAM_CONSTRUCT_ONLY |
+                         G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_MODE,
                                    gParamSpecs[PROP_MODE]);
 
@@ -764,26 +792,11 @@ gb_animation_class_init (GbAnimationClass *klass)
                           _("Target"),
                           _("The target of the animation"),
                           G_TYPE_OBJECT,
-                          G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY);
+                          (G_PARAM_WRITABLE |
+                           G_PARAM_CONSTRUCT_ONLY |
+                           G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_TARGET,
                                    gParamSpecs[PROP_TARGET]);
-
-   /**
-    * GbAnimation:frame-rate:
-    *
-    * The "frame-rate" is the number of frames that the animation should
-    * try to perform per-second. The default is 60 frames-per-second.
-    */
-   gParamSpecs[PROP_FRAME_RATE] =
-      g_param_spec_uint("frame-rate",
-                          _("Frame Rate"),
-                          _("The number of frames per second."),
-                          1,
-                          G_MAXUINT,
-                          60,
-                          G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY);
-   g_object_class_install_property(object_class, PROP_FRAME_RATE,
-                                   gParamSpecs[PROP_FRAME_RATE]);
 
    /**
     * GbAnimation::tick:
@@ -838,13 +851,14 @@ gb_animation_init (GbAnimation *animation)
 {
    GbAnimationPrivate *priv;
 
-   priv = G_TYPE_INSTANCE_GET_PRIVATE(animation, GB_TYPE_ANIMATION,
+   priv = G_TYPE_INSTANCE_GET_PRIVATE(animation,
+                                      GB_TYPE_ANIMATION,
                                       GbAnimationPrivate);
+
    animation->priv = priv;
 
    priv->duration_msec = 250;
-   priv->frame_rate = 60;
-   priv->mode = GB_ANIMATION_LINEAR;
+   priv->mode = GB_ANIMATION_EASE_IN_OUT_QUAD;
    priv->tweens = g_array_new(FALSE, FALSE, sizeof(Tween));
 }
 
@@ -891,7 +905,6 @@ GbAnimation *
 gb_object_animatev (gpointer         object,
                     GbAnimationMode  mode,
                     guint            duration_msec,
-                    guint            frame_rate,
                     const gchar     *first_property,
                     va_list          args)
 {
@@ -914,7 +927,6 @@ gb_object_animatev (gpointer         object,
    klass = G_OBJECT_GET_CLASS(object);
    animation = g_object_new(GB_TYPE_ANIMATION,
                             "duration", duration_msec,
-                            "frame-rate", frame_rate ? frame_rate : 60,
                             "mode", mode,
                             "target", object,
                             NULL);
@@ -992,8 +1004,8 @@ gb_object_animate (gpointer         object,
    va_list args;
 
    va_start(args, first_property);
-   animation = gb_object_animatev(object, mode, duration_msec, 0,
-                                 first_property, args);
+   animation = gb_object_animatev(object, mode, duration_msec,
+                                  first_property, args);
    va_end(args);
    return animation;
 }
@@ -1007,7 +1019,6 @@ GbAnimation*
 gb_object_animate_full (gpointer         object,
                         GbAnimationMode  mode,
                         guint            duration_msec,
-                        guint            frame_rate,
                         GDestroyNotify   notify,
                         gpointer         notify_data,
                         const gchar     *first_property,
@@ -1017,8 +1028,11 @@ gb_object_animate_full (gpointer         object,
    va_list args;
 
    va_start(args, first_property);
-   animation = gb_object_animatev(object, mode, duration_msec,
-                                  frame_rate, first_property, args);
+   animation = gb_object_animatev(object,
+                                  mode,
+                                  duration_msec,
+                                  first_property,
+                                  args);
    va_end(args);
    g_object_weak_ref(G_OBJECT(animation), (GWeakNotify)notify, notify_data);
    return animation;
