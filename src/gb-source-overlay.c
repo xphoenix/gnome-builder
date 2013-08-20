@@ -17,6 +17,7 @@
  */
 
 #include <glib/gi18n.h>
+#include <gtksourceview/gtksource.h>
 #include <string.h>
 
 #include "gb-source-overlay.h"
@@ -25,17 +26,16 @@ G_DEFINE_TYPE(GbSourceOverlay, gb_source_overlay, GTK_TYPE_DRAWING_AREA)
 
 struct _GbSourceOverlayPrivate
 {
-   GdkRGBA      background_color;
-   gchar       *tag;
-   GtkTextView *widget;
-   GtkTextTag  *text_tag;
+   GdkRGBA                 background_color;
+   GtkTextView            *widget;
+   GtkSourceSearchContext *search_context;
 };
 
 enum
 {
    PROP_0,
    PROP_BACKGROUND_COLOR,
-   PROP_TAG,
+   PROP_SEARCH_CONTEXT,
    PROP_WIDGET,
    LAST_PROP
 };
@@ -188,7 +188,7 @@ draw_bevels (GbSourceOverlay *overlay,
    /*
     * TODO: Add shade function to darken outer rectangle.
     */
-   gdk_rgba_parse(rgba, "#edd400");
+   gdk_rgba_parse(rgba, "#906d00");
    gdk_cairo_set_source_rgba(cr, rgba);
    gdk_rgba_free(rgba);
 
@@ -244,6 +244,7 @@ gb_source_overlay_draw (GtkWidget *widget,
    GtkTextIter iter;
    GtkTextIter begin;
    GtkTextIter end;
+   GtkTextTag *tag;
    GdkWindow *window;
    gint min_x;
    gint n_rectangles;
@@ -268,7 +269,12 @@ gb_source_overlay_draw (GtkWidget *widget,
       return FALSE;
    }
 
-   if (!GTK_IS_TEXT_VIEW(priv->widget) || !priv->tag) {
+   if (!priv->search_context) {
+      return FALSE;
+   }
+
+   tag = gtk_source_search_context_get_found_tag(priv->search_context);
+   if (!tag) {
       return FALSE;
    }
 
@@ -278,12 +284,6 @@ gb_source_overlay_draw (GtkWidget *widget,
 
    if (!(table = gtk_text_buffer_get_tag_table(buffer))) {
       return FALSE;
-   }
-
-   if (!priv->text_tag) {
-      if (!(priv->text_tag = gtk_text_tag_table_lookup(table, priv->tag))) {
-         return FALSE;
-      }
    }
 
    gtk_widget_get_allocation(widget, &alloc);
@@ -300,13 +300,13 @@ gb_source_overlay_draw (GtkWidget *widget,
                                       vis.y + vis.height);
 
    do {
-      if (!gtk_text_iter_begins_tag(&iter, priv->text_tag)) {
-         if (!gtk_text_iter_forward_to_tag_toggle(&iter, priv->text_tag)) {
+      if (!gtk_text_iter_begins_tag(&iter, tag)) {
+         if (!gtk_text_iter_forward_to_tag_toggle(&iter, tag)) {
             break;
          }
       }
       gtk_text_iter_assign(&begin, &iter);
-      if (!gtk_text_iter_forward_to_tag_toggle(&iter, priv->text_tag)) {
+      if (!gtk_text_iter_forward_to_tag_toggle(&iter, tag)) {
          break;
       }
 
@@ -326,7 +326,7 @@ gb_source_overlay_draw (GtkWidget *widget,
    cairo_fill_preserve(cr);
    cairo_clip(cr);
 
-   draw_bevels(overlay, cr, buffer, priv->text_tag);
+   draw_bevels(overlay, cr, buffer, tag);
 
    cairo_restore(cr);
 
@@ -414,15 +414,19 @@ gb_source_overlay_set_background_color (GbSourceOverlay *overlay,
 }
 
 static void
+gb_source_overlay_dispose (GObject *object)
+{
+   GbSourceOverlayPrivate *priv = GB_SOURCE_OVERLAY(object)->priv;
+
+   g_clear_object(&priv->search_context);
+   g_clear_object(&priv->widget);
+
+   G_OBJECT_CLASS(gb_source_overlay_parent_class)->dispose(object);
+}
+
+static void
 gb_source_overlay_finalize (GObject *object)
 {
-   GbSourceOverlayPrivate *priv;
-
-   priv = GB_SOURCE_OVERLAY(object)->priv;
-
-   g_clear_object(&priv->widget);
-   g_clear_pointer(&priv->tag, g_free);
-
    G_OBJECT_CLASS(gb_source_overlay_parent_class)->finalize(object);
 }
 
@@ -438,11 +442,11 @@ gb_source_overlay_get_property (GObject    *object,
    case PROP_BACKGROUND_COLOR:
       g_value_set_boxed(value, &overlay->priv->background_color);
       break;
+   case PROP_SEARCH_CONTEXT:
+      g_value_set_object(value, overlay->priv->search_context);
+      break;
    case PROP_WIDGET:
       g_value_set_object(value, overlay->priv->widget);
-      break;
-   case PROP_TAG:
-      g_value_set_string(value, overlay->priv->tag);
       break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -462,13 +466,13 @@ gb_source_overlay_set_property (GObject      *object,
       gb_source_overlay_set_background_color(overlay,
                                              g_value_get_boxed(value));
       break;
+   case PROP_SEARCH_CONTEXT:
+      g_clear_object(&overlay->priv->search_context);
+      overlay->priv->search_context = g_value_dup_object(value);
+      break;
    case PROP_WIDGET:
       g_clear_object(&overlay->priv->widget);
       overlay->priv->widget = g_value_dup_object(value);
-      break;
-   case PROP_TAG:
-      g_clear_pointer(&overlay->priv->tag, g_free);
-      overlay->priv->tag = g_value_dup_string(value);
       break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -482,6 +486,7 @@ gb_source_overlay_class_init (GbSourceOverlayClass *klass)
    GObjectClass *object_class;
 
    object_class = G_OBJECT_CLASS(klass);
+   object_class->dispose = gb_source_overlay_dispose;
    object_class->finalize = gb_source_overlay_finalize;
    object_class->get_property = gb_source_overlay_get_property;
    object_class->set_property = gb_source_overlay_set_property;
@@ -503,23 +508,25 @@ gb_source_overlay_class_init (GbSourceOverlayClass *klass)
    g_object_class_install_property(object_class, PROP_BACKGROUND_COLOR,
                                    gParamSpecs[PROP_BACKGROUND_COLOR]);
 
+   gParamSpecs[PROP_SEARCH_CONTEXT] =
+      g_param_spec_object("search-context",
+                          _("Search Context"),
+                          _("The search context to highlight."),
+                          GTK_SOURCE_TYPE_SEARCH_CONTEXT,
+                          (G_PARAM_READWRITE |
+                           G_PARAM_CONSTRUCT_ONLY |
+                           G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_SEARCH_CONTEXT,
+                                   gParamSpecs[PROP_SEARCH_CONTEXT]);
+
    gParamSpecs[PROP_WIDGET] =
       g_param_spec_object("widget",
                           _("Widget"),
                           _("The GtkTextView widget."),
-                          GTK_TYPE_WIDGET,
+                          GTK_TYPE_TEXT_VIEW,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
    g_object_class_install_property(object_class, PROP_WIDGET,
                                    gParamSpecs[PROP_WIDGET]);
-
-   gParamSpecs[PROP_TAG] =
-      g_param_spec_string("tag",
-                          _("Tag"),
-                          _("The name of the search tag."),
-                          NULL,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-   g_object_class_install_property(object_class, PROP_TAG,
-                                   gParamSpecs[PROP_TAG]);
 }
 
 static void

@@ -17,12 +17,7 @@
  */
 
 #include <glib/gi18n.h>
-#include <gtksourceview/gtksourcebuffer.h>
-#include <gtksourceview/gtksourcegutter.h>
-#include <gtksourceview/gtksourcelanguage.h>
-#include <gtksourceview/gtksourcelanguagemanager.h>
-#include <gtksourceview/gtksourcestyleschememanager.h>
-#include <gtksourceview/gtksourcestylescheme.h>
+#include <gtksourceview/gtksource.h>
 #include <nautilus/nautilus-floating-bar.h>
 
 #include "gb-animation.h"
@@ -60,6 +55,9 @@ struct _GbSourcePanePrivate
    GtkWidget *search_bar;
    GtkWidget *search_entry;
    GtkWidget *view;
+
+   GtkSourceSearchContext  *search_context;
+   GtkSourceSearchSettings *search_settings;
 
    gint insert_text_handler;
    gint delete_range_handler;
@@ -560,12 +558,31 @@ gb_source_pane_zoom_out (GbZoomable *zoomable)
 }
 
 static void
+gb_source_pane_search_text_changed (GtkEntry     *entry,
+                                    GParamSpec   *pspec,
+                                    GbSourcePane *pane)
+{
+   const gchar *text;
+
+   text = gtk_entry_get_text(entry);
+
+   if (text && !*text) {
+      text = NULL;
+   }
+
+   gtk_source_search_settings_set_search_text(pane->priv->search_settings,
+                                              text);
+}
+
+static void
 gb_source_pane_finalize (GObject *object)
 {
    GbSourcePanePrivate *priv = GB_SOURCE_PANE(object)->priv;
 
    g_clear_object(&priv->file);
    g_clear_object(&priv->diff);
+   g_clear_object(&priv->search_context);
+   g_clear_object(&priv->search_settings);
 
    G_OBJECT_CLASS(gb_source_pane_parent_class)->finalize(object);
 }
@@ -721,9 +738,20 @@ gb_source_pane_init (GbSourcePane *pane)
 
    priv->diff = gb_source_diff_new(NULL, GTK_TEXT_BUFFER(buffer));
 
+   priv->search_settings = g_object_new(GTK_SOURCE_TYPE_SEARCH_SETTINGS,
+                                        "search-text", NULL,
+                                        "regex-enabled", FALSE,
+                                        NULL);
+
+   priv->search_context = g_object_new(GTK_SOURCE_TYPE_SEARCH_CONTEXT,
+                                       "buffer", buffer,
+                                       "highlight", TRUE,
+                                       "settings", priv->search_settings,
+                                       NULL);
+
    priv->highlight = g_object_new(GB_TYPE_SOURCE_OVERLAY,
                                   "hexpand", TRUE,
-                                  "tag", "Tag::Search",
+                                  "search-context", priv->search_context,
                                   "vexpand", TRUE,
                                   "visible", TRUE,
                                   "widget", priv->view,
@@ -771,13 +799,19 @@ gb_source_pane_init (GbSourcePane *pane)
       g_signal_connect_after(buffer, "mark-set", G_CALLBACK(on_mark_set),
                              pane);
 
-   g_object_bind_property(pane->priv->search_entry, "text",
-                          pane->priv->view, "search-text",
+   g_signal_connect(priv->search_entry, "notify::text",
+                    G_CALLBACK(gb_source_pane_search_text_changed),
+                    pane);
+
+   g_object_bind_property(priv->search_bar, "visible",
+                          priv->highlight, "visible",
                           G_BINDING_SYNC_CREATE);
 
+#if 0
    g_object_bind_property(pane->priv->view, "search-has-matches",
                           pane->priv->highlight, "visible",
                           G_BINDING_SYNC_CREATE);
+#endif
 }
 
 static void
