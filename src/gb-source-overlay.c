@@ -440,7 +440,7 @@ gb_source_overlay_do_draw (GbSourceOverlay *overlay,
          gb_source_overlay_draw_bubble_inner,
          cr);
    gb_source_overlay_get_background(overlay, &fg1);
-   _gb_rgba_shade(&fg1, 1.1, &shade);
+   _gb_rgba_shade(&fg1, 1.05, &shade);
    gdk_cairo_set_source_rgba(cr, &shade);
    cairo_fill(cr);
 }
