@@ -753,7 +753,7 @@ gb_source_pane_init (GbSourcePane *pane)
                                   "search-context", priv->search_context,
                                   "source-view", priv->view,
                                   "vexpand", TRUE,
-                                  "visible", TRUE,
+                                  "visible", FALSE,
                                   NULL);
    gtk_overlay_add_overlay(GTK_OVERLAY(priv->overlay), priv->highlight);
 
@@ -797,16 +797,6 @@ gb_source_pane_init (GbSourcePane *pane)
    pane->priv->mark_set_handler =
       g_signal_connect_after(buffer, "mark-set", G_CALLBACK(on_mark_set),
                              pane);
-
-   g_object_bind_property(priv->search_bar, "visible",
-                          priv->highlight, "visible",
-                          G_BINDING_SYNC_CREATE);
-
-#if 0
-   g_object_bind_property(pane->priv->view, "search-has-matches",
-                          pane->priv->highlight, "visible",
-                          G_BINDING_SYNC_CREATE);
-#endif
 }
 
 static void
