@@ -245,6 +245,7 @@ gb_source_overlay_foreach_visible_match (GbSourceOverlay          *overlay,
    GtkTextIter match_end;
    GtkTextIter vis_begin;
    GtkTextIter vis_end;
+   gint64 first = -1;
 
    g_assert(GB_IS_SOURCE_OVERLAY(overlay));
 
@@ -271,8 +272,15 @@ gb_source_overlay_foreach_visible_match (GbSourceOverlay          *overlay,
                                             &iter,
                                             &match_begin,
                                             &match_end)) {
+         if ((first != -1) &&
+             (gtk_text_iter_get_offset(&match_begin) == first)) {
+            break;
+         }
          match_func(overlay, &match_begin, &match_end, match_data);
          gtk_text_iter_assign(&iter, &match_end);
+         if (first == -1) {
+            first = gtk_text_iter_get_offset(&match_begin);
+         }
          continue;
       }
       break;
