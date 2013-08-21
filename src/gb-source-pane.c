@@ -400,6 +400,10 @@ gb_source_pane_search_entry_changed (GtkEntry     *entry,
                                      GbSourcePane *pane)
 {
    GbSourcePanePrivate *priv;
+   GdkRectangle rect;
+   GtkTextIter iter;
+   GtkTextIter match_begin;
+   GtkTextIter match_end;
    const char *text;
 
    g_assert(GTK_IS_ENTRY(entry));
@@ -408,12 +412,39 @@ gb_source_pane_search_entry_changed (GtkEntry     *entry,
    priv = pane->priv;
 
    text = gtk_entry_get_text(entry);
+
+   /*
+    * Update the search query. It doesn't like "" much.
+    */
    if (text && !*text) {
       text = NULL;
    }
-
    gtk_source_search_settings_set_search_text(priv->search_settings, text);
+
+   /*
+    * Make sure our overlay is visible.
+    */
    gtk_widget_set_visible(priv->highlight, !!text);
+
+   /*
+    * Scroll to the first match if we can find one.
+    */
+   gtk_text_view_get_visible_rect(GTK_TEXT_VIEW(priv->view), &rect);
+   gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(priv->view),
+                                      &iter,
+                                      rect.x,
+                                      rect.y);
+   if (gtk_source_search_context_forward(priv->search_context,
+                                         &iter,
+                                         &match_begin,
+                                         &match_end)) {
+      gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(priv->view),
+                                   &match_begin,
+                                   0.25,
+                                   TRUE,
+                                   0.0,
+                                   0.5);
+   }
 }
 
 static void
