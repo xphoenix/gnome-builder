@@ -20,6 +20,7 @@
 #define GB_SOURCE_OVERLAY_H
 
 #include <gtk/gtk.h>
+#include <gtksourceview/gtksource.h>
 
 G_BEGIN_DECLS
 
@@ -46,9 +47,22 @@ struct _GbSourceOverlay
 struct _GbSourceOverlayClass
 {
    GtkDrawingAreaClass parent_class;
+
+   gpointer reserved[12];
 };
 
-GType gb_source_overlay_get_type (void) G_GNUC_CONST;
+GType                   gb_source_overlay_get_type            (void) G_GNUC_CONST;
+GtkWidget              *gb_source_overlay_new                 (GtkSourceView          *source_view,
+                                                               GtkSourceSearchContext *search_context);
+void                    gb_source_overlay_set_background_rgba (GbSourceOverlay        *overlay,
+                                                               const GdkRGBA          *background_rgba);
+const GdkRGBA          *gb_source_overlay_get_background_rgba (GbSourceOverlay        *overlay);
+GtkSourceView          *gb_source_overlay_get_source_view     (GbSourceOverlay        *overlay);
+void                    gb_source_overlay_set_source_view     (GbSourceOverlay        *overlay,
+                                                               GtkSourceView          *source_view);
+GtkSourceSearchContext *gb_source_overlay_get_search_context  (GbSourceOverlay        *overlay);
+void                    gb_source_overlay_set_search_context  (GbSourceOverlay        *overlay,
+                                                               GtkSourceSearchContext *search_context);
 
 G_END_DECLS
 

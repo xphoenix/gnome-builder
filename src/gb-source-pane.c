@@ -752,9 +752,9 @@ gb_source_pane_init (GbSourcePane *pane)
    priv->highlight = g_object_new(GB_TYPE_SOURCE_OVERLAY,
                                   "hexpand", TRUE,
                                   "search-context", priv->search_context,
+                                  "source-view", priv->view,
                                   "vexpand", TRUE,
                                   "visible", TRUE,
-                                  "widget", priv->view,
                                   NULL);
    gtk_overlay_add_overlay(GTK_OVERLAY(priv->overlay), priv->highlight);
 
