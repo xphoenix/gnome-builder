@@ -388,6 +388,9 @@ gb_source_pane_search_entry_key_press (GtkSearchEntry *search_entry,
 
    if (key->keyval == GDK_KEY_Escape) {
       gtk_widget_hide(priv->highlight);
+      g_object_set(priv->search_bar,
+                   "search-mode-enabled", FALSE,
+                   NULL);
       gtk_widget_grab_focus(priv->view);
       return TRUE;
    }
@@ -404,12 +407,23 @@ gb_source_pane_search_entry_changed (GtkEntry     *entry,
    GtkTextIter iter;
    GtkTextIter match_begin;
    GtkTextIter match_end;
+   gboolean search_mode_enabled;
    const char *text;
 
    g_assert(GTK_IS_ENTRY(entry));
    g_assert(GB_IS_SOURCE_PANE(pane));
 
    priv = pane->priv;
+
+   /*
+    * Ignore the change if it is by the search bar hiding.
+    */
+   g_object_get(priv->search_bar,
+                "search-mode-enabled", &search_mode_enabled,
+                NULL);
+   if (!search_mode_enabled) {
+      return;
+   }
 
    text = gtk_entry_get_text(entry);
 
