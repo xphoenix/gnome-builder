@@ -69,7 +69,7 @@ gb_workspace_layout_splash_row_activated (GtkListBox              *list_box,
 
    if (!(path = g_object_get_data(G_OBJECT(child), "path"))) {
       project = g_object_new(GB_TYPE_PROJECT,
-                             "name", "Unnamed Project",
+                             "name", _("Unnamed Project"),
                              NULL);
       gb_workspace_set_project(workspace, project);
       gb_workspace_set_mode(workspace, GB_WORKSPACE_EDIT);
