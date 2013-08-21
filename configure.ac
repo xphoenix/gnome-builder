@@ -64,7 +64,7 @@ PKG_CHECK_MODULES(DEVHELP,       [libdevhelp-3.0 >= 3.2.0])
 PKG_CHECK_MODULES(GIR,           [gobject-introspection-1.0 >= 0.10.2])
 PKG_CHECK_MODULES(GOBJECT,       [gobject-2.0 >= 2.28])
 PKG_CHECK_MODULES(GTK3,          [gtk+-3.0 >= 3.9.11])
-PKG_CHECK_MODULES(GTKSOURCEVIEW, [gtksourceview-3.0 >= 3.2.0])
+PKG_CHECK_MODULES(GTKSOURCEVIEW, [gtksourceview-3.0 >= 3.9.91])
 PKG_CHECK_MODULES(JSON,          [json-glib-1.0 >= 0.14.0])
 PKG_CHECK_MODULES(VTE,           [vte-2.90 >= 0.30])
 
