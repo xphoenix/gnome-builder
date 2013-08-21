@@ -369,13 +369,10 @@ gb_source_pane_view_key_press (GtkTextView  *text_view,
    GbSourcePanePrivate *priv = pane->priv;
 
    if (key->keyval == GDK_KEY_Escape) {
-      g_object_set(priv->highlight,
-                   "visible", FALSE,
+      gtk_widget_hide(priv->highlight);
+      g_object_set(priv->search_bar,
+                   "search-mode-enabled", FALSE,
                    NULL);
-      g_object_set(text_view,
-                   "search-text", NULL,
-                   NULL);
-      gtk_widget_grab_focus(priv->view);
       return TRUE;
    }
 
@@ -390,17 +387,33 @@ gb_source_pane_search_entry_key_press (GtkSearchEntry *search_entry,
    GbSourcePanePrivate *priv = pane->priv;
 
    if (key->keyval == GDK_KEY_Escape) {
-      g_object_set(priv->search_bar,
-                   "search-mode-enabled", FALSE,
-                   NULL);
-      g_object_set(priv->highlight,
-                   "visible", FALSE,
-                   NULL);
+      gtk_widget_hide(priv->highlight);
       gtk_widget_grab_focus(priv->view);
       return TRUE;
    }
 
    return FALSE;
+}
+
+static void
+gb_source_pane_search_entry_changed (GtkEntry     *entry,
+                                     GbSourcePane *pane)
+{
+   GbSourcePanePrivate *priv;
+   const char *text;
+
+   g_assert(GTK_IS_ENTRY(entry));
+   g_assert(GB_IS_SOURCE_PANE(pane));
+
+   priv = pane->priv;
+
+   text = gtk_entry_get_text(entry);
+   if (text && !*text) {
+      text = NULL;
+   }
+
+   gtk_source_search_settings_set_search_text(priv->search_settings, text);
+   gtk_widget_set_visible(priv->highlight, !!text);
 }
 
 static void
@@ -558,23 +571,6 @@ gb_source_pane_zoom_out (GbZoomable *zoomable)
 }
 
 static void
-gb_source_pane_search_text_changed (GtkEntry     *entry,
-                                    GParamSpec   *pspec,
-                                    GbSourcePane *pane)
-{
-   const gchar *text;
-
-   text = gtk_entry_get_text(entry);
-
-   if (text && !*text) {
-      text = NULL;
-   }
-
-   gtk_source_search_settings_set_search_text(pane->priv->search_settings,
-                                              text);
-}
-
-static void
 gb_source_pane_finalize (GObject *object)
 {
    GbSourcePanePrivate *priv = GB_SOURCE_PANE(object)->priv;
@@ -689,6 +685,9 @@ gb_source_pane_init (GbSourcePane *pane)
    g_signal_connect(priv->search_entry, "key-press-event",
                     G_CALLBACK(gb_source_pane_search_entry_key_press),
                     pane);
+   g_signal_connect(priv->search_entry, "changed",
+                    G_CALLBACK(gb_source_pane_search_entry_changed),
+                    pane);
    gtk_container_add(GTK_CONTAINER(priv->search_bar), priv->search_entry);
    gtk_search_bar_connect_entry(GTK_SEARCH_BAR(priv->search_bar),
                                 GTK_ENTRY(priv->search_entry));
@@ -798,10 +797,6 @@ gb_source_pane_init (GbSourcePane *pane)
    pane->priv->mark_set_handler =
       g_signal_connect_after(buffer, "mark-set", G_CALLBACK(on_mark_set),
                              pane);
-
-   g_signal_connect(priv->search_entry, "notify::text",
-                    G_CALLBACK(gb_source_pane_search_text_changed),
-                    pane);
 
    g_object_bind_property(priv->search_bar, "visible",
                           priv->highlight, "visible",
