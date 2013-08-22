@@ -393,6 +393,8 @@ gb_source_pane_search_entry_key_press (GtkSearchEntry *search_entry,
                    NULL);
       gtk_widget_grab_focus(priv->view);
       return TRUE;
+   } else if (key->keyval == GDK_KEY_Return) {
+      gtk_widget_show(priv->highlight);
    }
 
    return FALSE;
