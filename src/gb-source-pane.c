@@ -659,6 +659,34 @@ setup_source_view (GbSourcePane  *pane,
 }
 
 static void
+place_over (GtkWidget *window,
+            GtkWidget *other)
+{
+   GtkAllocation alloc;
+   GdkWindow *gwin;
+   gint x;
+   gint y;
+
+   gtk_widget_get_allocation(other, &alloc);
+   gwin = gtk_widget_get_window(other);
+   gdk_window_get_origin(gwin, &x, &y);
+
+   x += alloc.x;
+   y += alloc.y;
+
+   gtk_window_set_default_size(GTK_WINDOW(window), alloc.width, alloc.height);
+   gtk_window_move(GTK_WINDOW(window), x, y);
+}
+
+static gboolean
+fullscreen (gpointer data)
+{
+   gtk_window_fullscreen(data);
+
+   return FALSE;
+}
+
+static void
 gb_source_pane_fullscreen (GbWorkspacePane *pane)
 {
    PangoFontDescription *font;
@@ -690,8 +718,13 @@ gb_source_pane_fullscreen (GbWorkspacePane *pane)
 
    gtk_container_add(GTK_CONTAINER(container), source_view);
 
+   place_over(window, priv->scroller);
+
+   gtk_window_set_decorated(GTK_WINDOW(window), FALSE);
+
    gtk_window_present(GTK_WINDOW(window));
-   gtk_window_fullscreen(GTK_WINDOW(window));
+
+   g_timeout_add(100, fullscreen, window);
 }
 
 static void
