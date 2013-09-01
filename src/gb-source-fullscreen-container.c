@@ -17,6 +17,7 @@
  */
 
 #include <gtksourceview/gtksourcebuffer.h>
+#include <gtksourceview/gtksourcegutter.h>
 #include <gtksourceview/gtksourcestyle.h>
 #include <gtksourceview/gtksourcestylescheme.h>
 #include <gtksourceview/gtksourceview.h>
@@ -44,11 +45,13 @@ get_text_width (GbSourceFullscreenContainer *container)
    GbSourceFullscreenContainerPrivate *priv = container->priv;
    PangoFontDescription *font;
    GtkStyleContext *context;
+   GtkSourceGutter *gutter;
+   GdkWindow *window;
    gboolean show_right_margin;
    GString *str;
    gint right_margin_pos;
    gint i;
-   gint margin;
+   gint margin = 0;
    gint width = 0;
 
    if (!priv->layout || !priv->source_view) {
@@ -79,7 +82,12 @@ get_text_width (GbSourceFullscreenContainer *container)
    g_string_free(str, TRUE);
 
    pango_layout_get_pixel_size(priv->layout, &width, NULL);
-   margin = gtk_text_view_get_left_margin(GTK_TEXT_VIEW(priv->source_view));
+
+   gutter = gtk_source_view_get_gutter(GTK_SOURCE_VIEW(priv->source_view),
+                                       GTK_TEXT_WINDOW_LEFT);
+   if ((window = gtk_source_gutter_get_window(gutter))) {
+      margin = gdk_window_get_width(window);
+   }
 
    return MAX(0, width + margin);
 }
@@ -248,7 +256,7 @@ gb_source_fullscreen_container_size_allocate (GtkWidget     *widget,
       return;
    }
 
-   width_request = MAX ((alloc->width - text_width) / 2, 0);
+   width_request = MAX((alloc->width - text_width) / 2, 0);
    g_object_get(priv->spacer,
                 "width-request", &cur_width,
                 NULL);
