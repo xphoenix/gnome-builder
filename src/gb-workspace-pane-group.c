@@ -91,6 +91,23 @@ gb_workspace_pane_group_notify_can_save (GbWorkspacePane      *pane,
    }
 }
 
+static gboolean
+event_button_press (GtkWidget            *widget,
+                    GdkEventButton       *button,
+                    GbWorkspacePaneGroup *group)
+{
+   GbWorkspacePane *pane;
+
+   if (button->type == GDK_2BUTTON_PRESS) {
+      pane = g_object_get_data(G_OBJECT(widget), "pane");
+      if (GB_IS_WORKSPACE_PANE(pane)) {
+         gb_workspace_pane_fullscreen(pane);
+      }
+   }
+
+   return FALSE;
+}
+
 static GbWorkspacePane *
 gb_workspace_pane_group_get_current_pane (GbWorkspacePaneGroup *group)
 {
@@ -211,6 +228,7 @@ gb_workspace_pane_group_add (GtkContainer *container,
                            "visible", TRUE,
                            "visible-window", FALSE,
                            NULL);
+      g_object_set_data(G_OBJECT(event), "pane", child);
       gtk_drag_source_set(event,
                           GDK_BUTTON1_MASK,
                           drag_targets,
@@ -246,6 +264,18 @@ gb_workspace_pane_group_add (GtkContainer *container,
                              G_BINDING_SYNC_CREATE);
       gtk_container_add(GTK_CONTAINER(hbox), label);
 
+      event = g_object_new(GTK_TYPE_EVENT_BOX,
+                           "above-child", TRUE,
+                           "hexpand", TRUE,
+                           "visible", TRUE,
+                           "visible-window", FALSE,
+                           NULL);
+      g_object_set_data(G_OBJECT(event), "pane", child);
+      g_signal_connect(event, "button-press-event",
+                       G_CALLBACK(event_button_press),
+                       group);
+      gtk_container_add(GTK_CONTAINER(hbox), event);
+
       label = g_object_new(GTK_TYPE_LABEL,
                            "ellipsize", PANGO_ELLIPSIZE_START,
                            "hexpand", TRUE,
@@ -259,7 +289,7 @@ gb_workspace_pane_group_add (GtkContainer *container,
                            NULL);
       g_object_bind_property(child, "title", label, "label",
                              G_BINDING_SYNC_CREATE);
-      gtk_container_add(GTK_CONTAINER(hbox), label);
+      gtk_container_add(GTK_CONTAINER(event), label);
 
       close_button = g_object_new(GTK_TYPE_BUTTON,
                                   "hexpand", FALSE,
