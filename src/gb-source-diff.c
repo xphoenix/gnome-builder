@@ -23,7 +23,7 @@
 
 G_DEFINE_TYPE(GbSourceDiff, gb_source_diff, G_TYPE_OBJECT)
 
-#define DEFAULT_TIMEOUT_MSEC 500
+#define DEFAULT_TIMEOUT_MSEC 300
 
 struct _GbSourceDiffPrivate
 {
