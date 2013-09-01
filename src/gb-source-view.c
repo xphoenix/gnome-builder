@@ -17,6 +17,7 @@
  */
 
 #include <glib/gi18n.h>
+#include <gtksourceview/gtksourcestyleschememanager.h>
 
 #include "gb-source-state.h"
 #include "gb-source-view.h"
