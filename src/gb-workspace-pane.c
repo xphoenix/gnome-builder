@@ -25,6 +25,7 @@ G_DEFINE_TYPE(GbWorkspacePane, gb_workspace_pane, GTK_TYPE_GRID)
 
 struct _GbWorkspacePanePrivate
 {
+   gboolean  can_fullscreen;
    gboolean  can_save;
    gboolean  busy;
    gchar    *icon_name;
@@ -36,6 +37,7 @@ enum
 {
    PROP_0,
    PROP_BUSY,
+   PROP_CAN_FULLSCREEN,
    PROP_CAN_SAVE,
    PROP_ICON_NAME,
    PROP_TITLE,
@@ -70,6 +72,21 @@ gb_workspace_pane_close (GbWorkspacePane *pane)
 }
 
 void
+gb_workspace_pane_fullscreen (GbWorkspacePane *pane)
+{
+   GbWorkspacePaneClass *klass;
+
+   g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
+
+   if (pane->priv->can_fullscreen) {
+      klass = GB_WORKSPACE_PANE_GET_CLASS(pane);
+      if (klass->fullscreen) {
+         klass->fullscreen(pane);
+      }
+   }
+}
+
+void
 gb_workspace_pane_set_icon_name (GbWorkspacePane *pane,
                                  const gchar     *icon_name)
 {
@@ -96,6 +113,26 @@ gb_workspace_pane_set_uri (GbWorkspacePane *pane,
    g_free(pane->priv->uri);
    pane->priv->uri = g_strdup(uri);
    g_object_notify_by_pspec(G_OBJECT(pane), gParamSpecs[PROP_URI]);
+}
+
+gboolean
+gb_workspace_pane_get_can_fullscreen (GbWorkspacePane *pane)
+{
+   g_return_val_if_fail(GB_IS_WORKSPACE_PANE(pane), FALSE);
+   return pane->priv->can_fullscreen;
+}
+
+void
+gb_workspace_pane_set_can_fullscreen (GbWorkspacePane *pane,
+                                      gboolean         can_fullscreen)
+{
+   g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
+
+   if (pane->priv->can_fullscreen != can_fullscreen) {
+      pane->priv->can_fullscreen = can_fullscreen;
+      g_object_notify_by_pspec(G_OBJECT(pane),
+                               gParamSpecs[PROP_CAN_FULLSCREEN]);
+   }
 }
 
 gboolean
@@ -223,6 +260,9 @@ gb_workspace_pane_get_property (GObject    *object,
    case PROP_BUSY:
       g_value_set_boolean(value, gb_workspace_pane_get_busy(pane));
       break;
+   case PROP_CAN_FULLSCREEN:
+      g_value_set_boolean(value, gb_workspace_pane_get_can_fullscreen(pane));
+      break;
    case PROP_CAN_SAVE:
       g_value_set_boolean(value, gb_workspace_pane_get_can_save(pane));
       break;
@@ -251,6 +291,9 @@ gb_workspace_pane_set_property (GObject      *object,
    switch (prop_id) {
    case PROP_BUSY:
       gb_workspace_pane_set_busy(pane, g_value_get_boolean(value));
+      break;
+   case PROP_CAN_FULLSCREEN:
+      gb_workspace_pane_set_can_fullscreen(pane, g_value_get_boolean(value));
       break;
    case PROP_CAN_SAVE:
       gb_workspace_pane_set_can_save(pane, g_value_get_boolean(value));
@@ -289,14 +332,14 @@ gb_workspace_pane_class_init (GbWorkspacePaneClass *klass)
    g_object_class_install_property(object_class, PROP_BUSY,
                                    gParamSpecs[PROP_BUSY]);
 
-   gParamSpecs[PROP_ICON_NAME] =
-      g_param_spec_string("icon-name",
-                          _("Icon Name"),
-                          _("The name of the icon to display."),
-                          NULL,
+   gParamSpecs[PROP_CAN_FULLSCREEN] =
+      g_param_spec_boolean("can-fullscreen",
+                          _("Can Fullscreen"),
+                          _("If the widget can fullscreen."),
+                          FALSE,
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-   g_object_class_install_property(object_class, PROP_ICON_NAME,
-                                   gParamSpecs[PROP_ICON_NAME]);
+   g_object_class_install_property(object_class, PROP_CAN_FULLSCREEN,
+                                   gParamSpecs[PROP_CAN_FULLSCREEN]);
 
    gParamSpecs[PROP_CAN_SAVE] =
       g_param_spec_boolean("can-save",
@@ -306,6 +349,15 @@ gb_workspace_pane_class_init (GbWorkspacePaneClass *klass)
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_CAN_SAVE,
                                    gParamSpecs[PROP_CAN_SAVE]);
+
+   gParamSpecs[PROP_ICON_NAME] =
+      g_param_spec_string("icon-name",
+                          _("Icon Name"),
+                          _("The name of the icon to display."),
+                          NULL,
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_ICON_NAME,
+                                   gParamSpecs[PROP_ICON_NAME]);
 
    gParamSpecs[PROP_TITLE] =
       g_param_spec_string("title",

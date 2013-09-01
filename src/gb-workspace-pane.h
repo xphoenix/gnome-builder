@@ -54,10 +54,16 @@ struct _GbWorkspacePaneClass
    gboolean (*save_finish) (GbWorkspacePane      *pane,
                             GAsyncResult         *result,
                             GError              **error);
+
+   void     (*fullscreen)  (GbWorkspacePane      *pane);
+
+   gpointer padding[32];
 };
 
 void         gb_workspace_pane_close              (GbWorkspacePane      *pane);
+void         gb_workspace_pane_fullscreen         (GbWorkspacePane      *pane);
 gboolean     gb_workspace_pane_get_busy           (GbWorkspacePane      *pane);
+gboolean     gb_workspace_pane_get_can_fullscreen (GbWorkspacePane      *pane);
 gboolean     gb_workspace_pane_get_can_save       (GbWorkspacePane      *pane);
 const gchar *gb_workspace_pane_get_icon_name      (GbWorkspacePane      *pane);
 const gchar *gb_workspace_pane_get_title          (GbWorkspacePane      *pane);
@@ -65,6 +71,8 @@ GType        gb_workspace_pane_get_type           (void) G_GNUC_CONST;
 const gchar *gb_workspace_pane_get_uri            (GbWorkspacePane      *pane);
 void         gb_workspace_pane_set_busy           (GbWorkspacePane      *pane,
                                                    gboolean              busy);
+void         gb_workspace_pane_set_can_fullscreen (GbWorkspacePane      *pane,
+                                                   gboolean              can_fullscreen);
 void         gb_workspace_pane_set_can_save       (GbWorkspacePane      *pane,
                                                    gboolean              can_save);
 void         gb_workspace_pane_set_icon_name      (GbWorkspacePane      *pane,
