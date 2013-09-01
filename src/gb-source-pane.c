@@ -21,6 +21,7 @@
 #include <nautilus/nautilus-floating-bar.h>
 
 #include "gb-animation.h"
+#include "gb-source-fullscreen-container.h"
 #include "gb-search-provider.h"
 #include "gb-source-diff.h"
 #include "gb-source-gutter-renderer-compiler.h"
@@ -55,6 +56,8 @@ struct _GbSourcePanePrivate
    GtkWidget *search_bar;
    GtkWidget *search_entry;
    GtkWidget *view;
+
+   GtkSourceBuffer *buffer;
 
    GtkSourceSearchContext  *search_context;
    GtkSourceSearchSettings *search_settings;
@@ -618,10 +621,85 @@ gb_source_pane_zoom_out (GbZoomable *zoomable)
 }
 
 static void
+setup_source_view (GbSourcePane  *pane,
+                   GtkSourceView *source_view)
+{
+   GtkSourceGutterRenderer *renderer;
+   PangoFontDescription *font;
+   GbSourcePanePrivate *priv;
+   GtkSourceGutter *gutter;
+
+   priv = pane->priv;
+
+   g_object_set(source_view,
+                "buffer", priv->buffer,
+                "show-line-numbers", TRUE,
+                "show-right-margin", TRUE,
+                "right-margin-position", 80,
+                NULL);
+
+   gutter = gtk_source_view_get_gutter(source_view,
+                                       GTK_TEXT_WINDOW_LEFT);
+
+   renderer = g_object_new(GB_TYPE_SOURCE_GUTTER_RENDERER_COMPILER, NULL);
+   gtk_source_gutter_renderer_set_padding(renderer, 2, 1);
+   gtk_source_gutter_renderer_set_size(renderer, 14);
+   gtk_source_gutter_insert(gutter, renderer, -30);
+
+   renderer = g_object_new(GB_TYPE_SOURCE_GUTTER_RENDERER_DIFF,
+                           "diff", priv->diff,
+                           NULL);
+   gtk_source_gutter_renderer_set_size(renderer, 2);
+   gtk_source_gutter_renderer_set_padding(renderer, 2, 0);
+   gtk_source_gutter_insert(gutter, renderer, -10);
+
+   font = pango_font_description_from_string("Monospace");
+   gtk_widget_override_font(GTK_WIDGET(source_view), font);
+   pango_font_description_free(font);
+}
+
+static void
+gb_source_pane_fullscreen (GbWorkspacePane *pane)
+{
+   PangoFontDescription *font;
+   GbSourcePanePrivate *priv;
+   GtkStyleContext *context;
+   const gchar *uri;
+   GtkWidget *container;
+   GtkWidget *source_view;
+   GtkWidget *window;
+
+   priv = GB_SOURCE_PANE(pane)->priv;
+
+   uri = gb_workspace_pane_get_uri(pane);
+
+   window = g_object_new(GTK_TYPE_WINDOW,
+                         "title", uri,
+                         NULL);
+
+   container = g_object_new(GB_TYPE_SOURCE_FULLSCREEN_CONTAINER,
+                            "visible", TRUE,
+                            NULL);
+   gtk_container_add(GTK_CONTAINER(window), container);
+
+   source_view = g_object_new(GB_TYPE_SOURCE_VIEW,
+                              "visible", TRUE,
+                              NULL);
+
+   setup_source_view(GB_SOURCE_PANE(pane), GTK_SOURCE_VIEW(source_view));
+
+   gtk_container_add(GTK_CONTAINER(container), source_view);
+
+   gtk_window_present(GTK_WINDOW(window));
+   gtk_window_fullscreen(GTK_WINDOW(window));
+}
+
+static void
 gb_source_pane_finalize (GObject *object)
 {
    GbSourcePanePrivate *priv = GB_SOURCE_PANE(object)->priv;
 
+   g_clear_object(&priv->buffer);
    g_clear_object(&priv->file);
    g_clear_object(&priv->diff);
    g_clear_object(&priv->search_context);
@@ -684,6 +762,7 @@ gb_source_pane_class_init (GbSourcePaneClass *klass)
    workspace_pane_class = GB_WORKSPACE_PANE_CLASS(klass);
    workspace_pane_class->save_async = gb_source_pane_save_async;
    workspace_pane_class->save_finish = gb_source_pane_save_finish;
+   workspace_pane_class->fullscreen = gb_source_pane_fullscreen;
 
    gParamSpecs[PROP_FILE] =
       g_param_spec_object("file",
@@ -700,7 +779,6 @@ gb_source_pane_init (GbSourcePane *pane)
 {
    GtkSourceGutterRenderer *renderer;
    GbSourcePanePrivate *priv;
-   GtkSourceBuffer *buffer;
    GtkSourceGutter *gutter;
 
    pane->priv = G_TYPE_INSTANCE_GET_PRIVATE(pane,
@@ -710,6 +788,7 @@ gb_source_pane_init (GbSourcePane *pane)
    priv = pane->priv;
 
    g_object_set(pane,
+                "can-fullscreen", TRUE,
                 "icon-name", "text-x-generic",
                 "title", _("Unnamed File"),
                 NULL);
@@ -766,13 +845,13 @@ gb_source_pane_init (GbSourcePane *pane)
                                  NULL);
    gtk_container_add(GTK_CONTAINER(priv->overlay), priv->scroller);
 
-   buffer = gtk_source_buffer_new(NULL);
-   g_signal_connect_swapped(buffer,
+   priv->buffer = gtk_source_buffer_new(NULL);
+   g_signal_connect_swapped(priv->buffer,
                             "modified-changed",
                             G_CALLBACK(gb_source_pane_emit_modified_changed),
                             pane);
    priv->view = g_object_new(GB_TYPE_SOURCE_VIEW,
-                             "buffer", buffer,
+                             "buffer", priv->buffer,
                              "visible", TRUE,
                              NULL);
    g_object_add_weak_pointer(G_OBJECT(priv->view), (gpointer *)&priv->view);
@@ -780,9 +859,10 @@ gb_source_pane_init (GbSourcePane *pane)
                     G_CALLBACK(gb_source_pane_view_key_press),
                     pane);
    gtk_container_add(GTK_CONTAINER(priv->scroller), priv->view);
-   g_object_unref(buffer);
 
-   priv->diff = gb_source_diff_new(NULL, GTK_TEXT_BUFFER(buffer));
+   priv->diff = gb_source_diff_new(NULL, GTK_TEXT_BUFFER(priv->buffer));
+
+   setup_source_view(pane, GTK_SOURCE_VIEW(priv->view));
 
    priv->search_settings = g_object_new(GTK_SOURCE_TYPE_SEARCH_SETTINGS,
                                         "search-text", NULL,
@@ -790,7 +870,7 @@ gb_source_pane_init (GbSourcePane *pane)
                                         NULL);
 
    priv->search_context = g_object_new(GTK_SOURCE_TYPE_SEARCH_CONTEXT,
-                                       "buffer", buffer,
+                                       "buffer", priv->buffer,
                                        "highlight", TRUE,
                                        "settings", priv->search_settings,
                                        NULL);
@@ -816,34 +896,19 @@ gb_source_pane_init (GbSourcePane *pane)
       gtk_widget_set_halign(priv->ruler, GTK_ALIGN_START);
    }
 
-   gutter = gtk_source_view_get_gutter(GTK_SOURCE_VIEW(priv->view),
-                                       GTK_TEXT_WINDOW_LEFT);
-
-   renderer = g_object_new(GB_TYPE_SOURCE_GUTTER_RENDERER_COMPILER, NULL);
-   gtk_source_gutter_renderer_set_padding(renderer, 2, 1);
-   gtk_source_gutter_renderer_set_size(renderer, 14);
-   gtk_source_gutter_insert(gutter, renderer, -30);
-
-   renderer = g_object_new(GB_TYPE_SOURCE_GUTTER_RENDERER_DIFF,
-                           "diff", priv->diff,
-                           NULL);
-   gtk_source_gutter_renderer_set_size(renderer, 2);
-   gtk_source_gutter_renderer_set_padding(renderer, 2, 0);
-   gtk_source_gutter_insert(gutter, renderer, -10);
-
    gb_source_pane_load_scheme(pane);
 
    pane->priv->insert_text_handler =
-      g_signal_connect_after(buffer, "insert-text",
+      g_signal_connect_after(priv->buffer, "insert-text",
                              G_CALLBACK(on_insert_text), pane);
 
    pane->priv->delete_range_handler =
-      g_signal_connect_after(buffer, "delete-range",
+      g_signal_connect_after(priv->buffer, "delete-range",
                              G_CALLBACK(on_delete_range), pane);
 
    pane->priv->mark_set_handler =
-      g_signal_connect_after(buffer, "mark-set", G_CALLBACK(on_mark_set),
-                             pane);
+      g_signal_connect_after(priv->buffer, "mark-set",
+                             G_CALLBACK(on_mark_set), pane);
 }
 
 static void
