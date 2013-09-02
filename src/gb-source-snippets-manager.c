@@ -129,6 +129,7 @@ gb_source_snippets_manager_get_for_language (GbSourceSnippetsManager *manager,
                                              GtkSourceLanguage       *language)
 {
    GbSourceSnippetsManagerPrivate *priv;
+   GbSourceSnippets *snippets;
    const char *language_id;
 
    g_return_val_if_fail(GB_IS_SOURCE_SNIPPETS_MANAGER(manager), NULL);
@@ -137,14 +138,20 @@ gb_source_snippets_manager_get_for_language (GbSourceSnippetsManager *manager,
    priv = manager->priv;
 
    language_id = gtk_source_language_get_id(language);
-   return g_hash_table_lookup(priv->by_language_id, language_id);
+   snippets = g_hash_table_lookup(priv->by_language_id, language_id);
+
+   if (!snippets && g_str_equal(language_id, "chdr")) {
+      snippets = g_hash_table_lookup(priv->by_language_id, "c");
+   }
+
+   return snippets;
 }
 
 static void
 gb_source_snippets_manager_finalize (GObject *object)
 {
    GbSourceSnippetsManagerPrivate *priv;
-   
+
    priv = GB_SOURCE_SNIPPETS_MANAGER(object)->priv;
 
    g_clear_pointer(&priv->by_language_id, g_hash_table_unref);
