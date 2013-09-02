@@ -157,7 +157,7 @@ gb_source_snippet_move_next (GbSourceSnippet *snippet)
 
    gb_source_snippet_chunk_select(chunk);
 
-   return TRUE;
+   return (priv->tab_stop != max_tab_stop);
 }
 
 gboolean
