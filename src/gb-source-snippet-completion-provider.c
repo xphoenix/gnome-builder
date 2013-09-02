@@ -285,9 +285,29 @@ provider_populate (GtkSourceCompletionProvider *provider,
    g_free(state.word);
 }
 
+static gboolean
+provider_activate_proposal (GtkSourceCompletionProvider *provider,
+                            GtkSourceCompletionProposal *proposal,
+                            GtkTextIter                 *iter)
+{
+   GbSourceSnippetCompletionItem *item;
+   GbSourceSnippet *snippet;
+
+   item = GB_SOURCE_SNIPPET_COMPLETION_ITEM(proposal);
+   snippet = gb_source_snippet_completion_item_get_snippet(item);
+
+   if (snippet) {
+      g_printerr("TODO: Insert snippet into source view.\n");
+      return TRUE;
+   }
+
+   return FALSE;
+}
+
 static void
 init_provider (GtkSourceCompletionProviderIface *iface)
 {
+   iface->activate_proposal = provider_activate_proposal;
    iface->get_icon = provider_get_icon;
    iface->get_interactive_delay = provider_get_interactive_delay;
    iface->get_name = provider_get_name;
