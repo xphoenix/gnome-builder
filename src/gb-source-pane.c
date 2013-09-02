@@ -28,6 +28,9 @@
 #include "gb-source-gutter-renderer-diff.h"
 #include "gb-source-overlay.h"
 #include "gb-source-pane.h"
+#include "gb-source-snippet.h"
+#include "gb-source-snippet-completion-provider.h"
+#include "gb-source-snippets.h"
 #include "gb-source-view.h"
 #include "gb-zoomable.h"
 
@@ -47,6 +50,8 @@ struct _GbSourcePanePrivate
 {
    GFile        *file;
    GbSourceDiff *diff;
+
+   GbSourceSnippets *snippets;
 
    GtkWidget *highlight;
    GtkWidget *overlay;
@@ -620,14 +625,29 @@ gb_source_pane_zoom_out (GbZoomable *zoomable)
    gb_source_pane_zoom_by(GB_SOURCE_PANE(zoomable), PANGO_SCALE_SMALL);
 }
 
+static GtkSourceCompletionProvider *
+make_snippet_provider (GbSourcePane *pane)
+{
+   GtkSourceCompletionProvider *provider;
+
+   provider = g_object_new(GB_TYPE_SOURCE_SNIPPET_COMPLETION_PROVIDER,
+                           "snippets", pane->priv->snippets,
+                           NULL);
+
+   return provider;
+}
+
 static void
 setup_source_view (GbSourcePane  *pane,
                    GtkSourceView *source_view)
 {
+   GtkSourceCompletionProvider *provider;
    GtkSourceGutterRenderer *renderer;
    PangoFontDescription *font;
+   GtkSourceCompletion *completion;
    GbSourcePanePrivate *priv;
    GtkSourceGutter *gutter;
+   GError *error = NULL;
 
    priv = pane->priv;
 
@@ -637,6 +657,19 @@ setup_source_view (GbSourcePane  *pane,
                 "show-right-margin", TRUE,
                 "right-margin-position", 80,
                 NULL);
+
+   provider = make_snippet_provider(pane);
+   completion = gtk_source_view_get_completion(source_view);
+
+   g_object_set(completion,
+                "show-headers", FALSE,
+                NULL);
+
+   if (!gtk_source_completion_add_provider(completion, provider, &error)) {
+      g_warning("%s", error->message);
+      g_error_free(error);
+      g_object_unref(provider);
+   }
 
    gutter = gtk_source_view_get_gutter(source_view,
                                        GTK_TEXT_WINDOW_LEFT);
