@@ -69,6 +69,7 @@ parse_state_commit (ParseState       *state,
 {
    GbSourceSnippetsPrivate *priv;
    GbSourceSnippet *snippet;
+   GList *iter;
 
    g_assert(snippets);
    g_assert(state);
@@ -78,7 +79,9 @@ parse_state_commit (ParseState       *state,
 
    if (!g_queue_is_empty(state->chunks)) {
       snippet = gb_source_snippet_new(state->name);
-      gb_source_snippet_append_chunks(snippet, state->chunks->head);
+      for (iter = state->chunks->head; iter; iter = iter->next) {
+         gb_source_snippet_add_chunk(snippet, iter->data);
+      }
       g_hash_table_replace(priv->snippets,
                            g_strdup(state->name),
                            snippet);

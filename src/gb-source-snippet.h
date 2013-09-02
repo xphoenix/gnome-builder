@@ -19,7 +19,7 @@
 #ifndef GB_SOURCE_SNIPPET_H
 #define GB_SOURCE_SNIPPET_H
 
-#include <glib-object.h>
+#include <gtk/gtk.h>
 
 #include "gb-source-snippet-chunk.h"
 
@@ -50,13 +50,35 @@ struct _GbSourceSnippetClass
    GObjectClass parent_class;
 };
 
-void             gb_source_snippet_append_chunks (GbSourceSnippet *snippet,
-                                                  GList           *chunks);
-GType            gb_source_snippet_get_type      (void) G_GNUC_CONST;
-const gchar     *gb_source_snippet_get_trigger   (GbSourceSnippet *snippet);
-GbSourceSnippet *gb_source_snippet_new           (const gchar     *trigger);
-void             gb_source_snippet_set_trigger   (GbSourceSnippet *snippet,
-                                                  const gchar     *trigger);
+GbSourceSnippet *gb_source_snippet_new            (const gchar          *trigger);
+void             gb_source_snippet_add_chunk      (GbSourceSnippet      *snippet,
+                                                   GbSourceSnippetChunk *chunk);
+void             gb_source_snippet_draw           (GbSourceSnippet      *snippet,
+                                                   GtkWidget            *widget,
+                                                   cairo_t              *cr);
+void             gb_source_snippet_finish         (GbSourceSnippet      *snippet);
+const gchar     *gb_source_snippet_get_trigger    (GbSourceSnippet      *snippet);
+void             gb_source_snippet_set_trigger    (GbSourceSnippet      *snippet,
+                                                   const gchar          *trigger);
+GtkTextMark     *gb_source_snippet_get_mark_begin (GbSourceSnippet      *snippet);
+GtkTextMark     *gb_source_snippet_get_mark_end   (GbSourceSnippet      *snippet);
+GType            gb_source_snippet_get_type       (void) G_GNUC_CONST;
+void             gb_source_snippet_insert         (GbSourceSnippet      *snippet,
+                                                   GtkTextBuffer        *buffer,
+                                                   GtkTextIter          *location);
+gboolean         gb_source_snippet_move_next      (GbSourceSnippet      *snippet);
+gboolean         gb_source_snippet_move_previous  (GbSourceSnippet      *snippet);
+void             gb_source_snippet_remove         (GbSourceSnippet      *snippet);
+GbSourceSnippet *gb_source_snippet_copy           (GbSourceSnippet      *snippet);
+void             gb_source_snippet_insert_text    (GbSourceSnippet      *snippet,
+                                                   GtkTextBuffer        *buffer,
+                                                   GtkTextIter          *location,
+                                                   const gchar          *text,
+                                                   guint                 length);
+void             gb_source_snippet_delete_range   (GbSourceSnippet      *snippet,
+                                                   GtkTextBuffer        *buffer,
+                                                   GtkTextIter          *begin,
+                                                   GtkTextIter          *end);
 
 G_END_DECLS
 
