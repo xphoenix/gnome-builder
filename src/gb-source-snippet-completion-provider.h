@@ -22,6 +22,7 @@
 #include <gtksourceview/gtksourcecompletionprovider.h>
 
 #include "gb-source-snippets.h"
+#include "gb-source-view.h"
 
 G_BEGIN_DECLS
 
@@ -51,7 +52,8 @@ struct _GbSourceSnippetCompletionProviderClass
 };
 
 GType                        gb_source_snippet_completion_provider_get_type (void) G_GNUC_CONST;
-GtkSourceCompletionProvider *gb_source_snippet_completion_provider_new      (GbSourceSnippets *snippets);
+GtkSourceCompletionProvider *gb_source_snippet_completion_provider_new      (GbSourceView     *source_view,
+                                                                             GbSourceSnippets *snippets);
 
 G_END_DECLS
 

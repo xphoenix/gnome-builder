@@ -52,8 +52,7 @@ struct _GbSourcePanePrivate
    GFile        *file;
    GbSourceDiff *diff;
 
-   GbSourceSnippets            *snippets;
-   GtkSourceCompletionProvider *snippets_provider;
+   GbSourceSnippets *snippets;
 
    GtkWidget *highlight;
    GtkWidget *overlay;
@@ -279,13 +278,10 @@ gb_source_pane_reload_snippets (GbSourcePane      *pane,
    manager = gb_source_snippets_manager_get_default();
 
    if (language) {
-      snippets = gb_source_snippets_manager_get_for_language(manager,
-                                                             language);
+      snippets = gb_source_snippets_manager_get_for_language(manager, language);
+      gb_source_snippets_clear(pane->priv->snippets);
+      gb_source_snippets_merge(pane->priv->snippets, snippets);
    }
-
-   g_object_set(pane->priv->snippets_provider,
-                "snippets", snippets,
-                NULL);
 }
 
 static void
@@ -674,6 +670,7 @@ static void
 setup_source_view (GbSourcePane  *pane,
                    GtkSourceView *source_view)
 {
+   GtkSourceCompletionProvider *provider;
    GtkSourceGutterRenderer *renderer;
    PangoFontDescription *font;
    GtkSourceCompletion *completion;
@@ -695,9 +692,11 @@ setup_source_view (GbSourcePane  *pane,
                 "show-headers", FALSE,
                 NULL);
 
-   gtk_source_completion_add_provider(completion,
-                                      priv->snippets_provider,
-                                      NULL);
+   provider = gb_source_snippet_completion_provider_new(
+         GB_SOURCE_VIEW(source_view),
+         priv->snippets);
+   gtk_source_completion_add_provider(completion, provider, NULL);
+   g_object_unref(provider);
 
    gutter = gtk_source_view_get_gutter(source_view,
                                        GTK_TEXT_WINDOW_LEFT);
@@ -799,7 +798,6 @@ gb_source_pane_finalize (GObject *object)
    g_clear_object(&priv->search_context);
    g_clear_object(&priv->search_settings);
    g_clear_object(&priv->snippets);
-   g_clear_object(&priv->snippets_provider);
 
    G_OBJECT_CLASS(gb_source_pane_parent_class)->finalize(object);
 }
@@ -889,7 +887,7 @@ gb_source_pane_init (GbSourcePane *pane)
                 "title", _("Unnamed File"),
                 NULL);
 
-   priv->snippets_provider = gb_source_snippet_completion_provider_new(NULL);
+   priv->snippets = gb_source_snippets_new();
 
    priv->search_bar = g_object_new(GTK_TYPE_SEARCH_BAR,
                                    "show-close-button", FALSE,

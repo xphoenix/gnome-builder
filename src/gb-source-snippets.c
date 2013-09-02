@@ -45,6 +45,32 @@ gb_source_snippets_clear (GbSourceSnippets *snippets)
 }
 
 static void
+copy_into (gpointer key,
+           gpointer value,
+           gpointer user_data)
+{
+   GHashTable *ht = user_data;
+   GbSourceSnippet *snippet = value;
+
+   g_assert(ht);
+   g_assert(GB_IS_SOURCE_SNIPPET(snippet));
+
+   g_hash_table_insert(user_data, g_strdup(key), g_object_ref(snippet));
+}
+
+void
+gb_source_snippets_merge (GbSourceSnippets *snippets,
+                          GbSourceSnippets *other)
+{
+   g_return_if_fail(GB_IS_SOURCE_SNIPPETS(snippets));
+   g_return_if_fail(GB_IS_SOURCE_SNIPPETS(other));
+
+   g_hash_table_foreach(other->priv->snippets,
+                        copy_into,
+                        snippets->priv->snippets);
+}
+
+static void
 on_snippet_parsed (GbSourceSnippet *snippet,
                    gpointer         user_data)
 {

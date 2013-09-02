@@ -21,6 +21,7 @@
 
 #include "gb-source-snippet-completion-item.h"
 #include "gb-source-snippet-completion-provider.h"
+#include "gb-source-view-state-snippet.h"
 
 static void init_provider (GtkSourceCompletionProviderIface *iface);
 
@@ -33,6 +34,7 @@ G_DEFINE_TYPE_EXTENDED(GbSourceSnippetCompletionProvider,
 
 struct _GbSourceSnippetCompletionProviderPrivate
 {
+   GbSourceView     *source_view;
    GbSourceSnippets *snippets;
 };
 
@@ -47,15 +49,18 @@ enum
 {
    PROP_0,
    PROP_SNIPPETS,
+   PROP_SOURCE_VIEW,
    LAST_PROP
 };
 
 static GParamSpec *gParamSpecs[LAST_PROP];
 
 GtkSourceCompletionProvider *
-gb_source_snippet_completion_provider_new (GbSourceSnippets *snippets)
+gb_source_snippet_completion_provider_new (GbSourceView     *source_view,
+                                           GbSourceSnippets *snippets)
 {
    g_object_new(GB_TYPE_SOURCE_SNIPPET_COMPLETION_PROVIDER,
+                "source-view", source_view,
                 "snippets", snippets,
                 NULL);
 }
@@ -88,6 +93,11 @@ gb_source_snippet_completion_provider_finalize (GObject *object)
 
    g_clear_object(&priv->snippets);
 
+   if (priv->source_view) {
+      g_object_remove_weak_pointer(G_OBJECT(priv->source_view),
+                                   (gpointer *)&priv->source_view);
+   }
+
    G_OBJECT_CLASS(gb_source_snippet_completion_provider_parent_class)->finalize(object);
 }
 
@@ -100,6 +110,9 @@ gb_source_snippet_completion_provider_get_property (GObject    *object,
    GbSourceSnippetCompletionProvider *provider = GB_SOURCE_SNIPPET_COMPLETION_PROVIDER(object);
 
    switch (prop_id) {
+   case PROP_SOURCE_VIEW:
+      g_value_set_object(value, provider->priv->source_view);
+      break;
    case PROP_SNIPPETS:
       g_value_set_object(value, gb_source_snippet_completion_provider_get_snippets(provider));
       break;
@@ -117,6 +130,17 @@ gb_source_snippet_completion_provider_set_property (GObject      *object,
    GbSourceSnippetCompletionProvider *provider = GB_SOURCE_SNIPPET_COMPLETION_PROVIDER(object);
 
    switch (prop_id) {
+   case PROP_SOURCE_VIEW:
+      if (provider->priv->source_view) {
+         g_object_remove_weak_pointer(G_OBJECT(provider->priv->source_view),
+                                      (gpointer *)&provider->priv->source_view);
+         provider->priv->source_view = NULL;
+      }
+      if ((provider->priv->source_view = g_value_get_object(value))) {
+         g_object_add_weak_pointer(G_OBJECT(provider->priv->source_view),
+                                   (gpointer *)&provider->priv->source_view);
+      }
+      break;
    case PROP_SNIPPETS:
       gb_source_snippet_completion_provider_set_snippets(provider, g_value_get_object(value));
       break;
@@ -135,6 +159,15 @@ gb_source_snippet_completion_provider_class_init (GbSourceSnippetCompletionProvi
    object_class->get_property = gb_source_snippet_completion_provider_get_property;
    object_class->set_property = gb_source_snippet_completion_provider_set_property;
    g_type_class_add_private(object_class, sizeof(GbSourceSnippetCompletionProviderPrivate));
+
+   gParamSpecs[PROP_SOURCE_VIEW] =
+      g_param_spec_object("source-view",
+                          _("Source View"),
+                          _("The source view to insert snippet into."),
+                          GB_TYPE_SOURCE_VIEW,
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_SOURCE_VIEW,
+                                   gParamSpecs[PROP_SOURCE_VIEW]);
 
    gParamSpecs[PROP_SNIPPETS] =
       g_param_spec_object("snippets",
@@ -290,15 +323,26 @@ provider_activate_proposal (GtkSourceCompletionProvider *provider,
                             GtkSourceCompletionProposal *proposal,
                             GtkTextIter                 *iter)
 {
+   GbSourceSnippetCompletionProviderPrivate *priv;
    GbSourceSnippetCompletionItem *item;
+   GbSourceViewState *state;
    GbSourceSnippet *snippet;
 
-   item = GB_SOURCE_SNIPPET_COMPLETION_ITEM(proposal);
-   snippet = gb_source_snippet_completion_item_get_snippet(item);
+   priv = GB_SOURCE_SNIPPET_COMPLETION_PROVIDER(provider)->priv;
 
-   if (snippet) {
-      g_printerr("TODO: Insert snippet into source view.\n");
-      return TRUE;
+   if (priv->source_view) {
+      item = GB_SOURCE_SNIPPET_COMPLETION_ITEM(proposal);
+      snippet = gb_source_snippet_completion_item_get_snippet(item);
+      if (snippet) {
+         snippet = gb_source_snippet_copy(snippet);
+         state = g_object_new(GB_TYPE_SOURCE_VIEW_STATE_SNIPPET,
+                              "snippet", snippet,
+                              NULL);
+         g_object_set(priv->source_view, "state", state, NULL);
+         g_object_unref(state);
+         g_object_unref(snippet);
+         return TRUE;
+      }
    }
 
    return FALSE;

@@ -19,14 +19,15 @@
 #include <glib/gi18n.h>
 #include <gtksourceview/gtksourcestyleschememanager.h>
 
-#include "gb-source-state.h"
 #include "gb-source-view.h"
+#include "gb-source-view-state.h"
+#include "gb-source-view-state-insert.h"
 
 G_DEFINE_TYPE(GbSourceView, gb_source_view, GTK_SOURCE_TYPE_VIEW)
 
 struct _GbSourceViewPrivate
 {
-   GbSourceState *state;
+   GbSourceViewState *state;
 };
 
 enum
@@ -38,7 +39,7 @@ enum
 
 static GParamSpec *gParamSpecs[LAST_PROP];
 
-GbSourceState *
+GbSourceViewState *
 gb_source_view_get_state (GbSourceView *view)
 {
    g_return_val_if_fail(GB_IS_SOURCE_VIEW(view), NULL);
@@ -46,14 +47,26 @@ gb_source_view_get_state (GbSourceView *view)
 }
 
 void
-gb_source_view_set_state (GbSourceView  *view,
-                          GbSourceState *state)
+gb_source_view_set_state (GbSourceView      *view,
+                          GbSourceViewState *state)
 {
-   g_return_if_fail(GB_IS_SOURCE_VIEW(view));
-   g_return_if_fail(!state || GB_IS_SOURCE_STATE(state));
+   GbSourceViewPrivate *priv;
 
-   g_clear_object(&view->priv->state);
-   view->priv->state = state ? g_object_ref(state) : NULL;
+   g_return_if_fail(GB_IS_SOURCE_VIEW(view));
+   g_return_if_fail(!state || GB_IS_SOURCE_VIEW_STATE(state));
+
+   priv = view->priv;
+
+   if (priv->state) {
+      gb_source_view_state_unload(priv->state, view);
+      g_clear_object(&priv->state);
+   }
+
+   if (state) {
+      priv->state = g_object_ref(state);
+      gb_source_view_state_load(priv->state, view);
+   }
+
    g_object_notify_by_pspec(G_OBJECT(view), gParamSpecs[PROP_STATE]);
 }
 
@@ -117,11 +130,9 @@ gb_source_view_class_init (GbSourceViewClass *klass)
    gParamSpecs[PROP_STATE] =
       g_param_spec_object("state",
                           _("State"),
-                          _("The state of the source view."),
-                          GB_TYPE_SOURCE_STATE,
-                          (G_PARAM_READWRITE |
-                           G_PARAM_STATIC_STRINGS |
-                           G_PARAM_CONSTRUCT));
+                          _("The current state machine state."),
+                          GB_TYPE_SOURCE_VIEW_STATE,
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_STATE,
                                    gParamSpecs[PROP_STATE]);
 
@@ -133,7 +144,13 @@ gb_source_view_class_init (GbSourceViewClass *klass)
 static void
 gb_source_view_init (GbSourceView *view)
 {
+   GbSourceViewState *state;
+
    view->priv = G_TYPE_INSTANCE_GET_PRIVATE(view,
                                             GB_TYPE_SOURCE_VIEW,
                                             GbSourceViewPrivate);
+
+   state = gb_source_view_state_insert_new();
+   gb_source_view_set_state(view, state);
+   g_object_unref(state);
 }
