@@ -105,10 +105,12 @@ gb_source_view_state_snippet_on_delete_range (GtkTextBuffer            *buffer,
     * If the entire snippet has been deleted, then lets abort and go back to
     * insert state.
     */
+
    g_object_get(priv->snippet,
                 "mark-begin", &mark_begin,
                 "mark-end", &mark_end,
                 NULL);
+
    if (mark_begin && mark_end) {
       gtk_text_buffer_get_iter_at_mark(buffer, &a, mark_begin);
       gtk_text_buffer_get_iter_at_mark(buffer, &b, mark_end);
@@ -117,16 +119,15 @@ gb_source_view_state_snippet_on_delete_range (GtkTextBuffer            *buffer,
          insert = gb_source_view_state_insert_new();
          g_object_set(view, "state", insert, NULL);
          g_object_unref(insert);
-         return;
+         goto cleanup;
       }
    }
+
+   gb_source_snippet_delete_range(state->priv->snippet, buffer, begin, end);
+
+cleanup:
    g_clear_object(&mark_begin);
    g_clear_object(&mark_end);
-
-   gb_source_snippet_delete_range(state->priv->snippet,
-                                       buffer,
-                                       begin,
-                                       end);
 }
 
 static gboolean
