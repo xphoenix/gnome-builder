@@ -77,7 +77,6 @@ parse_state_commit (ParseState       *state,
    priv = snippets->priv;
 
    if (!g_queue_is_empty(state->chunks)) {
-      g_print("Committing snippet: %s\n", state->name);
       snippet = gb_source_snippet_new(state->name);
       gb_source_snippet_append_chunks(snippet, state->chunks->head);
       g_hash_table_replace(priv->snippets,
