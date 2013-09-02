@@ -233,6 +233,10 @@ snippet_parser_do_part (SnippetParser *parser,
    g_assert(line);
    g_assert(*line == '\t');
 
+   if (parser->cur_text->len || parser->chunks) {
+      g_string_append(parser->cur_text, "\n");
+   }
+
    line++;
 
 again:
