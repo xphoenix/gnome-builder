@@ -464,12 +464,12 @@ gb_source_snippet_chunk_class_init (GbSourceSnippetChunkClass *klass)
 
    gParamSpecs[PROP_LINKED_CHUNK] =
       g_param_spec_int("linked-chunk",
-                          _("Linked Chunk"),
-                          _("A chunk index this is linked to."),
-                          -1,
-                          G_MAXINT,
-                          -1,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                       _("Linked Chunk"),
+                       _("A chunk index this is linked to."),
+                       -1,
+                       G_MAXINT,
+                       -1,
+                       (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_LINKED_CHUNK,
                                    gParamSpecs[PROP_LINKED_CHUNK]);
 
@@ -478,7 +478,7 @@ gb_source_snippet_chunk_class_init (GbSourceSnippetChunkClass *klass)
                           _("Mark Begin"),
                           _("The beginning of the snippet region."),
                           GTK_TYPE_TEXT_MARK,
-                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                          (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_MARK_BEGIN,
                                    gParamSpecs[PROP_MARK_BEGIN]);
 
@@ -487,27 +487,27 @@ gb_source_snippet_chunk_class_init (GbSourceSnippetChunkClass *klass)
                           _("Mark End"),
                           _("The endning of the snippet region."),
                           GTK_TYPE_TEXT_MARK,
-                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                          (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_MARK_END,
                                    gParamSpecs[PROP_MARK_END]);
 
    gParamSpecs[PROP_MODIFIED] =
       g_param_spec_boolean("modified",
-                          _("Modified"),
-                          _("If the chunk has been modified directly."),
-                          FALSE,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                           _("Modified"),
+                           _("If the chunk has been modified directly."),
+                           FALSE,
+                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_MODIFIED,
                                    gParamSpecs[PROP_MODIFIED]);
 
    gParamSpecs[PROP_TAB_STOP] =
       g_param_spec_int("tab-stop",
-                          _("Tab Stop"),
-                          _("The tab stop in the snippet params."),
-                          -1,
-                          G_MAXINT,
-                          -1,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                       _("Tab Stop"),
+                       _("The tab stop in the snippet params."),
+                       -1,
+                       G_MAXINT,
+                       -1,
+                       (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_TAB_STOP,
                                    gParamSpecs[PROP_TAB_STOP]);
 
@@ -516,7 +516,7 @@ gb_source_snippet_chunk_class_init (GbSourceSnippetChunkClass *klass)
                           _("Text"),
                           _("The text to render."),
                           NULL,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_TEXT,
                                    gParamSpecs[PROP_TEXT]);
 }
