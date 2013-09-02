@@ -19,7 +19,7 @@
 #ifndef GB_SOURCE_SNIPPET_CHUNK_H
 #define GB_SOURCE_SNIPPET_CHUNK_H
 
-#include <glib-object.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
@@ -48,11 +48,34 @@ struct _GbSourceSnippetChunkClass
    GObjectClass parent_class;
 };
 
-const gchar          *gb_source_snippet_chunk_get_text (GbSourceSnippetChunk *chunk);
-GType                 gb_source_snippet_chunk_get_type (void) G_GNUC_CONST;
-GbSourceSnippetChunk *gb_source_snippet_chunk_new      (void);
-void                  gb_source_snippet_chunk_set_text (GbSourceSnippetChunk *chunk,
-                                                        const gchar          *text);
+GbSourceSnippetChunk *gb_source_snippet_chunk_new              (void);
+gboolean              gb_source_snippet_chunk_contains         (GbSourceSnippetChunk *chunk,
+                                                                GtkTextBuffer        *buffer,
+                                                                GtkTextIter          *location);
+void                  gb_source_snippet_chunk_draw             (GbSourceSnippetChunk *chunk,
+                                                                GtkWidget            *widget,
+                                                                cairo_t              *cr);
+void                  gb_source_snippet_chunk_build_marks      (GbSourceSnippetChunk *chunk,
+                                                                GtkTextBuffer        *buffer);
+void                  gb_source_snippet_chunk_select           (GbSourceSnippetChunk *chunk);
+const gchar          *gb_source_snippet_chunk_get_text         (GbSourceSnippetChunk *chunk);
+GType                 gb_source_snippet_chunk_get_type         (void) G_GNUC_CONST;
+gint                  gb_source_snippet_chunk_get_tab_stop     (GbSourceSnippetChunk *chunk);
+gint                  gb_source_snippet_chunk_get_linked_chunk (GbSourceSnippetChunk *chunk);
+gboolean              gb_source_snippet_chunk_get_modified     (GbSourceSnippetChunk *chunk);
+void                  gb_source_snippet_chunk_finish           (GbSourceSnippetChunk *chunk);
+void                  gb_source_snippet_chunk_insert           (GbSourceSnippetChunk *chunk,
+                                                                GtkTextBuffer        *buffer,
+                                                                GtkTextIter          *location);
+void                  gb_source_snippet_chunk_remove           (GbSourceSnippetChunk *chunk);
+GbSourceSnippetChunk *gb_source_snippet_chunk_copy             (GbSourceSnippetChunk *chunk);
+void                  gb_source_snippet_chunk_set_modified     (GbSourceSnippetChunk *chunk,
+                                                                gboolean             modified);
+void                  gb_source_snippet_chunk_set_text         (GbSourceSnippetChunk *chunk,
+                                                                const gchar          *text);
+void                  gb_source_snippet_chunk_update           (GbSourceSnippetChunk *chunk,
+                                                                GbSourceSnippetChunk *linked,
+                                                                GtkTextBuffer        *buffer);
 
 G_END_DECLS
 
