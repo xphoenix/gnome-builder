@@ -35,6 +35,13 @@ struct _GbSourceSnippetCompletionProviderPrivate
    GbSourceSnippets *snippets;
 };
 
+typedef struct
+{
+   GtkSourceCompletionProvider *provider;
+   gchar *word;
+   GList *list;
+} SearchState;
+
 enum
 {
    PROP_0,
@@ -43,6 +50,14 @@ enum
 };
 
 static GParamSpec *gParamSpecs[LAST_PROP];
+
+GtkSourceCompletionProvider *
+gb_source_snippet_completion_provider_new (GbSourceSnippets *snippets)
+{
+   g_object_new(GB_TYPE_SOURCE_SNIPPET_COMPLETION_PROVIDER,
+                "snippets", snippets,
+                NULL);
+}
 
 GbSourceSnippets *
 gb_source_snippet_completion_provider_get_snippets (GbSourceSnippetCompletionProvider *provider)
@@ -219,26 +234,60 @@ provider_get_name (GtkSourceCompletionProvider *provider)
 }
 
 static void
+foreach_snippet (gpointer data,
+                 gpointer user_data)
+{
+   GtkSourceCompletionItem *item;
+   GbSourceSnippet *snippet = data;
+   SearchState *state = user_data;
+   const char *trigger;
+
+   trigger = gb_source_snippet_get_trigger(snippet);
+   if (!g_str_has_prefix(trigger, state->word)) {
+      return;
+   }
+
+   /*
+    * TODO: We probably want to hold off on expanding the completion
+    *       text for the snippet until it has been chosen. So we
+    *       probably want to make our own completion proposal class.
+    */
+
+   item = gtk_source_completion_item_new(trigger, trigger, NULL, NULL);
+   state->list = g_list_append(state->list, item);
+}
+
+static void
 provider_populate (GtkSourceCompletionProvider *provider,
                    GtkSourceCompletionContext  *context)
 {
-   GtkSourceCompletionItem *item;
+   GbSourceSnippetCompletionProviderPrivate *priv;
+   SearchState state;
    GtkTextIter iter;
-   GList *list = NULL;
-   gchar *word;
+
+   priv = GB_SOURCE_SNIPPET_COMPLETION_PROVIDER(provider)->priv;
+
+   if (!priv->snippets) {
+      return;
+   }
 
    gtk_source_completion_context_get_iter(context, &iter);
-   word = get_word(provider, &iter);
 
-   /*
-    * TODO: Fetch by word.
-    */
+   state.list = NULL;
+   state.provider = provider;
+   state.word = get_word(provider, &iter);
 
-   gtk_source_completion_context_add_proposals(context, provider, list, TRUE);
+   if (!state.word || !*state.word) {
+      g_free(state.word);
+      return;
+   }
 
-   g_list_foreach(list, (GFunc)g_object_unref, NULL);
-   g_list_free(list);
-   g_free(word);
+   gb_source_snippets_foreach(priv->snippets, foreach_snippet, &state);
+   gtk_source_completion_context_add_proposals(context, provider, state.list, TRUE);
+
+   g_list_foreach(state.list, (GFunc)g_object_unref, NULL);
+   g_list_free(state.list);
+   g_free(state.word);
 }
 
 static void

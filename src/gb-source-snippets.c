@@ -33,6 +33,38 @@ enum
    LAST_PROP
 };
 
+GbSourceSnippets *
+gb_source_snippets_new (void)
+{
+   return g_object_new(GB_TYPE_SOURCE_SNIPPETS,
+                       NULL);
+}
+
+void
+gb_source_snippets_add (GbSourceSnippets *snippets,
+                        GbSourceSnippet  *snippet)
+{
+   gchar *key;
+
+   key = g_strdup(gb_source_snippet_get_trigger(snippet));
+   g_hash_table_insert(snippets->priv->snippets, key, g_object_ref(snippet));
+}
+
+void
+gb_source_snippets_foreach (GbSourceSnippets *snippets,
+                            GFunc             foreach_func,
+                            gpointer          user_data)
+{
+   GHashTableIter iter;
+   gpointer key;
+   gpointer value;
+
+   g_hash_table_iter_init(&iter, snippets->priv->snippets);
+   while (g_hash_table_iter_next(&iter, &key, &value)) {
+      foreach_func(value, user_data);
+   }
+}
+
 static void
 gb_source_snippets_finalize (GObject *object)
 {

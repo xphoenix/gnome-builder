@@ -50,7 +50,10 @@ struct _GbSourceSnippetClass
    GObjectClass parent_class;
 };
 
-GType gb_source_snippet_get_type (void) G_GNUC_CONST;
+GType        gb_source_snippet_get_type    (void) G_GNUC_CONST;
+const gchar *gb_source_snippet_get_trigger (GbSourceSnippet *snippet);
+void         gb_source_snippet_set_trigger (GbSourceSnippet *snippet,
+                                            const gchar     *trigger);
 
 G_END_DECLS
 

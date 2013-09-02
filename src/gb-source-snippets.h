@@ -50,7 +50,13 @@ struct _GbSourceSnippetsClass
    GObjectClass parent_class;
 };
 
-GType gb_source_snippets_get_type (void) G_GNUC_CONST;
+void              gb_source_snippets_add      (GbSourceSnippets *snippets,
+                                               GbSourceSnippet  *snippet);
+GbSourceSnippets *gb_source_snippets_new      (void);
+GType             gb_source_snippets_get_type (void) G_GNUC_CONST;
+void              gb_source_snippets_foreach  (GbSourceSnippets *snippets,
+                                               GFunc             foreach_func,
+                                               gpointer          user_data);
 
 G_END_DECLS
 

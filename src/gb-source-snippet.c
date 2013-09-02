@@ -24,20 +24,43 @@ G_DEFINE_TYPE(GbSourceSnippet, gb_source_snippet, G_TYPE_OBJECT)
 
 struct _GbSourceSnippetPrivate
 {
-   gpointer dummy;
+   gchar *trigger;
 };
 
 enum
 {
    PROP_0,
+   PROP_TRIGGER,
    LAST_PROP
 };
 
-//static GParamSpec *gParamSpecs[LAST_PROP];
+static GParamSpec *gParamSpecs[LAST_PROP];
+
+const gchar *
+gb_source_snippet_get_trigger (GbSourceSnippet *snippet)
+{
+   g_return_val_if_fail(GB_IS_SOURCE_SNIPPET(snippet), NULL);
+   return snippet->priv->trigger;
+}
+
+void
+gb_source_snippet_set_trigger (GbSourceSnippet *snippet,
+                               const gchar     *trigger)
+{
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
+
+   g_free(snippet->priv->trigger);
+   snippet->priv->trigger = g_strdup(trigger);
+   g_object_notify_by_pspec(G_OBJECT(snippet), gParamSpecs[PROP_TRIGGER]);
+}
 
 static void
 gb_source_snippet_finalize (GObject *object)
 {
+   GbSourceSnippetPrivate *priv = GB_SOURCE_SNIPPET(object)->priv;
+
+   g_clear_pointer(&priv->trigger, g_free);
+
    G_OBJECT_CLASS(gb_source_snippet_parent_class)->finalize(object);
 }
 
@@ -47,9 +70,12 @@ gb_source_snippet_get_property (GObject    *object,
                                 GValue     *value,
                                 GParamSpec *pspec)
 {
-   //GbSourceSnippet *snippet = GB_SOURCE_SNIPPET(object);
+   GbSourceSnippet *snippet = GB_SOURCE_SNIPPET(object);
 
    switch (prop_id) {
+   case PROP_TRIGGER:
+      g_value_set_string(value, gb_source_snippet_get_trigger(snippet));
+      break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
    }
@@ -61,9 +87,12 @@ gb_source_snippet_set_property (GObject      *object,
                                 const GValue *value,
                                 GParamSpec   *pspec)
 {
-   //GbSourceSnippet *snippet = GB_SOURCE_SNIPPET(object);
+   GbSourceSnippet *snippet = GB_SOURCE_SNIPPET(object);
 
    switch (prop_id) {
+   case PROP_TRIGGER:
+      gb_source_snippet_set_trigger(snippet, g_value_get_string(value));
+      break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
    }
@@ -79,6 +108,15 @@ gb_source_snippet_class_init (GbSourceSnippetClass *klass)
    object_class->get_property = gb_source_snippet_get_property;
    object_class->set_property = gb_source_snippet_set_property;
    g_type_class_add_private(object_class, sizeof(GbSourceSnippetPrivate));
+
+   gParamSpecs[PROP_TRIGGER] =
+      g_param_spec_string("trigger",
+                          _("Trigger"),
+                          _("The trigger for the snippet."),
+                          NULL,
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_TRIGGER,
+                                   gParamSpecs[PROP_TRIGGER]);
 }
 
 static void
