@@ -204,6 +204,19 @@ gb_source_view_state_snippet_on_draw (GtkWidget                *widget,
    return FALSE;
 }
 
+static gboolean
+switch_to_insert (gpointer user_data)
+{
+   GbSourceViewState *state;
+
+   state = gb_source_view_state_insert_new();
+   g_object_set(user_data, "state", state, NULL);
+   g_object_unref(state);
+   g_object_unref(user_data);
+
+   return FALSE;
+}
+
 static void
 gb_source_view_state_snippet_load (GbSourceViewState *state,
                                    GbSourceView      *view)
@@ -225,7 +238,9 @@ gb_source_view_state_snippet_load (GbSourceViewState *state,
       mark = gtk_text_buffer_get_insert(buffer);
       gtk_text_buffer_get_iter_at_mark(buffer, &iter, mark);
       gb_source_snippet_insert(priv->snippet, buffer, &iter);
-      gb_source_snippet_move_next(priv->snippet);
+      if (!gb_source_snippet_move_next(priv->snippet)) {
+         g_timeout_add(0, switch_to_insert, g_object_ref(view));
+      }
    }
 
    priv->draw_handler =
