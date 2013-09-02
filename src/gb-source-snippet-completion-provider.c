@@ -19,6 +19,7 @@
 #include <glib/gi18n.h>
 #include <gtksourceview/gtksourcecompletionitem.h>
 
+#include "gb-source-snippet-completion-item.h"
 #include "gb-source-snippet-completion-provider.h"
 
 static void init_provider (GtkSourceCompletionProviderIface *iface);
@@ -237,7 +238,7 @@ static void
 foreach_snippet (gpointer data,
                  gpointer user_data)
 {
-   GtkSourceCompletionItem *item;
+   GtkSourceCompletionProposal *item;
    GbSourceSnippet *snippet = data;
    SearchState *state = user_data;
    const char *trigger;
@@ -247,13 +248,7 @@ foreach_snippet (gpointer data,
       return;
    }
 
-   /*
-    * TODO: We probably want to hold off on expanding the completion
-    *       text for the snippet until it has been chosen. So we
-    *       probably want to make our own completion proposal class.
-    */
-
-   item = gtk_source_completion_item_new(trigger, trigger, NULL, NULL);
+   item = gb_source_snippet_completion_item_new(snippet);
    state->list = g_list_append(state->list, item);
 }
 
