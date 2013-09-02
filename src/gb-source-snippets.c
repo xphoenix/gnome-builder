@@ -41,6 +41,25 @@ gb_source_snippets_new (void)
 }
 
 void
+gb_source_snippets_clear (GbSourceSnippets *snippets)
+{
+   g_return_if_fail(GB_IS_SOURCE_SNIPPETS(snippets));
+   g_hash_table_remove_all(snippets->priv->snippets);
+}
+
+gboolean
+gb_source_snippets_load_from_file (GbSourceSnippets  *snippets,
+                                   GFile             *file,
+                                   GError           **error)
+{
+   /*
+    * TODO: Parse snippets file.
+    */
+
+   return TRUE;
+}
+
+void
 gb_source_snippets_add (GbSourceSnippets *snippets,
                         GbSourceSnippet  *snippet)
 {

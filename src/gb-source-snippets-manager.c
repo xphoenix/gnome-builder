@@ -29,13 +29,94 @@ struct _GbSourceSnippetsManagerPrivate
    GHashTable *by_language_id;
 };
 
+static gboolean
+gb_source_snippets_manager_load_file (GbSourceSnippetsManager  *manager,
+                                      GFile                    *file,
+                                      GError                  **error)
+{
+   GbSourceSnippets *snippets;
+   gchar *base;
+
+   g_return_val_if_fail(GB_IS_SOURCE_SNIPPETS_MANAGER(manager), FALSE);
+   g_return_val_if_fail(G_IS_FILE(file), FALSE);
+
+   base = g_file_get_basename(file);
+   if (!base) {
+      g_set_error(error,
+                  G_IO_ERROR,
+                  G_IO_ERROR_INVAL,
+                  _("The file is invalid."));
+      return FALSE;
+   }
+
+   if (strstr(base, ".")) {
+      *strstr(base, ".") = '\0';
+   }
+
+   snippets = g_hash_table_lookup(manager->priv->by_language_id, base);
+   if (!snippets) {
+      snippets = gb_source_snippets_new();
+      g_hash_table_insert(manager->priv->by_language_id,
+                          g_strdup(base),
+                          snippets);
+   }
+
+   g_free(base);
+
+   if (!gb_source_snippets_load_from_file(snippets, file, error)) {
+      return FALSE;
+   }
+
+   return TRUE;
+}
+
+static void
+gb_source_snippets_manager_load_directory (GbSourceSnippetsManager *manager,
+                                           const gchar             *path)
+{
+   const gchar *name;
+   GError *error = NULL;
+   gchar *filename;
+   GFile *file;
+   GDir *dir;
+
+   dir = g_dir_open(path, 0, &error);
+   if (!dir) {
+      g_warning("Failed to open directory: %s", error->message);
+      g_error_free(error);
+      return;
+   }
+
+   while ((name = g_dir_read_name(dir))) {
+      filename = g_build_filename(path, name, NULL);
+      file = g_file_new_for_path(filename);
+      if (!gb_source_snippets_manager_load_file(manager, file, &error)) {
+         g_warning("Failed to load file: %s: %s",
+                   filename, error->message);
+         g_clear_error(&error);
+      }
+      g_object_unref(file);
+      g_free(filename);
+   }
+
+   g_dir_close(dir);
+}
+
 GbSourceSnippetsManager *
 gb_source_snippets_manager_get_default (void)
 {
    static GbSourceSnippetsManager *instance;
+   gchar *path;
 
    if (!instance) {
       instance = g_object_new(GB_TYPE_SOURCE_SNIPPETS_MANAGER, NULL);
+      path = g_build_filename(g_get_user_config_dir(),
+                              "gnome-builder",
+                              "snippets",
+                              NULL);
+      g_mkdir_with_parents(path, 0700);
+      gb_source_snippets_manager_load_directory(instance, path);
+      g_free(path);
       g_object_add_weak_pointer(G_OBJECT(instance),
                                 (gpointer *)&instance);
    }
