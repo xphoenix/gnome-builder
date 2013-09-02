@@ -24,17 +24,26 @@ G_DEFINE_TYPE(GbSourceSnippetChunk, gb_source_snippet_chunk, G_TYPE_OBJECT)
 
 struct _GbSourceSnippetChunkPrivate
 {
-   gint tab_stop;
+   gint   tab_stop;
+   gchar *text;
 };
 
 enum
 {
    PROP_0,
    PROP_TAB_STOP,
+   PROP_TEXT,
    LAST_PROP
 };
 
 static GParamSpec *gParamSpecs[LAST_PROP];
+
+GbSourceSnippetChunk *
+gb_source_snippet_chunk_new (void)
+{
+   return g_object_new(GB_TYPE_SOURCE_SNIPPET_CHUNK,
+                       NULL);
+}
 
 gint
 gb_source_snippet_chunk_get_tab_stop (GbSourceSnippetChunk *chunk)
@@ -52,9 +61,31 @@ gb_source_snippet_chunk_set_tab_stop (GbSourceSnippetChunk *chunk,
    g_object_notify_by_pspec(G_OBJECT(chunk), gParamSpecs[PROP_TAB_STOP]);
 }
 
+const gchar *
+gb_source_snippet_chunk_get_text (GbSourceSnippetChunk *chunk)
+{
+   g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk), NULL);
+   return chunk->priv->text;
+}
+
+void
+gb_source_snippet_chunk_set_text (GbSourceSnippetChunk *chunk,
+                                  const gchar          *text)
+{
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
+
+   g_free(chunk->priv->text);
+   chunk->priv->text = g_strdup(text);
+   g_object_notify_by_pspec(G_OBJECT(chunk), gParamSpecs[PROP_TEXT]);
+}
+
 static void
 gb_source_snippet_chunk_finalize (GObject *object)
 {
+   GbSourceSnippetChunkPrivate *priv = GB_SOURCE_SNIPPET_CHUNK(object)->priv;
+
+   g_free(priv->text);
+
    G_OBJECT_CLASS(gb_source_snippet_chunk_parent_class)->finalize(object);
 }
 
@@ -69,6 +100,9 @@ gb_source_snippet_chunk_get_property (GObject    *object,
    switch (prop_id) {
    case PROP_TAB_STOP:
       g_value_set_int(value, gb_source_snippet_chunk_get_tab_stop(chunk));
+      break;
+   case PROP_TEXT:
+      g_value_set_string(value, gb_source_snippet_chunk_get_text(chunk));
       break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -86,6 +120,9 @@ gb_source_snippet_chunk_set_property (GObject      *object,
    switch (prop_id) {
    case PROP_TAB_STOP:
       gb_source_snippet_chunk_set_tab_stop(chunk, g_value_get_int(value));
+      break;
+   case PROP_TEXT:
+      gb_source_snippet_chunk_set_text(chunk, g_value_get_string(value));
       break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -113,6 +150,15 @@ gb_source_snippet_chunk_class_init (GbSourceSnippetChunkClass *klass)
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
    g_object_class_install_property(object_class, PROP_TAB_STOP,
                                    gParamSpecs[PROP_TAB_STOP]);
+
+   gParamSpecs[PROP_TEXT] =
+      g_param_spec_string("text",
+                          _("Text"),
+                          _("The text for the chunk."),
+                          NULL,
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_TEXT,
+                                   gParamSpecs[PROP_TEXT]);
 }
 
 static void
@@ -121,4 +167,6 @@ gb_source_snippet_chunk_init (GbSourceSnippetChunk *chunk)
    chunk->priv = G_TYPE_INSTANCE_GET_PRIVATE(chunk,
                                              GB_TYPE_SOURCE_SNIPPET_CHUNK,
                                              GbSourceSnippetChunkPrivate);
+
+   chunk->priv->tab_stop = -1;
 }

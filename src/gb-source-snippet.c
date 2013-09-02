@@ -24,6 +24,7 @@ G_DEFINE_TYPE(GbSourceSnippet, gb_source_snippet, G_TYPE_OBJECT)
 
 struct _GbSourceSnippetPrivate
 {
+   GList *chunks;
    gchar *trigger;
 };
 
@@ -35,6 +36,30 @@ enum
 };
 
 static GParamSpec *gParamSpecs[LAST_PROP];
+
+GbSourceSnippet *
+gb_source_snippet_new (const gchar *trigger)
+{
+   return g_object_new(GB_TYPE_SOURCE_SNIPPET,
+                       "trigger", trigger,
+                       NULL);
+}
+
+void
+gb_source_snippet_append_chunks (GbSourceSnippet *snippet,
+                                 GList           *chunks)
+{
+   GbSourceSnippetPrivate *priv;
+   GList *copy;
+
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
+
+   priv = snippet->priv;
+
+   copy = g_list_copy(chunks);
+   g_list_foreach(copy, (GFunc)g_object_ref, NULL);
+   priv->chunks = g_list_concat(priv->chunks, copy);
+}
 
 const gchar *
 gb_source_snippet_get_trigger (GbSourceSnippet *snippet)

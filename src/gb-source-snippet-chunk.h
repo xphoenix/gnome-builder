@@ -48,7 +48,11 @@ struct _GbSourceSnippetChunkClass
    GObjectClass parent_class;
 };
 
-GType gb_source_snippet_chunk_get_type (void) G_GNUC_CONST;
+const gchar          *gb_source_snippet_chunk_get_text (GbSourceSnippetChunk *chunk);
+GType                 gb_source_snippet_chunk_get_type (void) G_GNUC_CONST;
+GbSourceSnippetChunk *gb_source_snippet_chunk_new      (void);
+void                  gb_source_snippet_chunk_set_text (GbSourceSnippetChunk *chunk,
+                                                        const gchar          *text);
 
 G_END_DECLS
 
