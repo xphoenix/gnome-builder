@@ -530,4 +530,5 @@ gb_source_snippet_chunk_init (GbSourceSnippetChunk *chunk)
                                              GB_TYPE_SOURCE_SNIPPET_CHUNK,
                                              GbSourceSnippetChunkPrivate);
    chunk->priv->linked_chunk = -1;
+   chunk->priv->tab_stop = -1;
 }
