@@ -347,11 +347,13 @@ gb_source_snippet_chunk_build_marks (GbSourceSnippetChunk *chunk,
    if (priv->offset_begin) {
       gtk_text_buffer_get_iter_at_offset(buffer, &iter, priv->offset_begin);
       priv->mark_begin = gtk_text_buffer_create_mark(buffer, NULL, &iter, TRUE);
+      g_object_ref(priv->mark_begin);
    }
 
    if (priv->offset_end) {
       gtk_text_buffer_get_iter_at_offset(buffer, &iter, priv->offset_end);
       priv->mark_end = gtk_text_buffer_create_mark(buffer, NULL, &iter, FALSE);
+      g_object_ref(priv->mark_end);
    }
 
    g_object_notify_by_pspec(G_OBJECT(chunk), gParamSpecs[PROP_MARK_BEGIN]);
