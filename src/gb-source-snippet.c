@@ -145,19 +145,35 @@ gb_source_snippet_move_next (GbSourceSnippet *snippet)
    max_tab_stop = get_max_tab_stop(snippet);
 
    if (++priv->tab_stop > max_tab_stop) {
+move_to_end:
       buffer = gtk_text_mark_get_buffer(priv->mark_begin);
       gtk_text_buffer_get_iter_at_mark(buffer, &iter, priv->mark_end);
       gtk_text_buffer_select_range(buffer, &iter, &iter);
       return FALSE;
    }
 
+   /*
+    * If there are no more chunks to tab through, then move to $0 if it was
+    * created or place cursor at end of snippet.
+    */
    if (!(chunk = gb_source_snippet_get_chunk_at_tab_stop(snippet, priv->tab_stop))) {
-      return FALSE;
+      if ((chunk = gb_source_snippet_get_chunk_at_tab_stop(snippet, 0))) {
+         gb_source_snippet_chunk_select(chunk);
+         return FALSE;
+      }
+      goto move_to_end;
    }
 
+   /*
+    * Select the next chunk.
+    */
    gb_source_snippet_chunk_select(chunk);
 
-   return (priv->tab_stop != max_tab_stop);
+   /*
+    * Allow ourselves to be called once more after our last tabstop so that
+    * we can try to place the cursor on $0.
+    */
+   return (priv->tab_stop <= max_tab_stop);
 }
 
 gboolean
@@ -340,9 +356,11 @@ gb_source_snippet_insert_text (GbSourceSnippet *snippet,
       } else {
          linked_to = gb_source_snippet_chunk_get_linked_chunk(chunk);
          if (linked_to != -1) {
-            linked = g_ptr_array_index(priv->chunks, linked_to);
-            gb_source_snippet_chunk_update(chunk, linked, buffer);
-            gtk_text_buffer_get_iter_at_mark(buffer, location, here);
+            linked = gb_source_snippet_get_chunk_at_tab_stop(snippet, linked_to);
+            if (linked) {
+               gb_source_snippet_chunk_update(chunk, linked, buffer);
+               gtk_text_buffer_get_iter_at_mark(buffer, location, here);
+            }
          }
       }
    }
@@ -359,7 +377,9 @@ gb_source_snippet_delete_range (GbSourceSnippet *snippet,
                                 GtkTextIter     *begin,
                                 GtkTextIter     *end)
 {
+#if 0
    g_print("Text deleted from snippet.\n");
+#endif
 }
 
 void
@@ -522,7 +542,7 @@ gb_source_snippet_init (GbSourceSnippet *snippet)
    snippet->priv = G_TYPE_INSTANCE_GET_PRIVATE(snippet,
                                                GB_TYPE_SOURCE_SNIPPET,
                                                GbSourceSnippetPrivate);
-   snippet->priv->tab_stop = -1;
+   snippet->priv->tab_stop = 0;
    snippet->priv->chunks = g_ptr_array_new();
    g_ptr_array_set_free_func(snippet->priv->chunks, g_object_unref);
 }

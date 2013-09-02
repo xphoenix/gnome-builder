@@ -126,7 +126,7 @@ snippet_parser_do_part_n (SnippetParser *parser,
 
    chunk = gb_source_snippet_chunk_new();
    gb_source_snippet_chunk_set_text(chunk, inner);
-   gb_source_snippet_chunk_set_tab_stop(chunk, n - 1);
+   gb_source_snippet_chunk_set_tab_stop(chunk, n);
    parser->chunks = g_list_append(parser->chunks, chunk);
 }
 
@@ -181,7 +181,7 @@ parse_variable (const gchar  *line,
    *n = strtol(line, &end, 10);
    if (errno == ERANGE) {
       return FALSE;
-   } else if (*n < 1) {
+   } else if (*n < 0) {
       return FALSE;
    }
 
