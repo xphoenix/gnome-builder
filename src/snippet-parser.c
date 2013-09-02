@@ -237,13 +237,11 @@ snippet_parser_do_part (SnippetParser *parser,
 
 again:
    if (!*line) {
-      g_string_append(parser->cur_text, "\n");
       return;
    }
 
    if (!(dollar = strchr(line, '$'))) {
       snippet_parser_do_part_simple(parser, line);
-      g_string_append_c(parser->cur_text, '\n');
       return;
    }
 
@@ -255,7 +253,6 @@ again:
 
 parse_simple:
    if (!*line) {
-      g_string_append_c(parser->cur_text, '\n');
       return;
    }
 
@@ -270,7 +267,6 @@ parse_simple:
 parse_dollar:
    if (!parse_variable(dollar, &n, &inner, &line)) {
       snippet_parser_do_part_simple(parser, dollar);
-      g_string_append_c(parser->cur_text, '\n');
       return;
    }
 
@@ -316,12 +312,19 @@ snippet_parser_feed_line (SnippetParser *parser,
 
    switch (*line) {
    case '\0':
-      g_string_append_c(parser->cur_text, '\n');
+      if (parser->cur_name) {
+         g_string_append_c(parser->cur_text, '\n');
+      }
       break;
    case '#':
       break;
    case '\t':
-      snippet_parser_do_part(parser, line);
+      if (parser->cur_name) {
+         if (parser->cur_text->len || parser->chunks) {
+            g_string_append_c(parser->cur_text, '\n');
+         }
+         snippet_parser_do_part(parser, line);
+      }
       break;
    case 's':
       if (g_str_has_prefix(line, "snippet")) {
