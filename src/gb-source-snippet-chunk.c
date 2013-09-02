@@ -329,7 +329,9 @@ gb_source_snippet_chunk_insert (GbSourceSnippetChunk *chunk,
    }
 
    priv->offset_begin = gtk_text_iter_get_offset(location);
-   gtk_text_buffer_insert(buffer, location, priv->text, -1);
+   if (priv->text) {
+      gtk_text_buffer_insert(buffer, location, priv->text, -1);
+   }
    priv->offset_end = gtk_text_iter_get_offset(location);
 }
 
