@@ -414,13 +414,19 @@ gb_source_pane_view_key_press (GtkTextView  *text_view,
                                GbSourcePane *pane)
 {
    GbSourcePanePrivate *priv = pane->priv;
+   gboolean was_enabled;
 
    if (key->keyval == GDK_KEY_Escape) {
-      gtk_widget_hide(priv->highlight);
-      g_object_set(priv->search_bar,
-                   "search-mode-enabled", FALSE,
+      g_object_get(priv->search_bar,
+                   "search-mode-enabled", &was_enabled,
                    NULL);
-      return TRUE;
+      if (was_enabled) {
+         gtk_widget_hide(priv->highlight);
+         g_object_set(priv->search_bar,
+                      "search-mode-enabled", FALSE,
+                      NULL);
+         return TRUE;
+      }
    }
 
    return FALSE;
