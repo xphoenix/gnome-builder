@@ -69,8 +69,12 @@ void                  gb_source_snippet_chunk_insert           (GbSourceSnippetC
                                                                 GtkTextIter          *location);
 void                  gb_source_snippet_chunk_remove           (GbSourceSnippetChunk *chunk);
 GbSourceSnippetChunk *gb_source_snippet_chunk_copy             (GbSourceSnippetChunk *chunk);
+void                  gb_source_snippet_chunk_set_linked_chunk (GbSourceSnippetChunk *chunk,
+                                                                guint                 linked_chunk);
 void                  gb_source_snippet_chunk_set_modified     (GbSourceSnippetChunk *chunk,
                                                                 gboolean             modified);
+void                  gb_source_snippet_chunk_set_tab_stop     (GbSourceSnippetChunk *chunk,
+                                                                gint                  tab_stop);
 void                  gb_source_snippet_chunk_set_text         (GbSourceSnippetChunk *chunk,
                                                                 const gchar          *text);
 void                  gb_source_snippet_chunk_update           (GbSourceSnippetChunk *chunk,
