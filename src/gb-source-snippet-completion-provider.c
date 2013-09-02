@@ -327,6 +327,9 @@ provider_activate_proposal (GtkSourceCompletionProvider *provider,
    GbSourceSnippetCompletionItem *item;
    GbSourceViewState *state;
    GbSourceSnippet *snippet;
+   GtkTextBuffer *buffer;
+   GtkTextIter end;
+   gchar *word;
 
    priv = GB_SOURCE_SNIPPET_COMPLETION_PROVIDER(provider)->priv;
 
@@ -334,13 +337,33 @@ provider_activate_proposal (GtkSourceCompletionProvider *provider,
       item = GB_SOURCE_SNIPPET_COMPLETION_ITEM(proposal);
       snippet = gb_source_snippet_completion_item_get_snippet(item);
       if (snippet) {
+         /*
+          * Fetching the word will move us back to the beginning of it.
+          */
+         gtk_text_iter_assign(&end, iter);
+         word = get_word(provider, iter);
+         g_free(word);
+
+         /*
+          * Now delete the current word since it will get overwritten
+          * by the insertion of the snippet.
+          */
+         buffer = gtk_text_iter_get_buffer(iter);
+         gtk_text_buffer_delete(buffer, iter, &end);
+
+         /*
+          * Now change states to insert snippet. Always work with
+          * a copy of the snippet.
+          */
          snippet = gb_source_snippet_copy(snippet);
          state = g_object_new(GB_TYPE_SOURCE_VIEW_STATE_SNIPPET,
                               "snippet", snippet,
                               NULL);
          g_object_set(priv->source_view, "state", state, NULL);
+
          g_object_unref(state);
          g_object_unref(snippet);
+
          return TRUE;
       }
    }
