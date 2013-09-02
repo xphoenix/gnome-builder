@@ -21,6 +21,7 @@
 
 #include "gb-source-snippet-chunk.h"
 #include "gb-source-snippets.h"
+#include "snippet-parser.h"
 
 G_DEFINE_TYPE(GbSourceSnippets, gb_source_snippets, G_TYPE_OBJECT)
 
@@ -28,12 +29,6 @@ struct _GbSourceSnippetsPrivate
 {
    GHashTable *snippets;
 };
-
-typedef struct
-{
-   char   *name;
-   GQueue *chunks;
-} ParseState;
 
 GbSourceSnippets *
 gb_source_snippets_new (void)
@@ -50,93 +45,15 @@ gb_source_snippets_clear (GbSourceSnippets *snippets)
 }
 
 static void
-parse_state_reset (ParseState *state)
+on_snippet_parsed (GbSourceSnippet *snippet,
+                   gpointer         user_data)
 {
-   g_free(state->name);
+   GbSourceSnippets *snippets = user_data;
 
-   if (state->chunks) {
-      g_queue_foreach(state->chunks, (GFunc)g_object_unref, NULL);
-      g_queue_free(state->chunks);
-      state->chunks = NULL;
-   }
+   g_assert(GB_IS_SOURCE_SNIPPETS(snippets));
+   g_assert(GB_IS_SOURCE_SNIPPET(snippet));
 
-   memset(state, 0, sizeof *state);
-}
-
-static void
-parse_state_commit (ParseState       *state,
-                    GbSourceSnippets *snippets)
-{
-   GbSourceSnippetsPrivate *priv;
-   GbSourceSnippet *snippet;
-   GList *iter;
-
-   g_assert(snippets);
-   g_assert(state);
-   g_assert(state->name);
-
-   priv = snippets->priv;
-
-   if (!g_queue_is_empty(state->chunks)) {
-      snippet = gb_source_snippet_new(state->name);
-      for (iter = state->chunks->head; iter; iter = iter->next) {
-         gb_source_snippet_add_chunk(snippet, iter->data);
-      }
-      g_hash_table_replace(priv->snippets,
-                           g_strdup(state->name),
-                           snippet);
-   }
-}
-
-static void
-parse_state_append_c (ParseState *state,
-                      gunichar    c)
-{
-   GbSourceSnippetChunk *chunk;
-   const gchar *text;
-   gchar *new_text;
-   gchar outbuf[8];
-
-   if (!state->chunks) {
-      state->chunks = g_queue_new();
-   }
-
-   if (!(chunk = g_queue_peek_tail(state->chunks))) {
-      chunk = gb_source_snippet_chunk_new();
-      g_queue_push_tail(state->chunks, chunk);
-   }
-
-   text = gb_source_snippet_chunk_get_text(chunk);
-   g_unichar_to_utf8(c, outbuf);
-   new_text = g_strconcat(text ? text : "", outbuf, NULL);
-   gb_source_snippet_chunk_set_text(chunk, new_text);
-   g_free(new_text);
-}
-
-static void
-parse_state_append (ParseState  *state,
-                    const gchar *line)
-{
-   gunichar c;
-
-   g_assert(line);
-   g_assert(*line == '\t');
-
-   g_print("Append(%s): %s\n", state->name, line);
-
-   for (; (c = g_utf8_get_char(line)); line = g_utf8_next_char(line)) {
-      /*
-       * TODO: This is ripe for optimization by keeping a GString and only
-       *       committing it to the chunk once we hit a stop char.
-       */
-      switch (c) {
-      case '$':
-         break;
-      default:
-         parse_state_append_c(state, c);
-         break;
-      }
-   }
+   gb_source_snippets_add(snippets, snippet);
 }
 
 static gboolean
@@ -144,51 +61,35 @@ load_from_stream (GbSourceSnippets  *snippets,
                   GDataInputStream  *stream,
                   GError           **error)
 {
-   ParseState state = { 0 };
+   SnippetParser *parser;
    gboolean ret = TRUE;
    GError *local_error = NULL;
    gchar *line;
    gsize length;
-   gint lineno = 0;
+
+   g_assert(GB_IS_SOURCE_SNIPPETS(snippets));
+   g_assert(G_IS_DATA_INPUT_STREAM(stream));
+
+   parser = snippet_parser_new(on_snippet_parsed, snippets);
 
    while ((line = g_data_input_stream_read_line(stream,
                                                 &length,
                                                 NULL,
                                                 &local_error))) {
-      lineno++;
-
-      /* Skip comment lines. */
-      if (*line == '#') {
-         g_free(line);
-         continue;
-      }
-
-      /* If "snippet $name" commit our last entry. */
-      if (g_str_has_prefix(line, "snippet ")) {
-         if (state.name) {
-            parse_state_commit(&state, snippets);
-            parse_state_reset(&state);
-         }
-         state.name = g_strdup(g_strstrip(&line[8]));
-      } else if (*line == '\t') {
-         parse_state_append(&state, line);
-      } else {
-         g_warning("Invalid snippet at line %d", lineno);
-      }
-
+      snippet_parser_feed_line(parser, line);
       g_free(line);
    }
-
-   if (state.name) {
-      parse_state_commit(&state, snippets);
-   }
-
-   parse_state_reset(&state);
 
    if (local_error) {
       g_propagate_error(error, local_error);
       ret = FALSE;
    }
+
+   if (ret) {
+      snippet_parser_finish(parser);
+   }
+
+   snippet_parser_free(parser);
 
    return ret;
 }
@@ -236,10 +137,15 @@ void
 gb_source_snippets_add (GbSourceSnippets *snippets,
                         GbSourceSnippet  *snippet)
 {
-   gchar *key;
+   const gchar *trigger;
 
-   key = g_strdup(gb_source_snippet_get_trigger(snippet));
-   g_hash_table_insert(snippets->priv->snippets, key, g_object_ref(snippet));
+   g_return_if_fail(GB_IS_SOURCE_SNIPPETS(snippets));
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
+
+   trigger = gb_source_snippet_get_trigger(snippet);
+   g_hash_table_insert(snippets->priv->snippets,
+                       g_strdup(trigger),
+                       g_object_ref(snippet));
 }
 
 void

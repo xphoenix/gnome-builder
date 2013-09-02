@@ -73,6 +73,7 @@ NOINST_H_FILES =
 NOINST_H_FILES += $(top_srcdir)/src/nautilus/nautilus-floating-bar.h
 NOINST_H_FILES += $(top_builddir)/src/gb-application-resource.h
 NOINST_H_FILES += $(top_builddir)/src/gb-util.h
+NOINST_H_FILES += $(top_builddir)/src/snippet-parser.h
 
 GIR_C_FILES =
 GIR_C_FILES += $(top_srcdir)/src/gb-animation.c
@@ -142,6 +143,7 @@ NOGIR_C_FILES += $(top_srcdir)/src/main.c
 NOGIR_C_FILES += $(top_srcdir)/src/nautilus/nautilus-floating-bar.c
 NOGIR_C_FILES += $(top_builddir)/src/gb-application-resource.c
 NOGIR_C_FILES += $(top_builddir)/src/gb-util.c
+NOGIR_C_FILES += $(top_builddir)/src/snippet-parser.c
 
 gnome_builder_SOURCES =
 gnome_builder_SOURCES += $(GIR_C_FILES)
