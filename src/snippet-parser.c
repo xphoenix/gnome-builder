@@ -29,7 +29,6 @@ struct _SnippetParser
 
    gint               lineno;
 
-   gint               tab_stop;
    GList             *chunks;
 
    gchar             *cur_name;
@@ -45,7 +44,6 @@ snippet_parser_new (SnippetParserFunc func,
    parser = g_new0(SnippetParser, 1);
    parser->func = func;
    parser->user_data = user_data;
-   parser->tab_stop = -1;
    parser->lineno = -1;
    parser->cur_text = g_string_new(NULL);
 
