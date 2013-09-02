@@ -17,6 +17,7 @@
  */
 
 #include <glib/gi18n.h>
+#include <gtksourceview/gtksourcecompletion.h>
 
 #include "gb-source-view-state-insert.h"
 #include "gb-source-view-state-snippet.h"
@@ -208,11 +209,15 @@ static gboolean
 switch_to_insert (gpointer user_data)
 {
    GbSourceViewState *state;
+   GtkSourceView *source_view = user_data;
+
+   g_assert(GTK_SOURCE_IS_VIEW(source_view));
 
    state = gb_source_view_state_insert_new();
-   g_object_set(user_data, "state", state, NULL);
+   g_object_set(source_view, "state", state, NULL);
+
    g_object_unref(state);
-   g_object_unref(user_data);
+   g_object_unref(source_view);
 
    return FALSE;
 }
@@ -223,6 +228,7 @@ gb_source_view_state_snippet_load (GbSourceViewState *state,
 {
    GbSourceViewStateSnippetPrivate *priv;
    GbSourceViewStateSnippet *snippet = (GbSourceViewStateSnippet *)state;
+   GtkSourceCompletion *completion;
    GtkTextBuffer *buffer;
    GtkTextMark *mark;
    GtkTextIter iter;
@@ -231,6 +237,9 @@ gb_source_view_state_snippet_load (GbSourceViewState *state,
    g_return_if_fail(GB_IS_SOURCE_VIEW(view));
 
    priv = snippet->priv;
+
+   completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view));
+   gtk_source_completion_block_interactive(completion);
 
    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
 
@@ -280,6 +289,7 @@ gb_source_view_state_snippet_unload (GbSourceViewState *state,
                                      GbSourceView      *view)
 {
    GbSourceViewStateSnippetPrivate *priv;
+   GtkSourceCompletion *completion;
    GtkTextBuffer *buffer;
 
    g_return_if_fail(GB_IS_SOURCE_VIEW_STATE_SNIPPET(state));
@@ -302,6 +312,9 @@ gb_source_view_state_snippet_unload (GbSourceViewState *state,
 
    g_signal_handler_disconnect(buffer, priv->delete_range_handler);
    priv->delete_range_handler = 0;
+
+   completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view));
+   gtk_source_completion_unblock_interactive(completion);
 }
 
 static void
