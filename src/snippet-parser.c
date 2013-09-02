@@ -126,7 +126,7 @@ snippet_parser_do_part_n (SnippetParser *parser,
 
    chunk = gb_source_snippet_chunk_new();
    gb_source_snippet_chunk_set_text(chunk, inner);
-   gb_source_snippet_chunk_set_tab_stop(chunk, n);
+   gb_source_snippet_chunk_set_tab_stop(chunk, n - 1);
    parser->chunks = g_list_append(parser->chunks, chunk);
 }
 
