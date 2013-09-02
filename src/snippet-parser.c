@@ -233,15 +233,17 @@ snippet_parser_do_part (SnippetParser *parser,
    g_assert(line);
    g_assert(*line == '\t');
 
-   if (parser->cur_text->len || parser->chunks) {
-      g_string_append(parser->cur_text, "\n");
-   }
-
    line++;
 
 again:
+   if (!*line) {
+      g_string_append(parser->cur_text, "\n");
+      return;
+   }
+
    if (!(dollar = strchr(line, '$'))) {
       snippet_parser_do_part_simple(parser, line);
+      g_string_append_c(parser->cur_text, '\n');
       return;
    }
 
@@ -253,6 +255,7 @@ again:
 
 parse_simple:
    if (!*line) {
+      g_string_append_c(parser->cur_text, '\n');
       return;
    }
 
@@ -267,6 +270,7 @@ parse_simple:
 parse_dollar:
    if (!parse_variable(dollar, &n, &inner, &line)) {
       snippet_parser_do_part_simple(parser, dollar);
+      g_string_append_c(parser->cur_text, '\n');
       return;
    }
 
@@ -285,9 +289,7 @@ parse_dollar:
    }
 
    if (line) {
-      if (!*line) {
-         return;
-      } else if (*line == '$') {
+      if (*line == '$') {
          dollar = line;
          goto parse_dollar;
       } else {
@@ -313,6 +315,9 @@ snippet_parser_feed_line (SnippetParser *parser,
    parser->lineno++;
 
    switch (*line) {
+   case '\0':
+      g_string_append_c(parser->cur_text, '\n');
+      break;
    case '#':
       break;
    case '\t':
@@ -326,7 +331,7 @@ snippet_parser_feed_line (SnippetParser *parser,
       }
       /* Fall through */
    default:
-      g_warning("Invalid snippet at line %d", parser->lineno);
+      g_warning("Invalid snippet at line %d: %s", parser->lineno, line);
       break;
    }
 }
