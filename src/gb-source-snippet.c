@@ -76,15 +76,6 @@ gb_source_snippet_copy (GbSourceSnippet *snippet)
    return ret;
 }
 
-void
-gb_source_snippet_add_chunk (GbSourceSnippet      *snippet,
-                             GbSourceSnippetChunk *chunk)
-{
-   g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
-   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
-   g_ptr_array_add(snippet->priv->chunks, g_object_ref(chunk));
-}
-
 static GbSourceSnippetChunk *
 gb_source_snippet_get_chunk_at_tab_stop (GbSourceSnippet *snippet,
                                          guint            tab_stop)
@@ -105,6 +96,44 @@ gb_source_snippet_get_chunk_at_tab_stop (GbSourceSnippet *snippet,
    }
 
    return NULL;
+}
+
+static void
+gb_source_snippet_update_defaults (GbSourceSnippet *snippet)
+{
+   GbSourceSnippetPrivate *priv;
+   GbSourceSnippetChunk *chunk;
+   GbSourceSnippetChunk *linked;
+   const gchar *str;
+   gint linked_to;
+   gint i;
+
+   g_assert(GB_IS_SOURCE_SNIPPET(snippet));
+
+   priv = snippet->priv;
+
+   for (i = 0; i < priv->chunks->len; i++) {
+      chunk = g_ptr_array_index(priv->chunks, i);
+      linked_to = gb_source_snippet_chunk_get_linked_chunk(chunk);
+      if (linked_to > 0) {
+         linked = gb_source_snippet_get_chunk_at_tab_stop(snippet, linked_to);
+         if (linked) {
+            str = gb_source_snippet_chunk_get_text(linked);
+            gb_source_snippet_chunk_set_text(chunk, str);
+         }
+      }
+   }
+}
+
+void
+gb_source_snippet_add_chunk (GbSourceSnippet      *snippet,
+                             GbSourceSnippetChunk *chunk)
+{
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
+
+   g_ptr_array_add(snippet->priv->chunks, g_object_ref(chunk));
+   gb_source_snippet_update_defaults(snippet);
 }
 
 static gint
