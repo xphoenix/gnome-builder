@@ -61,27 +61,27 @@ struct _GbAnimationClass
 	GInitiallyUnownedClass parent_class;
 };
 
-GType gb_animation_get_type         (void) G_GNUC_CONST;
-GType gb_animation_mode_get_type    (void) G_GNUC_CONST;
-void  gb_animation_start            (GbAnimation      *animation);
-void  gb_animation_stop             (GbAnimation      *animation);
-void  gb_animation_add_property     (GbAnimation      *animation,
-                                     GParamSpec       *pspec,
-                                     const GValue     *value);
-GbAnimation* gb_object_animate      (gpointer          object,
-                                     GbAnimationMode   mode,
-                                     guint             duration_msec,
-                                     GdkFrameClock    *frame_clock,
-                                     const gchar      *first_property,
-                                     ...) G_GNUC_NULL_TERMINATED;
-GbAnimation* gb_object_animate_full (gpointer          object,
-                                     GbAnimationMode   mode,
-                                     guint             duration_msec,
-                                     GdkFrameClock    *frame_clock,
-                                     GDestroyNotify    notify,
-                                     gpointer          notify_data,
-                                     const gchar      *first_property,
-                                     ...) G_GNUC_NULL_TERMINATED;
+GType        gb_animation_get_type      (void) G_GNUC_CONST;
+GType        gb_animation_mode_get_type (void) G_GNUC_CONST;
+void         gb_animation_start         (GbAnimation      *animation);
+void         gb_animation_stop          (GbAnimation      *animation);
+void         gb_animation_add_property  (GbAnimation      *animation,
+                                         GParamSpec       *pspec,
+                                         const GValue     *value);
+GbAnimation* gb_object_animate          (gpointer          object,
+                                         GbAnimationMode   mode,
+                                         guint             duration_msec,
+                                         GdkFrameClock    *frame_clock,
+                                         const gchar      *first_property,
+                                         ...) G_GNUC_NULL_TERMINATED;
+GbAnimation* gb_object_animate_full     (gpointer          object,
+                                         GbAnimationMode   mode,
+                                         guint             duration_msec,
+                                         GdkFrameClock    *frame_clock,
+                                         GDestroyNotify    notify,
+                                         gpointer          notify_data,
+                                         const gchar      *first_property,
+                                         ...) G_GNUC_NULL_TERMINATED;
 
 G_END_DECLS
 
