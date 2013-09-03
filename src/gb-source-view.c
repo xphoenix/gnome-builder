@@ -71,14 +71,18 @@ gb_source_view_set_state (GbSourceView      *view,
 }
 
 static void
+gb_source_view_dispose (GObject *object)
+{
+   GbSourceView *view = GB_SOURCE_VIEW(object);
+
+   gb_source_view_set_state(view, NULL);
+
+   G_OBJECT_CLASS(gb_source_view_parent_class)->dispose(object);
+}
+
+static void
 gb_source_view_finalize (GObject *object)
 {
-   GbSourceViewPrivate *priv;
-
-   priv = GB_SOURCE_VIEW(object)->priv;
-
-   g_clear_object(&priv->state);
-
    G_OBJECT_CLASS(gb_source_view_parent_class)->finalize(object);
 }
 
@@ -122,6 +126,7 @@ gb_source_view_class_init (GbSourceViewClass *klass)
    GObjectClass *object_class;
 
    object_class = G_OBJECT_CLASS(klass);
+   object_class->dispose = gb_source_view_dispose;
    object_class->finalize = gb_source_view_finalize;
    object_class->get_property = gb_source_view_get_property;
    object_class->set_property = gb_source_view_set_property;
