@@ -523,6 +523,8 @@ gb_workspace_init_actions (GbWorkspace *workspace)
                                    workspace);
 
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
+                                   "<Primary>n", "win.new-file", NULL);
+   gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
                                    "<Primary>w", "win.close-pane", NULL);
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
                                    "<Primary>f", "win.search-pane", NULL);
@@ -618,6 +620,7 @@ gb_workspace_init (GbWorkspace *workspace)
          "      <item>"
          "        <attribute name='label' translatable='yes'>_New File</attribute>"
          "        <attribute name='action'>win.new-file</attribute>"
+         "        <attribute name='accel'>&lt;Primary&gt;n</attribute>"
          "      </item>"
          "      <item>"
          "        <attribute name='label' translatable='yes'>_Open...</attribute>"
