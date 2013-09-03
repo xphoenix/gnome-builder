@@ -326,6 +326,12 @@ gb_source_view_state_snippet_finalize (GObject *object)
 
    g_clear_object(&priv->snippet);
 
+   g_assert(!priv->key_press_handler);
+   g_assert(!priv->draw_handler);
+   g_assert(!priv->mark_set_handler);
+   g_assert(!priv->insert_text_handler);
+   g_assert(!priv->delete_range_handler);
+
    G_OBJECT_CLASS(gb_source_view_state_snippet_parent_class)->finalize(object);
 }
 
