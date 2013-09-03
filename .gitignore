@@ -10,6 +10,8 @@ configure
 depcomp
 .deps
 *.gir
+gnome-builder
+gschemas.compiled
 gtk-doc.make
 INSTALL
 install-sh
@@ -27,6 +29,5 @@ missing
 *.pyc
 stamp-h1
 *.swp
+test-snippet-parser
 *.typelib
-gnome-builder
-gschemas.compiled

@@ -1,0 +1,10 @@
+noinst_PROGRAMS = \
+	test-snippet-parser
+
+
+TEST_PROGS = \
+	test-snippet-parser
+
+
+test_snippet_parser_SOURCES = tests/test-snippet-parser.c
+test_snippet_parser_LDADD = libsource.la
