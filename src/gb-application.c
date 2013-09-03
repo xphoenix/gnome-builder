@@ -303,8 +303,8 @@ gb_application_set_property (GObject      *object,
 static void
 gb_application_class_init (GbApplicationClass *klass)
 {
-   GObjectClass *object_class;
    GApplicationClass *application_class;
+   GObjectClass *object_class;
 
    object_class = G_OBJECT_CLASS(klass);
    object_class->finalize = gb_application_finalize;
@@ -324,6 +324,8 @@ gb_application_class_init (GbApplicationClass *klass)
                           (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_WORKSPACE,
                                    gParamSpecs[PROP_WORKSPACE]);
+
+   g_resources_register(gb_application_get_resource());
 }
 
 static void
