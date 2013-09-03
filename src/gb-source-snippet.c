@@ -173,13 +173,15 @@ gb_source_snippet_move_next (GbSourceSnippet *snippet)
 
    max_tab_stop = get_max_tab_stop(snippet);
 
-   if (++priv->tab_stop > max_tab_stop) {
+   if (priv->tab_stop > max_tab_stop) {
 move_to_end:
       buffer = gtk_text_mark_get_buffer(priv->mark_begin);
       gtk_text_buffer_get_iter_at_mark(buffer, &iter, priv->mark_end);
       gtk_text_buffer_select_range(buffer, &iter, &iter);
       return FALSE;
    }
+
+   priv->tab_stop++;
 
    /*
     * If there are no more chunks to tab through, then move to $0 if it was
