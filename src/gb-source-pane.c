@@ -705,6 +705,7 @@ setup_source_view (GbSourcePane  *pane,
                 NULL);
 
    completion = gtk_source_view_get_completion(source_view);
+   gtk_source_completion_block_interactive(completion);
 
    g_signal_connect_object(source_view,
                            "focus-in-event",
