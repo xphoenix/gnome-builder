@@ -248,6 +248,7 @@ gb_source_snippet_chunk_set_text (GbSourceSnippetChunk *chunk,
                                   const gchar          *text)
 {
    g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
+
    g_free(chunk->priv->text);
    chunk->priv->text = g_strdup(text);
    g_object_notify_by_pspec(G_OBJECT(chunk), gParamSpecs[PROP_TEXT]);
@@ -387,6 +388,7 @@ gb_source_snippet_chunk_finalize (GObject *object)
 
    g_clear_object(&priv->mark_begin);
    g_clear_object(&priv->mark_end);
+   g_clear_pointer(&priv->text, g_free);
 
    G_OBJECT_CLASS(gb_source_snippet_chunk_parent_class)->finalize(object);
 }
