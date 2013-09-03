@@ -240,6 +240,13 @@ libterminal_la_SOURCES = \
 	$(NULL)
 
 
+noinst_LTLIBRARIES += libtrie.la
+libtrie_la_SOURCES = \
+	src/trie.c \
+	src/trie.h \
+	$(NULL)
+
+
 bin_PROGRAMS += gnome-builder
 gnome_builder_SOURCES = src/main.c
 gnome_builder_LDADD = \
@@ -255,6 +262,7 @@ gnome_builder_LDADD = \
 	libsource.la \
 	libsymbol.la \
 	libterminal.la \
+	libtrie.la \
 	libworkspace.la \
 	$(NULL)
 
