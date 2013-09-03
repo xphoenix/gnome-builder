@@ -17,8 +17,7 @@ AM_CPPFLAGS = \
 	-DGETTEXT_PACKAGE=\""gnome-builder"\" \
 	-DG_LOG_DOMAIN=\"Builder\" \
 	-I$(top_srcdir)/src \
-	-I$(top_builddir)/src \
-	$(NULL)
+	-I$(top_builddir)/src
 
 AM_LDFLAGS = \
 	-lclang \
@@ -31,15 +30,13 @@ AM_LDFLAGS = \
 	$(GTK3_LIBS) \
 	$(GTKSOURCEVIEW_LIBS) \
 	$(JSON_LIBS) \
-	$(VTE_LIBS) \
-	$(NULL)
+	$(VTE_LIBS)
 
 
 noinst_LTLIBRARIES += libapp.la
 libapp_la_DEPS = \
 	$(top_builddir)/src/gb-application-resource.c \
-	$(top_builddir)/src/gb-application-resource.h \
-	$(NULL)
+	$(top_builddir)/src/gb-application-resource.h
 libapp_la_SOURCES = \
 	$(top_builddir)/src/gb-application-resource.c \
 	$(top_builddir)/src/gb-application-resource.h \
@@ -48,8 +45,7 @@ libapp_la_SOURCES = \
 	src/gb-file-filters.c \
 	src/gb-file-filters.h \
 	src/gb-util.c \
-	src/gb-util.h \
-	$(NULL)
+	src/gb-util.h
 
 
 noinst_LTLIBRARIES += libcompiler.la
@@ -61,16 +57,14 @@ libcompiler_la_SOURCES = \
 	src/gb-compiler-js.c \
 	src/gb-compiler-js.h \
 	src/gb-compiler-result.c \
-	src/gb-compiler-result.h \
-	$(NULL)
+	src/gb-compiler-result.h
 
 noinst_LTLIBRARIES += libdebugger.la
 libdebugger_la_SOURCES = \
 	src/gb-debugger.c \
 	src/gb-debugger.h \
 	src/gb-debugger-gdb.c \
-	src/gb-debugger-gdb.h \
-	$(NULL)
+	src/gb-debugger-gdb.h
 
 
 noinst_LTLIBRARIES += libdocs.la
@@ -82,8 +76,7 @@ libdocs_la_SOURCES = \
 	src/gb-docs-provider-devhelp.c \
 	src/gb-docs-provider-devhelp.h \
 	src/gb-docs-provider-gir.c \
-	src/gb-docs-provider-gir.h \
-	$(NULL)
+	src/gb-docs-provider-gir.h
 
 
 noinst_LTLIBRARIES += liblanguage.la
@@ -99,8 +92,7 @@ liblanguage_la_SOURCES = \
 	src/gb-language-formatter-js.c \
 	src/gb-language-formatter-js.h \
 	src/gb-language-js.c \
-	src/gb-language-js.h \
-	$(NULL)
+	src/gb-language-js.h
 
 
 noinst_LTLIBRARIES += libprofiler.la
@@ -112,8 +104,7 @@ libprofiler_la_SOURCES = \
 	src/gb-profiler-strace.c \
 	src/gb-profiler-strace.h \
 	src/gb-profiler-valgrind.c \
-	src/gb-profiler-valgrind.h \
-	$(NULL)
+	src/gb-profiler-valgrind.h
 
 
 noinst_LTLIBRARIES += libproject.la
@@ -123,8 +114,7 @@ libproject_la_SOURCES = \
 	src/gb-project-file.c \
 	src/gb-project-file.h \
 	src/gb-project-item.c \
-	src/gb-project-item.h \
-	$(NULL)
+	src/gb-project-item.h
 
 
 noinst_LTLIBRARIES += librunner.la
@@ -132,15 +122,13 @@ librunner_la_SOURCES = \
 	src/gb-runner.c \
 	src/gb-runner.h \
 	src/gb-runner-program.c \
-	src/gb-runner-program.h \
-	$(NULL)
+	src/gb-runner-program.h
 
 
 noinst_LTLIBRARIES += libsearch.la
 libsearch_la_SOURCES = \
 	src/gb-search-provider.c \
-	src/gb-search-provider.h \
-	$(NULL)
+	src/gb-search-provider.h
 
 
 noinst_LTLIBRARIES += libsource.la
@@ -182,8 +170,7 @@ libsource_la_SOURCES = \
 	src/gb-source-view-state-insert.c \
 	src/gb-source-view-state-insert.h \
 	src/gb-source-view-state-snippet.c \
-	src/gb-source-view-state-snippet.h \
-	$(NULL);
+	src/gb-source-view-state-snippet.h
 
 
 noinst_LTLIBRARIES += libsymbol.la
@@ -199,22 +186,19 @@ libsymbol_la_SOURCES = \
 	src/gb-symbol-provider-c.c \
 	src/gb-symbol-provider-c.h \
 	src/gb-symbol-provider-js.c \
-	src/gb-symbol-provider-js.h \
-	$(NULL)
+	src/gb-symbol-provider-js.h
 
 
 noinst_LTLIBRARIES += libterminal.la
 libterminal_la_SOURCES = \
 	src/gb-terminal-pane.c \
-	src/gb-terminal-pane.h \
-	$(NULL)
+	src/gb-terminal-pane.h
 
 
 noinst_LTLIBRARIES += libtrie.la
 libtrie_la_SOURCES = \
 	src/trie.c \
-	src/trie.h \
-	$(NULL)
+	src/trie.h
 
 
 noinst_LTLIBRARIES += libworkspace.la
@@ -243,8 +227,7 @@ libworkspace_la_SOURCES = \
 	src/gb-zoomable.c \
 	src/gb-zoomable.h \
 	src/nautilus/nautilus-floating-bar.c \
-	src/nautilus/nautilus-floating-bar.h \
-	$(NULL)
+	src/nautilus/nautilus-floating-bar.h
 
 
 bin_PROGRAMS += gnome-builder
@@ -263,6 +246,5 @@ gnome_builder_LDADD = \
 	libsymbol.la \
 	libterminal.la \
 	libtrie.la \
-	libworkspace.la \
-	$(NULL)
+	libworkspace.la
 
