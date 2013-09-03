@@ -666,6 +666,24 @@ gb_source_pane_zoom_out (GbZoomable *zoomable)
    gb_source_pane_zoom_by(GB_SOURCE_PANE(zoomable), PANGO_SCALE_SMALL);
 }
 
+static gboolean
+block_completion (GtkSourceView       *source_view,
+                  GdkEventFocus       *event,
+                  GtkSourceCompletion *completion)
+{
+   gtk_source_completion_block_interactive(completion);
+   return FALSE;
+}
+
+static gboolean
+unblock_completion (GtkSourceView       *source_view,
+                    GdkEventFocus       *event,
+                    GtkSourceCompletion *completion)
+{
+   gtk_source_completion_unblock_interactive(completion);
+   return FALSE;
+}
+
 static void
 setup_source_view (GbSourcePane  *pane,
                    GtkSourceView *source_view)
@@ -687,6 +705,17 @@ setup_source_view (GbSourcePane  *pane,
                 NULL);
 
    completion = gtk_source_view_get_completion(source_view);
+
+   g_signal_connect_object(source_view,
+                           "focus-in-event",
+                           G_CALLBACK(unblock_completion),
+                           completion,
+                           0);
+   g_signal_connect_object(source_view,
+                           "focus-out-event",
+                           G_CALLBACK(block_completion),
+                           completion,
+                           0);
 
    g_object_set(completion,
                 "show-headers", FALSE,
