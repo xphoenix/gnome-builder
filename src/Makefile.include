@@ -52,36 +52,6 @@ libapp_la_SOURCES = \
 	$(NULL)
 
 
-noinst_LTLIBRARIES += libworkspace.la
-libworkspace_la_LIBADD = \
-	libproject.la \
-	libterminal.la
-libworkspace_la_SOURCES = \
-	src/gb-animation.c \
-	src/gb-animation.h \
-	src/gb-frame-source.c \
-	src/gb-frame-source.h \
-	src/gb-workspace.c \
-	src/gb-workspace.h \
-	src/gb-workspace-layout-edit.c \
-	src/gb-workspace-layout-edit.h \
-	src/gb-workspace-layout.c \
-	src/gb-workspace-layout.h \
-	src/gb-workspace-layout-splash.c \
-	src/gb-workspace-layout-splash.h \
-	src/gb-workspace-layout-switcher.c \
-	src/gb-workspace-layout-switcher.h \
-	src/gb-workspace-pane-group.c \
-	src/gb-workspace-pane-group.h \
-	src/gb-workspace-pane.c \
-	src/gb-workspace-pane.h \
-	src/gb-zoomable.c \
-	src/gb-zoomable.h \
-	src/nautilus/nautilus-floating-bar.c \
-	src/nautilus/nautilus-floating-bar.h \
-	$(NULL)
-
-
 noinst_LTLIBRARIES += libcompiler.la
 libcompiler_la_SOURCES = \
 	src/gb-compiler.c \
@@ -244,6 +214,36 @@ noinst_LTLIBRARIES += libtrie.la
 libtrie_la_SOURCES = \
 	src/trie.c \
 	src/trie.h \
+	$(NULL)
+
+
+noinst_LTLIBRARIES += libworkspace.la
+libworkspace_la_LIBADD = \
+	libproject.la \
+	libterminal.la
+libworkspace_la_SOURCES = \
+	src/gb-animation.c \
+	src/gb-animation.h \
+	src/gb-frame-source.c \
+	src/gb-frame-source.h \
+	src/gb-workspace.c \
+	src/gb-workspace.h \
+	src/gb-workspace-layout-edit.c \
+	src/gb-workspace-layout-edit.h \
+	src/gb-workspace-layout.c \
+	src/gb-workspace-layout.h \
+	src/gb-workspace-layout-splash.c \
+	src/gb-workspace-layout-splash.h \
+	src/gb-workspace-layout-switcher.c \
+	src/gb-workspace-layout-switcher.h \
+	src/gb-workspace-pane-group.c \
+	src/gb-workspace-pane-group.h \
+	src/gb-workspace-pane.c \
+	src/gb-workspace-pane.h \
+	src/gb-zoomable.c \
+	src/gb-zoomable.h \
+	src/nautilus/nautilus-floating-bar.c \
+	src/nautilus/nautilus-floating-bar.h \
 	$(NULL)
 
 
