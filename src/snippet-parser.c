@@ -139,6 +139,9 @@ snippet_parser_do_part_linked (SnippetParser *parser,
    chunk = gb_source_snippet_chunk_new();
    gb_source_snippet_chunk_set_text(chunk, NULL);
    gb_source_snippet_chunk_set_linked_chunk(chunk, n);
+   if (!n) {
+      gb_source_snippet_chunk_set_tab_stop(chunk, 0);
+   }
    parser->chunks = g_list_append(parser->chunks, chunk);
 }
 
