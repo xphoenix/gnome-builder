@@ -1,5 +1,14 @@
 # TODO
 
+## Application
+
+ * When calling `gnome-builder' again from the command line, we need to
+   make sure that we only bring the current window forward, rather than
+   spawning a new instance of the window.
+
+   Alternatively, we can make sure we support multiple projects open within
+   one process space.
+
 ## Snippets
 
  * Each new line should insert with the same spacing as the previous line.
