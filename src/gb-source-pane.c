@@ -278,7 +278,7 @@ gb_source_pane_load_finish (GbSourcePane  *pane,
 }
 
 static void
-gb_source_pane_emit_modified_changed (GbSourcePane *pane)
+buffer_modified_changed_cb (GbSourcePane *pane)
 {
    GtkTextBuffer *buffer;
    gboolean modified;
@@ -308,9 +308,9 @@ gb_source_pane_reload_snippets (GbSourcePane      *pane,
 }
 
 static void
-gb_source_pane_language_changed (GbSourcePane      *pane,
-                                 GParamSpec        *pspec,
-                                 GtkSourceBuffer   *buffer)
+buffer_notify_language_cb (GbSourcePane    *pane,
+                           GParamSpec      *pspec,
+                           GtkSourceBuffer *buffer)
 {
    GtkSourceLanguage *language;
 
@@ -332,18 +332,9 @@ gb_source_pane_grab_focus (GtkWidget *widget)
    gtk_widget_grab_focus(GTK_WIDGET(pane->priv->view));
 }
 
-static gboolean
-get_child_position (GtkOverlay   *overlay,
-                    GtkWidget    *widget,
-                    GdkRectangle *allocation,
-                    GbSourcePane *pane)
-{
-   return FALSE;
-}
-
 static void
-update_position (GbSourcePane  *pane,
-                 GtkTextBuffer *buffer)
+gb_source_pane_update_cursor_position (GbSourcePane  *pane,
+                                       GtkTextBuffer *buffer)
 {
    GtkTextMark *mark;
    GtkTextIter iter;
@@ -365,39 +356,52 @@ update_position (GbSourcePane  *pane,
 }
 
 static void
-on_mark_set (GtkTextBuffer *buffer,
-             GtkTextIter   *location,
-             GtkTextMark   *mark,
-             GbSourcePane  *pane)
+buffer_mark_set_cb (GtkTextBuffer *buffer,
+                    GtkTextIter   *location,
+                    GtkTextMark   *mark,
+                    GbSourcePane  *pane)
 {
+   g_assert(GTK_IS_TEXT_BUFFER(buffer));
+   g_assert(GB_IS_SOURCE_PANE(pane));
+
    if (mark && (mark == gtk_text_buffer_get_insert(buffer))) {
-      update_position(pane, buffer);
+      gb_source_pane_update_cursor_position(pane, buffer);
    }
 }
 
 static void
-on_insert_text (GtkTextBuffer *buffer,
-                GtkTextIter   *location,
-                gchar         *text,
-                gint           length,
-                GbSourcePane  *pane)
+buffer_insert_text_cb (GtkTextBuffer *buffer,
+                       GtkTextIter   *location,
+                       gchar         *text,
+                       gint           length,
+                       GbSourcePane  *pane)
 {
-   update_position(pane, buffer);
+   g_assert(GTK_IS_TEXT_BUFFER(buffer));
+   g_assert(GB_IS_SOURCE_PANE(pane));
+
+   gb_source_pane_update_cursor_position(pane, buffer);
 }
 
 static void
-on_delete_range (GtkTextBuffer *buffer,
-                 GtkTextIter   *begin,
-                 GtkTextIter   *end,
-                 GbSourcePane  *pane)
+buffer_delete_range_cb (GtkTextBuffer *buffer,
+                        GtkTextIter   *begin,
+                        GtkTextIter   *end,
+                        GbSourcePane  *pane)
 {
-   update_position(pane, buffer);
+   g_assert(GTK_IS_TEXT_BUFFER(buffer));
+   g_assert(GB_IS_SOURCE_PANE(pane));
+
+   gb_source_pane_update_cursor_position(pane, buffer);
 }
 
 static void
 gb_source_pane_focus_search (GbWorkspacePane *pane)
 {
-   GbSourcePanePrivate *priv = GB_SOURCE_PANE(pane)->priv;
+   GbSourcePanePrivate *priv;
+
+   g_return_if_fail(GB_IS_SOURCE_PANE(pane));
+
+   priv = GB_SOURCE_PANE(pane)->priv;
 
    g_object_set(priv->search_bar,
                 "search-mode-enabled", TRUE,
@@ -443,9 +447,9 @@ gb_source_pane_dispose (GObject *object)
 }
 
 static gboolean
-gb_source_pane_view_key_press (GtkTextView  *text_view,
-                               GdkEventKey  *key,
-                               GbSourcePane *pane)
+view_key_press_event_cb (GtkTextView  *text_view,
+                         GdkEventKey  *key,
+                         GbSourcePane *pane)
 {
    GbSourcePanePrivate *priv = pane->priv;
    gboolean was_enabled;
@@ -467,9 +471,9 @@ gb_source_pane_view_key_press (GtkTextView  *text_view,
 }
 
 static gboolean
-gb_source_pane_search_entry_key_press (GtkSearchEntry *search_entry,
-                                       GdkEventKey    *key,
-                                       GbSourcePane   *pane)
+search_entry_key_press_event_cb (GtkSearchEntry *search_entry,
+                                 GdkEventKey    *key,
+                                 GbSourcePane   *pane)
 {
    GbSourcePanePrivate *priv = pane->priv;
 
@@ -488,8 +492,8 @@ gb_source_pane_search_entry_key_press (GtkSearchEntry *search_entry,
 }
 
 static void
-gb_source_pane_search_entry_changed (GtkEntry     *entry,
-                                     GbSourcePane *pane)
+search_entry_changed_cb (GtkEntry     *entry,
+                         GbSourcePane *pane)
 {
    GbSourcePanePrivate *priv;
    GdkRectangle rect;
@@ -695,30 +699,40 @@ gb_source_pane_zoom_by (GbSourcePane *pane,
 static void
 gb_source_pane_zoom_in (GbZoomable *zoomable)
 {
+   g_return_if_fail(GB_IS_SOURCE_PANE(zoomable));
+
    gb_source_pane_zoom_by(GB_SOURCE_PANE(zoomable), PANGO_SCALE_LARGE);
 }
 
 static void
 gb_source_pane_zoom_out (GbZoomable *zoomable)
 {
+   g_return_if_fail(GB_IS_SOURCE_PANE(zoomable));
+
    gb_source_pane_zoom_by(GB_SOURCE_PANE(zoomable), PANGO_SCALE_SMALL);
 }
 
 static gboolean
-block_completion (GtkSourceView       *source_view,
-                  GdkEventFocus       *event,
-                  GtkSourceCompletion *completion)
+view_focus_out_event_cb (GtkSourceView       *source_view,
+                         GdkEventFocus       *event,
+                         GtkSourceCompletion *completion)
 {
+   g_return_if_fail(GTK_SOURCE_IS_COMPLETION(completion));
+
    gtk_source_completion_block_interactive(completion);
+
    return FALSE;
 }
 
 static gboolean
-unblock_completion (GtkSourceView       *source_view,
-                    GdkEventFocus       *event,
-                    GtkSourceCompletion *completion)
+view_focus_in_event_cb (GtkSourceView       *source_view,
+                        GdkEventFocus       *event,
+                        GtkSourceCompletion *completion)
 {
+   g_return_if_fail(GTK_SOURCE_IS_COMPLETION(completion));
+
    gtk_source_completion_unblock_interactive(completion);
+
    return FALSE;
 }
 
@@ -748,13 +762,13 @@ setup_source_view (GbSourcePane  *pane,
    priv->view_focus_in_event_handler =
       g_signal_connect(source_view,
                        "focus-in-event",
-                       G_CALLBACK(unblock_completion),
+                       G_CALLBACK(view_focus_in_event_cb),
                        completion);
 
    priv->view_focus_out_event_handler =
       g_signal_connect(source_view,
                        "focus-out-event",
-                       G_CALLBACK(block_completion),
+                       G_CALLBACK(view_focus_out_event_cb),
                        completion);
 
    g_object_set(completion,
@@ -952,12 +966,12 @@ gb_source_pane_init (GbSourcePane *pane)
 
    priv->search_entry_key_press_event_handler =
       g_signal_connect(priv->search_entry, "key-press-event",
-                       G_CALLBACK(gb_source_pane_search_entry_key_press),
+                       G_CALLBACK(search_entry_key_press_event_cb),
                        pane);
 
    priv->search_entry_changed_handler =
       g_signal_connect(priv->search_entry, "changed",
-                       G_CALLBACK(gb_source_pane_search_entry_changed),
+                       G_CALLBACK(search_entry_changed_cb),
                        pane);
 
    priv->overlay = g_object_new(GTK_TYPE_OVERLAY,
@@ -989,13 +1003,13 @@ gb_source_pane_init (GbSourcePane *pane)
    priv->buffer_modified_changed_handler =
       g_signal_connect_swapped(priv->buffer,
                                "modified-changed",
-                               G_CALLBACK(gb_source_pane_emit_modified_changed),
+                               G_CALLBACK(buffer_modified_changed_cb),
                                pane);
 
    priv->buffer_notify_language_handler =
       g_signal_connect_swapped(priv->buffer,
                                "notify::language",
-                               G_CALLBACK(gb_source_pane_language_changed),
+                               G_CALLBACK(buffer_notify_language_cb),
                                pane);
 
    priv->view = g_object_new(GB_TYPE_SOURCE_VIEW,
@@ -1006,7 +1020,7 @@ gb_source_pane_init (GbSourcePane *pane)
 
    priv->view_key_press_event_handler =
       g_signal_connect(priv->view, "key-press-event",
-                       G_CALLBACK(gb_source_pane_view_key_press),
+                       G_CALLBACK(view_key_press_event_cb),
                        pane);
 
    priv->diff = gb_source_diff_new(NULL, GTK_TEXT_BUFFER(priv->buffer));
@@ -1048,19 +1062,19 @@ gb_source_pane_init (GbSourcePane *pane)
    pane->priv->buffer_insert_text_handler =
       g_signal_connect_after(priv->buffer,
                              "insert-text",
-                             G_CALLBACK(on_insert_text),
+                             G_CALLBACK(buffer_insert_text_cb),
                              pane);
 
    pane->priv->buffer_delete_range_handler =
       g_signal_connect_after(priv->buffer,
                              "delete-range",
-                             G_CALLBACK(on_delete_range),
+                             G_CALLBACK(buffer_delete_range_cb),
                              pane);
 
    pane->priv->buffer_mark_set_handler =
       g_signal_connect_after(priv->buffer,
                              "mark-set",
-                             G_CALLBACK(on_mark_set),
+                             G_CALLBACK(buffer_mark_set_cb),
                              pane);
 }
 
