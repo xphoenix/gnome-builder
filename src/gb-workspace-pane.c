@@ -119,6 +119,16 @@ gb_workspace_pane_set_uri (GbWorkspacePane *pane,
    g_object_notify_by_pspec(G_OBJECT(pane), gParamSpecs[PROP_URI]);
 }
 
+void
+gb_workspace_pane_focus_search (GbWorkspacePane *pane)
+{
+   g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
+
+   if (GB_WORKSPACE_PANE_GET_CLASS(pane)->focus_search) {
+      GB_WORKSPACE_PANE_GET_CLASS(pane)->focus_search(pane);
+   }
+}
+
 gboolean
 gb_workspace_pane_get_can_save (GbWorkspacePane *pane)
 {

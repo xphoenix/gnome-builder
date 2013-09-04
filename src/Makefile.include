@@ -125,15 +125,8 @@ librunner_la_SOURCES = \
 	src/gb-runner-program.h
 
 
-noinst_LTLIBRARIES += libsearch.la
-libsearch_la_SOURCES = \
-	src/gb-search-provider.c \
-	src/gb-search-provider.h
-
-
 noinst_LTLIBRARIES += libsource.la
 libsource_la_LIBADD = \
-	libsearch.la \
 	libcompiler.la \
 	libapp.la
 libsource_la_SOURCES = \
@@ -241,7 +234,6 @@ gnome_builder_LDADD = \
 	libprofiler.la \
 	libproject.la \
 	librunner.la \
-	libsearch.la \
 	libsource.la \
 	libsymbol.la \
 	libterminal.la \

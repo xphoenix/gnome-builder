@@ -20,7 +20,6 @@
 
 #include "gb-action.h"
 #include "gb-application.h"
-#include "gb-search-provider.h"
 #include "gb-source-pane.h"
 #include "gb-terminal-pane.h"
 #include "gb-workspace.h"
@@ -238,9 +237,7 @@ gb_workspace_search_pane (GSimpleAction *action,
                           gpointer       user_data)
 {
    GbWorkspacePrivate *priv;
-   GbSearchProvider *provider;
    GbWorkspace *workspace = user_data;
-   GtkWidget *widget;
 
    g_return_if_fail(GB_IS_WORKSPACE(workspace));
    g_return_if_fail(G_IS_ACTION(action));
@@ -248,10 +245,7 @@ gb_workspace_search_pane (GSimpleAction *action,
    priv = workspace->priv;
 
    if (GB_IS_WORKSPACE_PANE(priv->current_pane)) {
-      if (GB_IS_SEARCH_PROVIDER(priv->current_pane)) {
-         provider = GB_SEARCH_PROVIDER(priv->current_pane);
-         gb_search_provider_focus_search(provider);
-      }
+      gb_workspace_pane_focus_search(GB_WORKSPACE_PANE(priv->current_pane));
    }
 }
 

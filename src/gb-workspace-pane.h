@@ -58,13 +58,15 @@ struct _GbWorkspacePaneClass
    void     (*fullscreen)   (GbWorkspacePane      *pane);
    void     (*unfullscreen) (GbWorkspacePane      *pane);
 
+   void     (*focus_search) (GbWorkspacePane      *pane);
+
    gpointer padding[32];
 };
 
 void         gb_workspace_pane_close              (GbWorkspacePane      *pane);
+void         gb_workspace_pane_focus_search       (GbWorkspacePane      *pane);
 void         gb_workspace_pane_fullscreen         (GbWorkspacePane      *pane);
 gboolean     gb_workspace_pane_get_busy           (GbWorkspacePane      *pane);
-gboolean     gb_workspace_pane_get_can_fullscreen (GbWorkspacePane      *pane);
 gboolean     gb_workspace_pane_get_can_save       (GbWorkspacePane      *pane);
 const gchar *gb_workspace_pane_get_icon_name      (GbWorkspacePane      *pane);
 const gchar *gb_workspace_pane_get_title          (GbWorkspacePane      *pane);

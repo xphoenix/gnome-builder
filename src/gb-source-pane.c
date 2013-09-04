@@ -22,7 +22,6 @@
 
 #include "gb-animation.h"
 #include "gb-source-fullscreen-container.h"
-#include "gb-search-provider.h"
 #include "gb-source-diff.h"
 #include "gb-source-gutter-renderer-compiler.h"
 #include "gb-source-gutter-renderer-diff.h"
@@ -35,15 +34,12 @@
 #include "gb-source-view.h"
 #include "gb-zoomable.h"
 
-static void gb_search_provider_init (GbSearchProviderIface *iface);
-static void gb_zoomable_init        (GbZoomableInterface *iface);
+static void gb_zoomable_init (GbZoomableInterface *iface);
 
 G_DEFINE_TYPE_EXTENDED(GbSourcePane,
                        gb_source_pane,
                        GB_TYPE_WORKSPACE_PANE,
                        0,
-                       G_IMPLEMENT_INTERFACE(GB_TYPE_SEARCH_PROVIDER,
-                                             gb_search_provider_init)
                        G_IMPLEMENT_INTERFACE(GB_TYPE_ZOOMABLE,
                                              gb_zoomable_init))
 
@@ -368,16 +364,14 @@ on_delete_range (GtkTextBuffer *buffer,
 }
 
 static void
-gb_source_pane_focus_search (GbSearchProvider *provider)
+gb_source_pane_focus_search (GbWorkspacePane *pane)
 {
-   GbSourcePane *pane = (GbSourcePane *)provider;
+   GbSourcePanePrivate *priv = GB_SOURCE_PANE(pane)->priv;
 
-   g_assert(GB_IS_SOURCE_PANE(pane));
-
-   g_object_set(pane->priv->search_bar,
+   g_object_set(priv->search_bar,
                 "search-mode-enabled", TRUE,
                 NULL);
-   gtk_widget_grab_focus(pane->priv->search_entry);
+   gtk_widget_grab_focus(priv->search_entry);
 }
 
 static void
@@ -886,9 +880,9 @@ gb_source_pane_class_init (GbSourcePaneClass *klass)
    widget_class->grab_focus = gb_source_pane_grab_focus;
 
    workspace_pane_class = GB_WORKSPACE_PANE_CLASS(klass);
+   workspace_pane_class->focus_search = gb_source_pane_focus_search;
    workspace_pane_class->save_async = gb_source_pane_save_async;
    workspace_pane_class->save_finish = gb_source_pane_save_finish;
-   //workspace_pane_class->fullscreen = gb_source_pane_fullscreen;
 
    gParamSpecs[PROP_FILE] =
       g_param_spec_object("file",
@@ -1040,12 +1034,6 @@ gb_source_pane_init (GbSourcePane *pane)
    pane->priv->mark_set_handler =
       g_signal_connect_after(priv->buffer, "mark-set",
                              G_CALLBACK(on_mark_set), pane);
-}
-
-static void
-gb_search_provider_init (GbSearchProviderIface *iface)
-{
-   iface->focus_search = gb_source_pane_focus_search;
 }
 
 static void
