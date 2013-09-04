@@ -56,9 +56,9 @@ struct _GbSourcePanePrivate
    GtkSourceSearchContext  *search_context;
    GtkSourceSearchSettings *search_settings;
 
-   gint insert_text_handler;
-   gint delete_range_handler;
-   gint mark_set_handler;
+   gint buffer_insert_text_handler;
+   gint buffer_delete_range_handler;
+   gint buffer_mark_set_handler;
 };
 
 enum
@@ -400,22 +400,26 @@ static void
 gb_source_pane_dispose (GObject *object)
 {
    GbSourcePanePrivate *priv = GB_SOURCE_PANE(object)->priv;
-   GtkTextBuffer *buffer;
 
-   g_clear_object(&priv->diff);
-
-   if (priv->view) {
-      if ((buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(priv->view)))) {
-         if (priv->insert_text_handler) {
-            g_signal_handler_disconnect(buffer, priv->insert_text_handler);
-            priv->insert_text_handler = 0;
-         }
-         if (priv->delete_range_handler) {
-            g_signal_handler_disconnect(buffer, priv->delete_range_handler);
-            priv->delete_range_handler = 0;
-         }
-      }
+#define DISCONNECT(object, field) \
+   if (object && field) { \
+      g_signal_handler_disconnect(object, field); \
+      field = 0; \
    }
+
+   DISCONNECT(priv->buffer, priv->buffer_insert_text_handler);
+   DISCONNECT(priv->buffer, priv->buffer_delete_range_handler);
+   DISCONNECT(priv->buffer, priv->buffer_mark_set_handler);
+
+#undef DISCONNECT
+
+   g_clear_object(&priv->file);
+   g_clear_object(&priv->buffer);
+   g_clear_object(&priv->diff);
+   g_clear_object(&priv->search_context);
+   g_clear_object(&priv->search_settings);
+   g_clear_object(&priv->snippets);
+   g_clear_object(&priv->snippets_provider);
 
    G_OBJECT_CLASS(gb_source_pane_parent_class)->dispose(object);
 }
@@ -780,57 +784,6 @@ place_over (GtkWidget *window,
    gtk_window_move(GTK_WINDOW(window), x, y);
 }
 
-#if 0
-static gboolean
-fullscreen (gpointer data)
-{
-   gtk_window_fullscreen(data);
-
-   return FALSE;
-}
-
-static void
-gb_source_pane_fullscreen (GbWorkspacePane *pane)
-{
-   PangoFontDescription *font;
-   GbSourcePanePrivate *priv;
-   GtkStyleContext *context;
-   const gchar *uri;
-   GtkWidget *container;
-   GtkWidget *source_view;
-   GtkWidget *window;
-
-   priv = GB_SOURCE_PANE(pane)->priv;
-
-   uri = gb_workspace_pane_get_uri(pane);
-
-   window = g_object_new(GTK_TYPE_WINDOW,
-                         "title", uri,
-                         NULL);
-
-   container = g_object_new(GB_TYPE_SOURCE_FULLSCREEN_CONTAINER,
-                            "visible", TRUE,
-                            NULL);
-   gtk_container_add(GTK_CONTAINER(window), container);
-
-   source_view = g_object_new(GB_TYPE_SOURCE_VIEW,
-                              "visible", TRUE,
-                              NULL);
-
-   setup_source_view(GB_SOURCE_PANE(pane), GTK_SOURCE_VIEW(source_view));
-
-   gtk_container_add(GTK_CONTAINER(container), source_view);
-
-   place_over(window, priv->scroller);
-
-   gtk_window_set_decorated(GTK_WINDOW(window), FALSE);
-
-   gtk_window_present(GTK_WINDOW(window));
-
-   g_timeout_add(100, fullscreen, window);
-}
-#endif
-
 static void
 gb_source_pane_finalize (GObject *object)
 {
@@ -1067,20 +1020,20 @@ gb_source_pane_init (GbSourcePane *pane)
       gtk_widget_set_halign(priv->floating_bar, GTK_ALIGN_START);
    }
 
-   pane->priv->insert_text_handler =
+   pane->priv->buffer_insert_text_handler =
       g_signal_connect_object(priv->buffer,
                               "insert-text",
                               G_CALLBACK(on_insert_text), pane,
                               G_CONNECT_AFTER);
 
-   pane->priv->delete_range_handler =
+   pane->priv->buffer_delete_range_handler =
       g_signal_connect_object(priv->buffer,
                               "delete-range",
                               G_CALLBACK(on_delete_range),
                               pane,
                               G_CONNECT_AFTER);
 
-   pane->priv->mark_set_handler =
+   pane->priv->buffer_mark_set_handler =
       g_signal_connect_object(priv->buffer,
                               "mark-set",
                               G_CALLBACK(on_mark_set),
