@@ -56,9 +56,20 @@ struct _GbSourcePanePrivate
    GtkSourceSearchContext  *search_context;
    GtkSourceSearchSettings *search_settings;
 
-   gint buffer_insert_text_handler;
-   gint buffer_delete_range_handler;
-   gint buffer_mark_set_handler;
+   guint buffer_delete_range_handler;
+   guint buffer_insert_text_handler;
+   guint buffer_mark_set_handler;
+   guint buffer_modified_changed_handler;
+   guint buffer_notify_language_handler;
+
+   guint view_focus_in_event_handler;
+   guint view_focus_out_event_handler;
+   guint view_key_press_event_handler;
+
+   guint search_entry_key_press_event_handler;
+   guint search_entry_changed_handler;
+
+   guint overlay_get_child_position_handler;
 };
 
 enum
@@ -407,9 +418,20 @@ gb_source_pane_dispose (GObject *object)
       field = 0; \
    }
 
-   DISCONNECT(priv->buffer, priv->buffer_insert_text_handler);
    DISCONNECT(priv->buffer, priv->buffer_delete_range_handler);
+   DISCONNECT(priv->buffer, priv->buffer_insert_text_handler);
    DISCONNECT(priv->buffer, priv->buffer_mark_set_handler);
+   DISCONNECT(priv->buffer, priv->buffer_modified_changed_handler);
+   DISCONNECT(priv->buffer, priv->buffer_notify_language_handler);
+
+   DISCONNECT(priv->view, priv->view_focus_in_event_handler);
+   DISCONNECT(priv->view, priv->view_focus_out_event_handler);
+   DISCONNECT(priv->view, priv->view_key_press_event_handler);
+
+   DISCONNECT(priv->search_entry, priv->search_entry_key_press_event_handler);
+   DISCONNECT(priv->search_entry, priv->search_entry_changed_handler);
+
+   DISCONNECT(priv->overlay, priv->overlay_get_child_position_handler);
 
 #undef DISCONNECT
 
@@ -727,17 +749,17 @@ setup_source_view (GbSourcePane  *pane,
    completion = gtk_source_view_get_completion(source_view);
    gtk_source_completion_block_interactive(completion);
 
-   g_signal_connect_object(source_view,
-                           "focus-in-event",
-                           G_CALLBACK(unblock_completion),
-                           completion,
-                           0);
+   priv->view_focus_in_event_handler =
+      g_signal_connect(source_view,
+                       "focus-in-event",
+                       G_CALLBACK(unblock_completion),
+                       completion);
 
-   g_signal_connect_object(source_view,
-                           "focus-out-event",
-                           G_CALLBACK(block_completion),
-                           completion,
-                           0);
+   priv->view_focus_out_event_handler =
+      g_signal_connect(source_view,
+                       "focus-out-event",
+                       G_CALLBACK(block_completion),
+                       completion);
 
    g_object_set(completion,
                 "show-headers", FALSE,
@@ -928,28 +950,34 @@ gb_source_pane_init (GbSourcePane *pane)
                                      "visible", TRUE,
                                      "width-chars", 32,
                                      NULL);
-   g_signal_connect(priv->search_entry, "key-press-event",
-                    G_CALLBACK(gb_source_pane_search_entry_key_press),
-                    pane);
-   g_signal_connect(priv->search_entry, "changed",
-                    G_CALLBACK(gb_source_pane_search_entry_changed),
-                    pane);
    gtk_container_add(GTK_CONTAINER(priv->search_bar), priv->search_entry);
    gtk_search_bar_connect_entry(GTK_SEARCH_BAR(priv->search_bar),
                                 GTK_ENTRY(priv->search_entry));
 
+   priv->search_entry_key_press_event_handler =
+      g_signal_connect(priv->search_entry, "key-press-event",
+                       G_CALLBACK(gb_source_pane_search_entry_key_press),
+                       pane);
+
+   priv->search_entry_changed_handler =
+      g_signal_connect(priv->search_entry, "changed",
+                       G_CALLBACK(gb_source_pane_search_entry_changed),
+                       pane);
+
    priv->overlay = g_object_new(GTK_TYPE_OVERLAY,
                                 "visible", TRUE,
                                 NULL);
-   g_signal_connect(priv->overlay, "get-child-position",
-                    G_CALLBACK(get_child_position),
-                    pane);
    gtk_container_add_with_properties(GTK_CONTAINER(pane), priv->overlay,
                                      "height", 1,
                                      "left-attach", 0,
                                      "top-attach", 1,
                                      "width", 1,
                                      NULL);
+
+   priv->overlay_get_child_position_handler =
+      g_signal_connect(priv->overlay, "get-child-position",
+                       G_CALLBACK(get_child_position),
+                       pane);
 
    priv->progress = gtk_progress_bar_new();
    gtk_style_context_add_class(gtk_widget_get_style_context(priv->progress),
@@ -966,23 +994,29 @@ gb_source_pane_init (GbSourcePane *pane)
    gtk_container_add(GTK_CONTAINER(priv->overlay), priv->scroller);
 
    priv->buffer = gtk_source_buffer_new(NULL);
-   g_signal_connect_swapped(priv->buffer,
-                            "modified-changed",
-                            G_CALLBACK(gb_source_pane_emit_modified_changed),
-                            pane);
-   g_signal_connect_swapped(priv->buffer,
-                            "notify::language",
-                            G_CALLBACK(gb_source_pane_language_changed),
-                            pane);
+
+   priv->buffer_modified_changed_handler =
+      g_signal_connect_swapped(priv->buffer,
+                               "modified-changed",
+                               G_CALLBACK(gb_source_pane_emit_modified_changed),
+                               pane);
+
+   priv->buffer_notify_language_handler =
+      g_signal_connect_swapped(priv->buffer,
+                               "notify::language",
+                               G_CALLBACK(gb_source_pane_language_changed),
+                               pane);
+
    priv->view = g_object_new(GB_TYPE_SOURCE_VIEW,
                              "buffer", priv->buffer,
                              "visible", TRUE,
                              NULL);
-   g_object_add_weak_pointer(G_OBJECT(priv->view), (gpointer *)&priv->view);
-   g_signal_connect(priv->view, "key-press-event",
-                    G_CALLBACK(gb_source_pane_view_key_press),
-                    pane);
    gtk_container_add(GTK_CONTAINER(priv->scroller), priv->view);
+
+   priv->view_key_press_event_handler =
+      g_signal_connect(priv->view, "key-press-event",
+                       G_CALLBACK(gb_source_pane_view_key_press),
+                       pane);
 
    priv->diff = gb_source_diff_new(NULL, GTK_TEXT_BUFFER(priv->buffer));
 
@@ -1021,24 +1055,22 @@ gb_source_pane_init (GbSourcePane *pane)
    }
 
    pane->priv->buffer_insert_text_handler =
-      g_signal_connect_object(priv->buffer,
-                              "insert-text",
-                              G_CALLBACK(on_insert_text), pane,
-                              G_CONNECT_AFTER);
+      g_signal_connect_after(priv->buffer,
+                             "insert-text",
+                             G_CALLBACK(on_insert_text),
+                             pane);
 
    pane->priv->buffer_delete_range_handler =
-      g_signal_connect_object(priv->buffer,
-                              "delete-range",
-                              G_CALLBACK(on_delete_range),
-                              pane,
-                              G_CONNECT_AFTER);
+      g_signal_connect_after(priv->buffer,
+                             "delete-range",
+                             G_CALLBACK(on_delete_range),
+                             pane);
 
    pane->priv->buffer_mark_set_handler =
-      g_signal_connect_object(priv->buffer,
-                              "mark-set",
-                              G_CALLBACK(on_mark_set),
-                              pane,
-                              G_CONNECT_AFTER);
+      g_signal_connect_after(priv->buffer,
+                             "mark-set",
+                             G_CALLBACK(on_mark_set),
+                             pane);
 }
 
 static void
