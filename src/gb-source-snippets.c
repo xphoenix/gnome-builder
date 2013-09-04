@@ -22,12 +22,13 @@
 #include "gb-source-snippet-chunk.h"
 #include "gb-source-snippets.h"
 #include "snippet-parser.h"
+#include "trie.h"
 
 G_DEFINE_TYPE(GbSourceSnippets, gb_source_snippets, G_TYPE_OBJECT)
 
 struct _GbSourceSnippetsPrivate
 {
-   GHashTable *snippets;
+   Trie *snippets;
 };
 
 GbSourceSnippets *
@@ -40,22 +41,31 @@ gb_source_snippets_new (void)
 void
 gb_source_snippets_clear (GbSourceSnippets *snippets)
 {
+   GbSourceSnippetsPrivate *priv;
+
    g_return_if_fail(GB_IS_SOURCE_SNIPPETS(snippets));
-   g_hash_table_remove_all(snippets->priv->snippets);
+
+   priv = snippets->priv;
+
+   trie_destroy(priv->snippets);
+   priv->snippets = trie_new(g_object_unref);
 }
 
-static void
-copy_into (gpointer key,
-           gpointer value,
-           gpointer user_data)
+static gboolean
+copy_into (Trie        *trie,
+           const gchar *key,
+           gpointer     value,
+           gpointer     user_data)
 {
-   GHashTable *ht = user_data;
    GbSourceSnippet *snippet = value;
+   Trie *dest = user_data;
 
-   g_assert(ht);
+   g_assert(dest);
    g_assert(GB_IS_SOURCE_SNIPPET(snippet));
 
-   g_hash_table_insert(user_data, g_strdup(key), g_object_ref(snippet));
+   trie_insert(dest, key, g_object_ref(snippet));
+
+   return FALSE;
 }
 
 void
@@ -65,9 +75,13 @@ gb_source_snippets_merge (GbSourceSnippets *snippets,
    g_return_if_fail(GB_IS_SOURCE_SNIPPETS(snippets));
    g_return_if_fail(GB_IS_SOURCE_SNIPPETS(other));
 
-   g_hash_table_foreach(other->priv->snippets,
-                        copy_into,
-                        snippets->priv->snippets);
+   trie_traverse(other->priv->snippets,
+                 "",
+                 G_TRAVERSE_LEAVES,
+                 G_PRE_ORDER,
+                 -1,
+                 copy_into,
+                 snippets->priv->snippets);
 }
 
 static void
@@ -169,24 +183,47 @@ gb_source_snippets_add (GbSourceSnippets *snippets,
    g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
 
    trigger = gb_source_snippet_get_trigger(snippet);
-   g_hash_table_insert(snippets->priv->snippets,
-                       g_strdup(trigger),
-                       g_object_ref(snippet));
+   trie_insert(snippets->priv->snippets, trigger, g_object_ref(snippet));
+}
+
+gboolean
+gb_source_snippets_foreach_cb (Trie        *trie,
+                               const gchar *key,
+                               gpointer     value,
+                               gpointer     user_data)
+{
+   gpointer *closure = user_data;
+
+   ((GFunc)closure[0]) (value, closure[1]);
+
+   return FALSE;
 }
 
 void
 gb_source_snippets_foreach (GbSourceSnippets *snippets,
+                            const gchar      *prefix,
                             GFunc             foreach_func,
                             gpointer          user_data)
 {
-   GHashTableIter iter;
-   gpointer key;
-   gpointer value;
+   GbSourceSnippetsPrivate *priv;
+   gpointer closure[2] = { foreach_func, user_data };
 
-   g_hash_table_iter_init(&iter, snippets->priv->snippets);
-   while (g_hash_table_iter_next(&iter, &key, &value)) {
-      foreach_func(value, user_data);
+   g_return_if_fail(GB_IS_SOURCE_SNIPPETS(snippets));
+   g_return_if_fail(foreach_func);
+
+   priv = snippets->priv;
+
+   if (!prefix) {
+      prefix = "";
    }
+
+   trie_traverse(priv->snippets,
+                 prefix,
+                 G_PRE_ORDER,
+                 G_TRAVERSE_LEAVES,
+                 -1,
+                 gb_source_snippets_foreach_cb,
+                 (gpointer)closure);
 }
 
 static void
@@ -196,7 +233,7 @@ gb_source_snippets_finalize (GObject *object)
 
    priv = GB_SOURCE_SNIPPETS(object)->priv;
 
-   g_clear_pointer(&priv->snippets, g_hash_table_unref);
+   g_clear_pointer(&priv->snippets, (GDestroyNotify)trie_destroy);
 
    G_OBJECT_CLASS(gb_source_snippets_parent_class)->finalize(object);
 }
@@ -218,9 +255,5 @@ gb_source_snippets_init (GbSourceSnippets *snippets)
                                                 GB_TYPE_SOURCE_SNIPPETS,
                                                 GbSourceSnippetsPrivate);
 
-   snippets->priv->snippets =
-      g_hash_table_new_full(g_str_hash,
-                            g_str_equal,
-                            g_free,
-                            g_object_unref);
+   snippets->priv->snippets = trie_new(g_object_unref);
 }

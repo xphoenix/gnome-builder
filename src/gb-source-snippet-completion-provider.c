@@ -310,7 +310,7 @@ provider_populate (GtkSourceCompletionProvider *provider,
       return;
    }
 
-   gb_source_snippets_foreach(priv->snippets, foreach_snippet, &state);
+   gb_source_snippets_foreach(priv->snippets, state.word, foreach_snippet, &state);
    gtk_source_completion_context_add_proposals(context, provider, state.list, TRUE);
 
    g_list_foreach(state.list, (GFunc)g_object_unref, NULL);
