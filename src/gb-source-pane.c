@@ -304,6 +304,9 @@ gb_source_pane_reload_snippets (GbSourcePane      *pane,
       manager = gb_source_snippets_manager_get_default();
       snippets = gb_source_snippets_manager_get_for_language(manager, language);
       pane->priv->snippets = snippets ? g_object_ref(snippets) : NULL;
+      g_object_set(pane->priv->snippets_provider,
+                   "snippets", snippets,
+                   NULL);
    }
 }
 
