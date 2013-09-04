@@ -53,9 +53,16 @@ struct _GbWorkspaceLayoutClass
                    GbProject         *project);
    void (*unload) (GbWorkspaceLayout *layout,
                    GbProject         *project);
+
+   void (*fullscreen)   (GbWorkspaceLayout *layout);
+   void (*unfullscreen) (GbWorkspaceLayout *layout);
+
+   gpointer padding[32];
 };
 
-GType gb_workspace_layout_get_type (void) G_GNUC_CONST;
+GType gb_workspace_layout_get_type     (void) G_GNUC_CONST;
+void  gb_workspace_layout_fullscreen   (GbWorkspaceLayout *layout);
+void  gb_workspace_layout_unfullscreen (GbWorkspaceLayout *layout);
 
 G_END_DECLS
 

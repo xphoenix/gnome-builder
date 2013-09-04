@@ -768,6 +768,7 @@ place_over (GtkWidget *window,
    gtk_window_move(GTK_WINDOW(window), x, y);
 }
 
+#if 0
 static gboolean
 fullscreen (gpointer data)
 {
@@ -816,6 +817,7 @@ gb_source_pane_fullscreen (GbWorkspacePane *pane)
 
    g_timeout_add(100, fullscreen, window);
 }
+#endif
 
 static void
 gb_source_pane_finalize (GObject *object)
@@ -886,7 +888,7 @@ gb_source_pane_class_init (GbSourcePaneClass *klass)
    workspace_pane_class = GB_WORKSPACE_PANE_CLASS(klass);
    workspace_pane_class->save_async = gb_source_pane_save_async;
    workspace_pane_class->save_finish = gb_source_pane_save_finish;
-   workspace_pane_class->fullscreen = gb_source_pane_fullscreen;
+   //workspace_pane_class->fullscreen = gb_source_pane_fullscreen;
 
    gParamSpecs[PROP_FILE] =
       g_param_spec_object("file",
@@ -912,7 +914,6 @@ gb_source_pane_init (GbSourcePane *pane)
    priv = pane->priv;
 
    g_object_set(pane,
-                "can-fullscreen", TRUE,
                 "icon-name", "text-x-generic",
                 "title", _("Unnamed File"),
                 NULL);

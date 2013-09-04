@@ -36,6 +36,8 @@ struct _GbWorkspacePrivate
 {
    GbProject *project;
 
+   gboolean is_fullscreen : 1;
+
    GtkWidget *build;
    GtkWidget *current_pane;
    GtkWidget *edit;
@@ -53,6 +55,7 @@ struct _GbWorkspacePrivate
 enum
 {
    PROP_0,
+   PROP_IS_FULLSCREEN,
    PROP_PROJECT,
    LAST_PROP
 };
@@ -62,6 +65,13 @@ static GParamSpec *gParamSpecs[LAST_PROP];
 G_DEFINE_TYPE_WITH_PRIVATE(GbWorkspace,
                            gb_workspace,
                            GTK_TYPE_APPLICATION_WINDOW)
+
+gboolean
+gb_workspace_is_fullscreen (GbWorkspace *workspace)
+{
+   g_return_val_if_fail(GB_IS_WORKSPACE(workspace), FALSE);
+   return workspace->priv->is_fullscreen;
+}
 
 /**
  * gb_workspace_get_project:
@@ -391,6 +401,22 @@ gb_workspace_set_focus (GtkWindow *window,
    }
 }
 
+void
+gb_workspace_set_fullscreen_layout (GbWorkspace *workspace,
+                                    gboolean     fullscreen_layout)
+{
+   GbWorkspacePrivate *priv;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+
+   priv = workspace->priv;
+
+   gtk_widget_set_visible(priv->header, !fullscreen_layout);
+
+   gtk_notebook_set_show_tabs(GTK_NOTEBOOK(priv->notebook),
+                              !fullscreen_layout);
+}
+
 static void
 gb_workspace_select_pane (GSimpleAction *action,
                           GVariant      *parameter,
@@ -426,6 +452,62 @@ gb_workspace_select_pane (GSimpleAction *action,
 }
 
 static void
+gb_workspace_toggle_fullscreen (GSimpleAction *action,
+                                GVariant      *parameter,
+                                gpointer       user_data)
+{
+   GbWorkspace *workspace = user_data;
+
+   if (gb_workspace_is_fullscreen(workspace)) {
+      gtk_window_unfullscreen(GTK_WINDOW(workspace));
+   } else {
+      gtk_window_fullscreen(GTK_WINDOW(workspace));
+   }
+}
+
+static void
+gb_workspace_do_fullscreen (GbWorkspace *workspace)
+{
+   GbWorkspacePrivate *priv = workspace->priv;
+
+   gb_workspace_layout_fullscreen(GB_WORKSPACE_LAYOUT(priv->layout));
+   gtk_widget_hide(priv->header);
+}
+
+static void
+gb_workspace_do_unfullscreen (GbWorkspace *workspace)
+{
+   GbWorkspacePrivate *priv = workspace->priv;
+
+   gtk_widget_show(priv->header);
+   gb_workspace_layout_unfullscreen(GB_WORKSPACE_LAYOUT(priv->layout));
+}
+
+static void
+gb_workspace_window_state_event (GtkWidget           *widget,
+                                 GdkEventWindowState *event,
+                                 gpointer             user_data)
+{
+   GbWorkspacePrivate *priv;
+   GbWorkspace *workspace = (GbWorkspace *)widget;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+
+   priv = workspace->priv;
+
+   if ((event->changed_mask & GDK_WINDOW_STATE_FULLSCREEN)) {
+      priv->is_fullscreen = !priv->is_fullscreen;
+      if (priv->is_fullscreen) {
+         gb_workspace_do_fullscreen(workspace);
+      } else {
+         gb_workspace_do_unfullscreen(workspace);
+      }
+      g_object_notify_by_pspec(G_OBJECT(widget),
+                               gParamSpecs[PROP_IS_FULLSCREEN]);
+   }
+}
+
+static void
 gb_workspace_finalize (GObject *object)
 {
    GbWorkspacePrivate *priv;
@@ -446,6 +528,9 @@ gb_workspace_get_property (GObject    *object,
    GbWorkspace *workspace = GB_WORKSPACE(object);
 
    switch (prop_id) {
+   case PROP_IS_FULLSCREEN:
+      g_value_set_boolean(value, gb_workspace_is_fullscreen(workspace));
+      break;
    case PROP_PROJECT:
       g_value_set_object(value, gb_workspace_get_project(workspace));
       break;
@@ -489,6 +574,15 @@ gb_workspace_class_init (GbWorkspaceClass *klass)
    window_class = GTK_WINDOW_CLASS(klass);
    window_class->set_focus = gb_workspace_set_focus;
 
+   gParamSpecs[PROP_IS_FULLSCREEN] =
+      g_param_spec_boolean("is-fullscreen",
+                          _("Is Fullscreen"),
+                          _("If the window is currently in fullscreen mode."),
+                          FALSE,
+                          (G_PARAM_READWRITE | G_PARAM_READWRITE));
+   g_object_class_install_property(object_class, PROP_IS_FULLSCREEN,
+                                   gParamSpecs[PROP_IS_FULLSCREEN]);
+
    gParamSpecs[PROP_PROJECT] =
       g_param_spec_object("project",
                           _("Project"),
@@ -511,6 +605,7 @@ gb_workspace_init_actions (GbWorkspace *workspace)
       { "save-pane", gb_workspace_save_pane },
       { "search-pane", gb_workspace_search_pane },
       { "select-pane", gb_workspace_select_pane, "i" },
+      { "toggle-fullscreen", gb_workspace_toggle_fullscreen },
       { "zoom-pane-in", gb_workspace_zoom_pane_in },
       { "zoom-pane-out", gb_workspace_zoom_pane_out },
    };
@@ -537,6 +632,9 @@ gb_workspace_init_actions (GbWorkspace *workspace)
                                    NULL);
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
                                    "<Primary><Shift>t", "win.new-terminal",
+                                   NULL);
+   gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
+                                   "F11", "win.toggle-fullscreen",
                                    NULL);
 
 #define ADD_PANE_ACCEL(n, k) G_STMT_START { \
@@ -746,4 +844,9 @@ gb_workspace_init (GbWorkspace *workspace)
    g_object_unref(builder);
 
    gb_workspace_update_actions(workspace);
+
+   g_signal_connect(workspace,
+                    "window-state-event",
+                    G_CALLBACK(gb_workspace_window_state_event),
+                    NULL);
 }

@@ -27,6 +27,8 @@ G_DEFINE_TYPE(GbWorkspacePaneGroup, gb_workspace_pane_group, GTK_TYPE_GRID)
 struct _GbWorkspacePaneGroupPrivate
 {
    GtkWidget *notebook;
+
+   gboolean is_fullscreen : 1;
 };
 
 enum
@@ -96,12 +98,18 @@ event_button_press (GtkWidget            *widget,
                     GdkEventButton       *button,
                     GbWorkspacePaneGroup *group)
 {
-   GbWorkspacePane *pane;
+   GtkWidget *toplevel;
+
+   g_assert(GTK_IS_WIDGET(widget));
 
    if (button->type == GDK_2BUTTON_PRESS) {
-      pane = g_object_get_data(G_OBJECT(widget), "pane");
-      if (GB_IS_WORKSPACE_PANE(pane)) {
-         gb_workspace_pane_fullscreen(pane);
+      toplevel = gtk_widget_get_toplevel(widget);
+      if (GB_IS_WORKSPACE(toplevel)) {
+         if (gb_workspace_is_fullscreen(GB_WORKSPACE(toplevel))) {
+            gtk_window_unfullscreen(GTK_WINDOW(toplevel));
+         } else {
+            gtk_window_fullscreen(GTK_WINDOW(toplevel));
+         }
       }
    }
 
@@ -339,6 +347,56 @@ gb_workspace_pane_group_grab_focus (GtkWidget *widget)
    }
 
    g_list_free(children);
+}
+
+void
+gb_workspace_pane_group_fullscreen (GbWorkspacePaneGroup *group)
+{
+   GbWorkspacePaneGroupPrivate *priv;
+   GtkWidget *widget;
+   gint n_pages;
+   gint i;
+
+   g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
+
+   priv = group->priv;
+
+   priv->is_fullscreen = TRUE;
+
+   n_pages = gtk_notebook_get_n_pages(GTK_NOTEBOOK(priv->notebook));
+   for (i = 0; i < n_pages; i++) {
+      widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(priv->notebook), i);
+      if (GB_IS_WORKSPACE_PANE(widget)) {
+         gb_workspace_pane_fullscreen(GB_WORKSPACE_PANE(widget));
+      }
+   }
+
+   gtk_notebook_set_show_tabs(GTK_NOTEBOOK(priv->notebook), FALSE);
+}
+
+void
+gb_workspace_pane_group_unfullscreen (GbWorkspacePaneGroup *group)
+{
+   GbWorkspacePaneGroupPrivate *priv;
+   GtkWidget *widget;
+   gint n_pages;
+   gint i;
+
+   g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
+
+   priv = group->priv;
+
+   priv->is_fullscreen = FALSE;
+
+   n_pages = gtk_notebook_get_n_pages(GTK_NOTEBOOK(priv->notebook));
+   for (i = 0; i < n_pages; i++) {
+      widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(priv->notebook), i);
+      if (GB_IS_WORKSPACE_PANE(widget)) {
+         gb_workspace_pane_unfullscreen(GB_WORKSPACE_PANE(widget));
+      }
+   }
+
+   gtk_notebook_set_show_tabs(GTK_NOTEBOOK(priv->notebook), TRUE);
 }
 
 static void

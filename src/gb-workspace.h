@@ -64,6 +64,7 @@ struct _GbWorkspaceClass
 
 GbProject *gb_workspace_get_project    (GbWorkspace     *workspace);
 GType      gb_workspace_get_type       (void) G_GNUC_CONST;
+gboolean   gb_workspace_is_fullscreen  (GbWorkspace     *workspace);
 void       gb_workspace_set_mode       (GbWorkspace     *workspace,
                                         GbWorkspaceMode  mode);
 void       gb_workspace_set_project    (GbWorkspace     *workspace,

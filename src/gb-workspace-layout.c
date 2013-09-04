@@ -35,6 +35,26 @@ enum
 
 //static GParamSpec *gParamSpecs[LAST_PROP];
 
+void
+gb_workspace_layout_fullscreen (GbWorkspaceLayout *layout)
+{
+   g_return_if_fail(GB_IS_WORKSPACE_LAYOUT(layout));
+
+   if (GB_WORKSPACE_LAYOUT_GET_CLASS(layout)->fullscreen) {
+      GB_WORKSPACE_LAYOUT_GET_CLASS(layout)->fullscreen(layout);
+   }
+}
+
+void
+gb_workspace_layout_unfullscreen (GbWorkspaceLayout *layout)
+{
+   g_return_if_fail(GB_IS_WORKSPACE_LAYOUT(layout));
+
+   if (GB_WORKSPACE_LAYOUT_GET_CLASS(layout)->unfullscreen) {
+      GB_WORKSPACE_LAYOUT_GET_CLASS(layout)->unfullscreen(layout);
+   }
+}
+
 static void
 gb_workspace_layout_finalize (GObject *object)
 {

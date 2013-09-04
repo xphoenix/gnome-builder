@@ -31,6 +31,8 @@ G_DEFINE_TYPE(GbWorkspaceLayoutEdit,
 struct _GbWorkspaceLayoutEditPrivate
 {
    GList *groups;
+
+   gboolean is_fullscreen : 1;
 };
 
 static void
@@ -61,7 +63,13 @@ gb_workspace_layout_edit_add (GtkContainer *container,
 
    priv = edit->priv;
 
-   if (GB_IS_SOURCE_PANE(child) || GB_IS_TERMINAL_PANE(child)) {
+   if (GB_IS_WORKSPACE_PANE_GROUP(child)) {
+      if (priv->is_fullscreen) {
+         gb_workspace_pane_group_fullscreen(GB_WORKSPACE_PANE_GROUP(child));
+      }
+   }
+
+   if (GB_IS_WORKSPACE_PANE(child)) {
       gtk_container_add(GTK_CONTAINER(priv->groups->data), child);
    } else {
       GTK_CONTAINER_CLASS(gb_workspace_layout_edit_parent_class)->
@@ -83,6 +91,36 @@ gb_workspace_layout_edit_grab_focus (GtkWidget *widget)
    }
 
    GTK_WIDGET_CLASS(gb_workspace_layout_edit_parent_class)->grab_focus(widget);
+}
+
+static void
+gb_workspace_layout_edit_fullscreen (GbWorkspaceLayout *layout)
+{
+   GbWorkspaceLayoutEdit *edit = (GbWorkspaceLayoutEdit *)layout;
+   GList *iter;
+
+   g_return_if_fail(GB_IS_WORKSPACE_LAYOUT_EDIT(edit));
+
+   edit->priv->is_fullscreen = TRUE;
+
+   for (iter = edit->priv->groups; iter; iter = iter->next) {
+      gb_workspace_pane_group_fullscreen(iter->data);
+   }
+}
+
+static void
+gb_workspace_layout_edit_unfullscreen (GbWorkspaceLayout *layout)
+{
+   GbWorkspaceLayoutEdit *edit = (GbWorkspaceLayoutEdit *)layout;
+   GList *iter;
+
+   g_return_if_fail(GB_IS_WORKSPACE_LAYOUT_EDIT(edit));
+
+   edit->priv->is_fullscreen = FALSE;
+
+   for (iter = edit->priv->groups; iter; iter = iter->next) {
+      gb_workspace_pane_group_unfullscreen(iter->data);
+   }
 }
 
 static void
@@ -112,6 +150,8 @@ gb_workspace_layout_edit_class_init (GbWorkspaceLayoutEditClass *klass)
 
    layout_class = GB_WORKSPACE_LAYOUT_CLASS(klass);
    layout_class->load = gb_workspace_layout_edit_load;
+   layout_class->fullscreen = gb_workspace_layout_edit_fullscreen;
+   layout_class->unfullscreen = gb_workspace_layout_edit_unfullscreen;
 }
 
 static void

@@ -47,15 +47,16 @@ struct _GbWorkspacePaneClass
 {
    GtkGridClass parent_class;
 
-   void     (*save_async)  (GbWorkspacePane      *pane,
-                            GCancellable         *cancellable,
-                            GAsyncReadyCallback   callback,
-                            gpointer              user_data);
-   gboolean (*save_finish) (GbWorkspacePane      *pane,
-                            GAsyncResult         *result,
-                            GError              **error);
+   void     (*save_async)   (GbWorkspacePane      *pane,
+                             GCancellable         *cancellable,
+                             GAsyncReadyCallback   callback,
+                             gpointer              user_data);
+   gboolean (*save_finish)  (GbWorkspacePane      *pane,
+                             GAsyncResult         *result,
+                             GError              **error);
 
-   void     (*fullscreen)  (GbWorkspacePane      *pane);
+   void     (*fullscreen)   (GbWorkspacePane      *pane);
+   void     (*unfullscreen) (GbWorkspacePane      *pane);
 
    gpointer padding[32];
 };
@@ -88,6 +89,7 @@ void         gb_workspace_pane_save_async         (GbWorkspacePane      *pane,
 gboolean     gb_workspace_pane_save_finish        (GbWorkspacePane      *pane,
                                                    GAsyncResult         *result,
                                                    GError              **error);
+void         gb_workspace_pane_unfullscreen       (GbWorkspacePane      *pane);
 
 G_END_DECLS
 
