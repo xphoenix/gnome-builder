@@ -68,8 +68,6 @@ struct _GbSourcePanePrivate
 
    guint search_entry_key_press_event_handler;
    guint search_entry_changed_handler;
-
-   guint overlay_get_child_position_handler;
 };
 
 enum
@@ -295,17 +293,17 @@ gb_source_pane_reload_snippets (GbSourcePane      *pane,
                                 GtkSourceLanguage *language)
 {
    GbSourceSnippetsManager *manager;
-   GbSourceSnippets *snippets = NULL;
+   GbSourceSnippets *snippets;
 
    g_return_if_fail(GB_IS_SOURCE_PANE(pane));
    g_return_if_fail(!language || GTK_SOURCE_IS_LANGUAGE(language));
 
-   manager = gb_source_snippets_manager_get_default();
+   g_clear_object(&pane->priv->snippets);
 
    if (language) {
+      manager = gb_source_snippets_manager_get_default();
       snippets = gb_source_snippets_manager_get_for_language(manager, language);
-      gb_source_snippets_clear(pane->priv->snippets);
-      gb_source_snippets_merge(pane->priv->snippets, snippets);
+      pane->priv->snippets = snippets ? g_object_ref(snippets) : NULL;
    }
 }
 
@@ -430,8 +428,6 @@ gb_source_pane_dispose (GObject *object)
 
    DISCONNECT(priv->search_entry, priv->search_entry_key_press_event_handler);
    DISCONNECT(priv->search_entry, priv->search_entry_changed_handler);
-
-   DISCONNECT(priv->overlay, priv->overlay_get_child_position_handler);
 
 #undef DISCONNECT
 
@@ -973,11 +969,6 @@ gb_source_pane_init (GbSourcePane *pane)
                                      "top-attach", 1,
                                      "width", 1,
                                      NULL);
-
-   priv->overlay_get_child_position_handler =
-      g_signal_connect(priv->overlay, "get-child-position",
-                       G_CALLBACK(get_child_position),
-                       pane);
 
    priv->progress = gtk_progress_bar_new();
    gtk_style_context_add_class(gtk_widget_get_style_context(priv->progress),
