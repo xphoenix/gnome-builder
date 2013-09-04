@@ -21,9 +21,7 @@
 #include <nautilus/nautilus-floating-bar.h>
 
 #include "gb-animation.h"
-#include "gb-source-fullscreen-container.h"
 #include "gb-source-diff.h"
-#include "gb-source-gutter-renderer-compiler.h"
 #include "gb-source-gutter-renderer-diff.h"
 #include "gb-source-overlay.h"
 #include "gb-source-pane.h"
@@ -34,32 +32,26 @@
 #include "gb-source-view.h"
 #include "gb-zoomable.h"
 
-static void gb_zoomable_init (GbZoomableInterface *iface);
-
-G_DEFINE_TYPE_EXTENDED(GbSourcePane,
-                       gb_source_pane,
-                       GB_TYPE_WORKSPACE_PANE,
-                       0,
-                       G_IMPLEMENT_INTERFACE(GB_TYPE_ZOOMABLE,
-                                             gb_zoomable_init))
-
 struct _GbSourcePanePrivate
 {
-   GFile        *file;
-   GbSourceDiff *diff;
+   GFile *file;
 
-   GbSourceSnippets *snippets;
+   GtkSourceBuffer *buffer;
 
-   GtkWidget *highlight;
+   GbSourceDiff            *diff;
+   GtkSourceGutterRenderer *diff_renderer;
+
+   GbSourceSnippets            *snippets;
+   GtkSourceCompletionProvider *snippets_provider;
+
+   GtkWidget *floating_bar;
    GtkWidget *overlay;
    GtkWidget *progress;
-   GtkWidget *ruler;
    GtkWidget *scroller;
    GtkWidget *search_bar;
    GtkWidget *search_entry;
+   GtkWidget *source_overlay;
    GtkWidget *view;
-
-   GtkSourceBuffer *buffer;
 
    GtkSourceSearchContext  *search_context;
    GtkSourceSearchSettings *search_settings;
@@ -73,10 +65,67 @@ enum
 {
    PROP_0,
    PROP_FILE,
+   PROP_FONT,
+   PROP_STYLE_SCHEME_NAME,
    LAST_PROP
 };
 
+static void gb_zoomable_init (GbZoomableInterface *iface);
+
+G_DEFINE_TYPE_EXTENDED(GbSourcePane,
+                       gb_source_pane,
+                       GB_TYPE_WORKSPACE_PANE,
+                       0,
+                       G_IMPLEMENT_INTERFACE(GB_TYPE_ZOOMABLE,
+                                             gb_zoomable_init))
+
 static GParamSpec *gParamSpecs[LAST_PROP];
+
+static void
+gb_source_pane_set_style_scheme_name (GbSourcePane *pane,
+                                      const gchar  *name)
+{
+   GtkSourceStyleSchemeManager *m;
+   GtkSourceStyleScheme *s;
+
+   g_return_if_fail(GB_IS_SOURCE_PANE(pane));
+
+   if (!name) {
+      name = "tango";
+   }
+
+   m = gtk_source_style_scheme_manager_get_default();
+   s = gtk_source_style_scheme_manager_get_scheme(m, name);
+   gtk_source_buffer_set_style_scheme(pane->priv->buffer, s);
+
+   g_object_notify_by_pspec(G_OBJECT(pane),
+                            gParamSpecs[PROP_STYLE_SCHEME_NAME]);
+}
+
+static void
+gb_source_pane_set_font (GbSourcePane *pane,
+                         const gchar  *font)
+{
+   PangoFontDescription *font_desc = NULL;
+
+   g_return_if_fail(GB_IS_SOURCE_PANE(pane));
+
+   /*
+    * TODO: This should take into account the current zoom.
+    */
+
+   if (font) {
+      font_desc = pango_font_description_from_string(font);
+   }
+
+   gtk_widget_override_font(GTK_WIDGET(pane->priv->view), font_desc);
+
+   if (font_desc) {
+      pango_font_description_free(font_desc);
+   }
+
+   g_object_notify_by_pspec(G_OBJECT(pane), gParamSpecs[PROP_FONT]);
+}
 
 static void
 gb_source_pane_guess_language (GbSourcePane *pane,
@@ -112,37 +161,6 @@ gb_source_pane_guess_language (GbSourcePane *pane,
 
    g_clear_object(&info);
    g_free(base);
-}
-
-static void
-gb_source_pane_load_scheme (GbSourcePane *pane)
-{
-   static const gchar *schemes[] = {
-      "solarized-light",
-      "solarizeddark",
-      "tango",
-      NULL
-   };
-
-   GtkSourceStyleSchemeManager *sm;
-   GtkSourceStyleScheme *s;
-   GbSourcePanePrivate *priv;
-   GtkTextBuffer *buffer;
-   gint i;
-
-   g_return_if_fail(GB_IS_SOURCE_PANE(pane));
-
-   priv = pane->priv;
-
-   sm = gtk_source_style_scheme_manager_get_default();
-   for (i = 0; schemes[i]; i++) {
-      s = gtk_source_style_scheme_manager_get_scheme(sm, schemes[i]);
-      if (s) {
-         buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(priv->view));
-         gtk_source_buffer_set_style_scheme(GTK_SOURCE_BUFFER(buffer), s);
-         break;
-      }
-   }
 }
 
 GFile *
@@ -298,7 +316,11 @@ gb_source_pane_language_changed (GbSourcePane      *pane,
 static void
 gb_source_pane_grab_focus (GtkWidget *widget)
 {
-   gtk_widget_grab_focus(GB_SOURCE_PANE(widget)->priv->view);
+   GbSourcePane *pane = (GbSourcePane *)widget;
+
+   g_return_if_fail(GB_IS_SOURCE_PANE(pane));
+
+   gtk_widget_grab_focus(GTK_WIDGET(pane->priv->view));
 }
 
 static gboolean
@@ -325,11 +347,11 @@ update_position (GbSourcePane  *pane,
    line = gtk_text_iter_get_line(&iter) + 1;
    column = gtk_text_iter_get_line_offset(&iter) + 1;
    text = g_strdup_printf(_("Line: %u  Column: %u"), line, column);
-   g_object_set(pane->priv->ruler, "label", text, NULL);
+   g_object_set(pane->priv->floating_bar, "label", text, NULL);
    g_free(text);
 
-   if (!gtk_widget_get_visible(pane->priv->ruler)) {
-      gtk_widget_show(pane->priv->ruler);
+   if (!gtk_widget_get_visible(pane->priv->floating_bar)) {
+      gtk_widget_show(pane->priv->floating_bar);
    }
 }
 
@@ -411,7 +433,7 @@ gb_source_pane_view_key_press (GtkTextView  *text_view,
                    "search-mode-enabled", &was_enabled,
                    NULL);
       if (was_enabled) {
-         gtk_widget_hide(priv->highlight);
+         gtk_widget_hide(priv->source_overlay);
          g_object_set(priv->search_bar,
                       "search-mode-enabled", FALSE,
                       NULL);
@@ -430,14 +452,14 @@ gb_source_pane_search_entry_key_press (GtkSearchEntry *search_entry,
    GbSourcePanePrivate *priv = pane->priv;
 
    if (key->keyval == GDK_KEY_Escape) {
-      gtk_widget_hide(priv->highlight);
+      gtk_widget_hide(priv->source_overlay);
       g_object_set(priv->search_bar,
                    "search-mode-enabled", FALSE,
                    NULL);
       gtk_widget_grab_focus(priv->view);
       return TRUE;
    } else if (key->keyval == GDK_KEY_Return) {
-      gtk_widget_show(priv->highlight);
+      gtk_widget_show(priv->source_overlay);
    }
 
    return FALSE;
@@ -483,7 +505,7 @@ gb_source_pane_search_entry_changed (GtkEntry     *entry,
    /*
     * Make sure our overlay is visible.
     */
-   gtk_widget_set_visible(priv->highlight, !!text);
+   gtk_widget_set_visible(priv->source_overlay, !!text);
 
    /*
     * Scroll to the first match if we can find one.
@@ -706,6 +728,7 @@ setup_source_view (GbSourcePane  *pane,
                            G_CALLBACK(unblock_completion),
                            completion,
                            0);
+
    g_signal_connect_object(source_view,
                            "focus-out-event",
                            G_CALLBACK(block_completion),
@@ -716,30 +739,25 @@ setup_source_view (GbSourcePane  *pane,
                 "show-headers", FALSE,
                 NULL);
 
-   provider = gb_source_snippet_completion_provider_new(
-         GB_SOURCE_VIEW(source_view),
-         priv->snippets);
-   gtk_source_completion_add_provider(completion, provider, NULL);
-   g_object_unref(provider);
+   /*
+    * Allow snippets to be completed via GtkSourceCompletion.
+    */
+   priv->snippets_provider =
+      gb_source_snippet_completion_provider_new(GB_SOURCE_VIEW(priv->view),
+                                                priv->snippets);
+   gtk_source_completion_add_provider(completion,
+                                      priv->snippets_provider,
+                                      NULL);
 
-   gutter = gtk_source_view_get_gutter(source_view,
-                                       GTK_TEXT_WINDOW_LEFT);
+   /*
+    * Attach gutter renderers to the left gutter.
+    */
+   gutter = gtk_source_view_get_gutter(source_view, GTK_TEXT_WINDOW_LEFT);
 
-   renderer = g_object_new(GB_TYPE_SOURCE_GUTTER_RENDERER_COMPILER, NULL);
-   gtk_source_gutter_renderer_set_padding(renderer, 2, 1);
-   gtk_source_gutter_renderer_set_size(renderer, 14);
-   gtk_source_gutter_insert(gutter, renderer, -30);
-
-   renderer = g_object_new(GB_TYPE_SOURCE_GUTTER_RENDERER_DIFF,
-                           "diff", priv->diff,
-                           NULL);
-   gtk_source_gutter_renderer_set_size(renderer, 2);
-   gtk_source_gutter_renderer_set_padding(renderer, 2, 0);
-   gtk_source_gutter_insert(gutter, renderer, -10);
-
-   font = pango_font_description_from_string("Monospace");
-   gtk_widget_override_font(GTK_WIDGET(source_view), font);
-   pango_font_description_free(font);
+   priv->diff_renderer = gb_source_gutter_renderer_diff_new(priv->diff);
+   gtk_source_gutter_renderer_set_size(priv->diff_renderer, 2);
+   gtk_source_gutter_renderer_set_padding(priv->diff_renderer, 2, 0);
+   gtk_source_gutter_insert(gutter, priv->diff_renderer, -10);
 }
 
 static void
@@ -857,6 +875,12 @@ gb_source_pane_set_property (GObject      *object,
    case PROP_FILE:
       gb_source_pane_set_file(pane, g_value_get_object(value));
       break;
+   case PROP_FONT:
+      gb_source_pane_set_font(pane, g_value_get_string(value));
+      break;
+   case PROP_STYLE_SCHEME_NAME:
+      gb_source_pane_set_style_scheme_name(pane, g_value_get_string(value));
+      break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
    }
@@ -892,6 +916,28 @@ gb_source_pane_class_init (GbSourcePaneClass *klass)
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
    g_object_class_install_property(object_class, PROP_FILE,
                                    gParamSpecs[PROP_FILE]);
+
+   gParamSpecs[PROP_FONT] =
+      g_param_spec_string("font",
+                          _("Font"),
+                          _("The font to use on the source view."),
+                          "Monospace",
+                          (G_PARAM_WRITABLE |
+                           G_PARAM_CONSTRUCT |
+                           G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_FONT,
+                                   gParamSpecs[PROP_FONT]);
+
+   gParamSpecs[PROP_STYLE_SCHEME_NAME] =
+      g_param_spec_string("style-scheme-name",
+                          _("Style Scheme Name"),
+                          _("The name of the style scheme to use."),
+                          NULL,
+                          (G_PARAM_WRITABLE |
+                           G_PARAM_CONSTRUCT |
+                           G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_STYLE_SCHEME_NAME,
+                                   gParamSpecs[PROP_STYLE_SCHEME_NAME]);
 }
 
 static void
@@ -1000,40 +1046,46 @@ gb_source_pane_init (GbSourcePane *pane)
                                        "settings", priv->search_settings,
                                        NULL);
 
-   priv->highlight = g_object_new(GB_TYPE_SOURCE_OVERLAY,
-                                  "hexpand", TRUE,
-                                  "search-context", priv->search_context,
-                                  "source-view", priv->view,
-                                  "vexpand", TRUE,
-                                  "visible", FALSE,
-                                  NULL);
-   gtk_overlay_add_overlay(GTK_OVERLAY(priv->overlay), priv->highlight);
+   priv->source_overlay = g_object_new(GB_TYPE_SOURCE_OVERLAY,
+                                       "hexpand", TRUE,
+                                       "search-context", priv->search_context,
+                                       "source-view", priv->view,
+                                       "vexpand", TRUE,
+                                       "visible", FALSE,
+                                       NULL);
+   gtk_overlay_add_overlay(GTK_OVERLAY(priv->overlay), priv->source_overlay);
 
-   priv->ruler = g_object_new(NAUTILUS_TYPE_FLOATING_BAR,
-                              "label", _("Line: 1  Column: 1"),
-                              "halign", GTK_ALIGN_END,
-                              "valign", GTK_ALIGN_END,
-                              "visible", TRUE,
-                              NULL);
-   gtk_overlay_add_overlay(GTK_OVERLAY(priv->overlay), priv->ruler);
+   priv->floating_bar = g_object_new(NAUTILUS_TYPE_FLOATING_BAR,
+                                     "label", _("Line: 1  Column: 1"),
+                                     "halign", GTK_ALIGN_END,
+                                     "valign", GTK_ALIGN_END,
+                                     "visible", TRUE,
+                                     NULL);
+   gtk_overlay_add_overlay(GTK_OVERLAY(priv->overlay), priv->floating_bar);
 
    if (gtk_widget_get_direction(priv->view) == GTK_TEXT_DIR_RTL) {
-      gtk_widget_set_halign(priv->ruler, GTK_ALIGN_START);
+      gtk_widget_set_halign(priv->floating_bar, GTK_ALIGN_START);
    }
 
-   gb_source_pane_load_scheme(pane);
-
    pane->priv->insert_text_handler =
-      g_signal_connect_after(priv->buffer, "insert-text",
-                             G_CALLBACK(on_insert_text), pane);
+      g_signal_connect_object(priv->buffer,
+                              "insert-text",
+                              G_CALLBACK(on_insert_text), pane,
+                              G_CONNECT_AFTER);
 
    pane->priv->delete_range_handler =
-      g_signal_connect_after(priv->buffer, "delete-range",
-                             G_CALLBACK(on_delete_range), pane);
+      g_signal_connect_object(priv->buffer,
+                              "delete-range",
+                              G_CALLBACK(on_delete_range),
+                              pane,
+                              G_CONNECT_AFTER);
 
    pane->priv->mark_set_handler =
-      g_signal_connect_after(priv->buffer, "mark-set",
-                             G_CALLBACK(on_mark_set), pane);
+      g_signal_connect_object(priv->buffer,
+                              "mark-set",
+                              G_CALLBACK(on_mark_set),
+                              pane,
+                              G_CONNECT_AFTER);
 }
 
 static void

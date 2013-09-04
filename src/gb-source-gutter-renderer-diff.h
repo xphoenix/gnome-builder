@@ -21,6 +21,8 @@
 
 #include <gtksourceview/gtksourcegutterrenderer.h>
 
+#include "gb-source-diff.h"
+
 G_BEGIN_DECLS
 
 #define GB_TYPE_SOURCE_GUTTER_RENDERER_DIFF            (gb_source_gutter_renderer_diff_get_type())
@@ -48,7 +50,8 @@ struct _GbSourceGutterRendererDiffClass
    GtkSourceGutterRendererClass parent_class;
 };
 
-GType gb_source_gutter_renderer_diff_get_type (void) G_GNUC_CONST;
+GType                    gb_source_gutter_renderer_diff_get_type (void) G_GNUC_CONST;
+GtkSourceGutterRenderer *gb_source_gutter_renderer_diff_new      (GbSourceDiff *diff);
 
 G_END_DECLS
 

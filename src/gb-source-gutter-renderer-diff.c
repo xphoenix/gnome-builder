@@ -42,6 +42,16 @@ enum
 
 static GParamSpec *gParamSpecs[LAST_PROP];
 
+GtkSourceGutterRenderer *
+gb_source_gutter_renderer_diff_new (GbSourceDiff *diff)
+{
+   g_return_val_if_fail(GB_IS_SOURCE_DIFF(diff), NULL);
+
+   return g_object_new(GB_TYPE_SOURCE_GUTTER_RENDERER_DIFF,
+                       "diff", diff,
+                       NULL);
+}
+
 static void
 gb_source_gutter_renderer_diff_changed (GbSourceDiff               *diff,
                                         GbSourceGutterRendererDiff *renderer)

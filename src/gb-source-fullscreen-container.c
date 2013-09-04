@@ -39,6 +39,12 @@ struct _GbSourceFullscreenContainerPrivate
    PangoLayout *layout;
 };
 
+GtkWidget *
+gb_source_fullscreen_container_new (void)
+{
+   return g_object_new(GB_TYPE_SOURCE_FULLSCREEN_CONTAINER, NULL);
+}
+
 static gint
 get_text_width (GbSourceFullscreenContainer *container)
 {
