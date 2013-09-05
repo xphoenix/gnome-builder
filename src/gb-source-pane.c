@@ -740,88 +740,6 @@ view_focus_in_event_cb (GtkSourceView       *source_view,
 }
 
 static void
-setup_source_view (GbSourcePane  *pane,
-                   GtkSourceView *source_view)
-{
-   GtkSourceCompletionProvider *provider;
-   GtkSourceGutterRenderer *renderer;
-   PangoFontDescription *font;
-   GtkSourceCompletion *completion;
-   GbSourcePanePrivate *priv;
-   GtkSourceGutter *gutter;
-
-   priv = pane->priv;
-
-   g_object_set(source_view,
-                "buffer", priv->buffer,
-                "insert-spaces-instead-of-tabs", TRUE,
-                "show-line-numbers", TRUE,
-                "show-right-margin", TRUE,
-                "right-margin-position", 80,
-                "tab-width", 3,
-                NULL);
-
-   completion = gtk_source_view_get_completion(source_view);
-   gtk_source_completion_block_interactive(completion);
-
-   priv->view_focus_in_event_handler =
-      g_signal_connect(source_view,
-                       "focus-in-event",
-                       G_CALLBACK(view_focus_in_event_cb),
-                       completion);
-
-   priv->view_focus_out_event_handler =
-      g_signal_connect(source_view,
-                       "focus-out-event",
-                       G_CALLBACK(view_focus_out_event_cb),
-                       completion);
-
-   g_object_set(completion,
-                "show-headers", FALSE,
-                NULL);
-
-   /*
-    * Allow snippets to be completed via GtkSourceCompletion.
-    */
-   priv->snippets_provider =
-      gb_source_snippet_completion_provider_new(GB_SOURCE_VIEW(priv->view),
-                                                priv->snippets);
-   gtk_source_completion_add_provider(completion,
-                                      priv->snippets_provider,
-                                      NULL);
-
-   /*
-    * Attach gutter renderers to the left gutter.
-    */
-   gutter = gtk_source_view_get_gutter(source_view, GTK_TEXT_WINDOW_LEFT);
-
-   priv->diff_renderer = gb_source_gutter_renderer_diff_new(priv->diff);
-   gtk_source_gutter_renderer_set_size(priv->diff_renderer, 2);
-   gtk_source_gutter_renderer_set_padding(priv->diff_renderer, 2, 0);
-   gtk_source_gutter_insert(gutter, priv->diff_renderer, -10);
-}
-
-static void
-place_over (GtkWidget *window,
-            GtkWidget *other)
-{
-   GtkAllocation alloc;
-   GdkWindow *gwin;
-   gint x;
-   gint y;
-
-   gtk_widget_get_allocation(other, &alloc);
-   gwin = gtk_widget_get_window(other);
-   gdk_window_get_origin(gwin, &x, &y);
-
-   x += alloc.x;
-   y += alloc.y;
-
-   gtk_window_set_default_size(GTK_WINDOW(window), alloc.width, alloc.height);
-   gtk_window_move(GTK_WINDOW(window), x, y);
-}
-
-static void
 gb_source_pane_finalize (GObject *object)
 {
    GbSourcePanePrivate *priv = GB_SOURCE_PANE(object)->priv;
@@ -934,6 +852,7 @@ static void
 gb_source_pane_init (GbSourcePane *pane)
 {
    GtkSourceGutterRenderer *renderer;
+   GtkSourceCompletion *completion;
    GbSourcePanePrivate *priv;
    GtkSourceGutter *gutter;
 
@@ -1019,6 +938,11 @@ gb_source_pane_init (GbSourcePane *pane)
 
    priv->view = g_object_new(GB_TYPE_SOURCE_VIEW,
                              "buffer", priv->buffer,
+                             "insert-spaces-instead-of-tabs", TRUE,
+                             "right-margin-position", 80,
+                             "show-line-numbers", TRUE,
+                             "show-right-margin", TRUE,
+                             "tab-width", 3,
                              "visible", TRUE,
                              NULL);
    gtk_container_add(GTK_CONTAINER(priv->scroller), priv->view);
@@ -1028,9 +952,40 @@ gb_source_pane_init (GbSourcePane *pane)
                        G_CALLBACK(view_key_press_event_cb),
                        pane);
 
+   priv->view_focus_in_event_handler =
+      g_signal_connect(priv->view,
+                       "focus-in-event",
+                       G_CALLBACK(view_focus_in_event_cb),
+                       completion);
+
+   priv->view_focus_out_event_handler =
+      g_signal_connect(priv->view,
+                       "focus-out-event",
+                       G_CALLBACK(view_focus_out_event_cb),
+                       completion);
+
+   completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(priv->view));
+   g_object_set(completion,
+                "show-headers", FALSE,
+                NULL);
+   gtk_source_completion_block_interactive(completion);
+
+   priv->snippets_provider =
+      gb_source_snippet_completion_provider_new(GB_SOURCE_VIEW(priv->view),
+                                                priv->snippets);
+   gtk_source_completion_add_provider(completion,
+                                      priv->snippets_provider,
+                                      NULL);
+
    priv->diff = gb_source_diff_new(NULL, GTK_TEXT_BUFFER(priv->buffer));
 
-   setup_source_view(pane, GTK_SOURCE_VIEW(priv->view));
+   gutter = gtk_source_view_get_gutter(GTK_SOURCE_VIEW(priv->view),
+                                       GTK_TEXT_WINDOW_LEFT);
+
+   priv->diff_renderer = gb_source_gutter_renderer_diff_new(priv->diff);
+   gtk_source_gutter_renderer_set_size(priv->diff_renderer, 2);
+   gtk_source_gutter_renderer_set_padding(priv->diff_renderer, 2, 0);
+   gtk_source_gutter_insert(gutter, priv->diff_renderer, -10);
 
    priv->search_settings = g_object_new(GTK_SOURCE_TYPE_SEARCH_SETTINGS,
                                         "search-text", NULL,
