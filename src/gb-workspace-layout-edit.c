@@ -32,7 +32,7 @@ struct _GbWorkspaceLayoutEditPrivate
 {
    GList *groups;
 
-   gboolean is_fullscreen : 1;
+   gboolean is_fullscreen;
 };
 
 static void

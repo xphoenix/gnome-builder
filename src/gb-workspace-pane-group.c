@@ -28,7 +28,7 @@ struct _GbWorkspacePaneGroupPrivate
 {
    GtkWidget *notebook;
 
-   gboolean is_fullscreen : 1;
+   gboolean is_fullscreen;
 };
 
 enum

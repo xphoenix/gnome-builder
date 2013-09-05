@@ -35,7 +35,7 @@ struct _GbWorkspacePrivate
 {
    GbProject *project;
 
-   gboolean is_fullscreen : 1;
+   gboolean is_fullscreen;
 
    GtkWidget *build;
    GtkWidget *current_pane;
@@ -145,6 +145,11 @@ gb_workspace_set_mode (GbWorkspace     *workspace,
                                  (guint)mode);
    priv->layout = gtk_notebook_get_nth_page(GTK_NOTEBOOK(priv->notebook),
                                             (guint)mode);
+
+   if (priv->is_fullscreen) {
+      gtk_widget_set_visible(priv->header,
+                             GB_IS_WORKSPACE_LAYOUT_SWITCHER(priv->layout));
+   }
 }
 
 static void
@@ -404,22 +409,6 @@ gb_workspace_set_focus (GtkWindow *window,
    }
 }
 
-void
-gb_workspace_set_fullscreen_layout (GbWorkspace *workspace,
-                                    gboolean     fullscreen_layout)
-{
-   GbWorkspacePrivate *priv;
-
-   g_return_if_fail(GB_IS_WORKSPACE(workspace));
-
-   priv = workspace->priv;
-
-   gtk_widget_set_visible(priv->header, !fullscreen_layout);
-
-   gtk_notebook_set_show_tabs(GTK_NOTEBOOK(priv->notebook),
-                              !fullscreen_layout);
-}
-
 static void
 gb_workspace_select_pane (GSimpleAction *action,
                           GVariant      *parameter,
@@ -469,12 +458,37 @@ gb_workspace_toggle_fullscreen (GSimpleAction *action,
 }
 
 static void
+gb_workspace_do_fullscreen_cb (GtkWidget *widget,
+                               gpointer   user_data)
+{
+   if (GB_IS_WORKSPACE_LAYOUT(widget)) {
+      gb_workspace_layout_fullscreen(GB_WORKSPACE_LAYOUT(widget));
+   }
+}
+
+static void
+gb_workspace_do_unfullscreen_cb (GtkWidget *widget,
+                                 gpointer   user_data)
+{
+   if (GB_IS_WORKSPACE_LAYOUT(widget)) {
+      gb_workspace_layout_unfullscreen(GB_WORKSPACE_LAYOUT(widget));
+   }
+}
+
+static void
 gb_workspace_do_fullscreen (GbWorkspace *workspace)
 {
    GbWorkspacePrivate *priv = workspace->priv;
 
    gb_workspace_layout_fullscreen(GB_WORKSPACE_LAYOUT(priv->layout));
-   gtk_widget_hide(priv->header);
+
+   gtk_container_foreach(GTK_CONTAINER(priv->notebook),
+                         gb_workspace_do_fullscreen_cb,
+                         NULL);
+
+   if (!GB_IS_WORKSPACE_LAYOUT_SPLASH(priv->layout)) {
+      gtk_widget_hide(priv->header);
+   }
 }
 
 static void
@@ -483,7 +497,10 @@ gb_workspace_do_unfullscreen (GbWorkspace *workspace)
    GbWorkspacePrivate *priv = workspace->priv;
 
    gtk_widget_show(priv->header);
-   gb_workspace_layout_unfullscreen(GB_WORKSPACE_LAYOUT(priv->layout));
+
+   gtk_container_foreach(GTK_CONTAINER(priv->notebook),
+                         gb_workspace_do_unfullscreen_cb,
+                         NULL);
 }
 
 static void
