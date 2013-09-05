@@ -235,13 +235,43 @@ gb_source_snippet_move_previous (GbSourceSnippet *snippet)
    return TRUE;
 }
 
+static gchar *
+get_line_prefix (GtkTextBuffer *buffer,
+                 GtkTextIter   *iter)
+{
+   GtkTextIter begin;
+   GtkTextIter end;
+   gunichar c;
+
+   g_assert(GTK_IS_TEXT_BUFFER(buffer));
+   g_assert(iter);
+
+   gtk_text_iter_assign(&begin, iter);
+   gtk_text_iter_set_line_offset(&begin, 0);
+   gtk_text_iter_assign(&end, &begin);
+
+   while ((c = gtk_text_iter_get_char(&end))) {
+      if (c == '\t' || c == ' ') {
+         gtk_text_iter_forward_char(&end);
+         continue;
+      }
+      break;
+   }
+
+   return gtk_text_iter_get_text(&begin, &end);
+}
+
 void
 gb_source_snippet_insert (GbSourceSnippet *snippet,
                           GtkTextBuffer   *buffer,
-                          GtkTextIter     *location)
+                          GtkTextIter     *location,
+                          guint            tab_size,
+                          gboolean         use_spaces)
+
 {
    GbSourceSnippetPrivate *priv;
    GbSourceSnippetChunk *chunk;
+   gchar *line_prefix;
    guint i;
 
    g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
@@ -254,11 +284,14 @@ gb_source_snippet_insert (GbSourceSnippet *snippet,
       return;
    }
 
+   line_prefix = get_line_prefix(buffer, location);
+
    priv->mark_begin = gtk_text_buffer_create_mark(buffer, NULL, location, TRUE);
 
    for (i = 0; i < priv->chunks->len; i++) {
       chunk = g_ptr_array_index(priv->chunks, i);
-      gb_source_snippet_chunk_insert(chunk, buffer, location);
+      gb_source_snippet_chunk_insert(chunk, buffer, location,
+                                     line_prefix, tab_size, use_spaces);
    }
 
    priv->mark_end = gtk_text_buffer_create_mark(buffer, NULL, location, FALSE);

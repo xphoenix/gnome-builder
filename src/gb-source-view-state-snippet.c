@@ -232,11 +232,16 @@ gb_source_view_state_snippet_load (GbSourceViewState *state,
    GtkTextBuffer *buffer;
    GtkTextMark *mark;
    GtkTextIter iter;
+   gboolean use_spaces;
+   guint tab_size;
 
    g_return_if_fail(GB_IS_SOURCE_VIEW_STATE_SNIPPET(snippet));
    g_return_if_fail(GB_IS_SOURCE_VIEW(view));
 
    priv = snippet->priv;
+
+   use_spaces = gtk_source_view_get_insert_spaces_instead_of_tabs(GTK_SOURCE_VIEW(view));
+   tab_size = gtk_source_view_get_tab_width(GTK_SOURCE_VIEW(view));
 
    completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view));
    gtk_source_completion_block_interactive(completion);
@@ -246,7 +251,11 @@ gb_source_view_state_snippet_load (GbSourceViewState *state,
    if (priv->snippet) {
       mark = gtk_text_buffer_get_insert(buffer);
       gtk_text_buffer_get_iter_at_mark(buffer, &iter, mark);
-      gb_source_snippet_insert(priv->snippet, buffer, &iter);
+      gb_source_snippet_insert(priv->snippet,
+                               buffer,
+                               &iter,
+                               tab_size,
+                               use_spaces);
       if (!gb_source_snippet_move_next(priv->snippet)) {
          g_timeout_add(0, switch_to_insert, g_object_ref(view));
       }

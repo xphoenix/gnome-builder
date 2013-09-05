@@ -754,9 +754,11 @@ setup_source_view (GbSourcePane  *pane,
 
    g_object_set(source_view,
                 "buffer", priv->buffer,
+                "insert-spaces-instead-of-tabs", TRUE,
                 "show-line-numbers", TRUE,
                 "show-right-margin", TRUE,
                 "right-margin-position", 80,
+                "tab-width", 3,
                 NULL);
 
    completion = gtk_source_view_get_completion(source_view);

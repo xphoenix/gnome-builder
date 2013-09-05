@@ -314,9 +314,16 @@ gb_source_snippet_chunk_select (GbSourceSnippetChunk *chunk)
 void
 gb_source_snippet_chunk_insert (GbSourceSnippetChunk *chunk,
                                 GtkTextBuffer        *buffer,
-                                GtkTextIter          *location)
+                                GtkTextIter          *location,
+                                const gchar          *line_prefix,
+                                guint                 tab_size,
+                                gboolean              use_spaces)
 {
    GbSourceSnippetChunkPrivate *priv;
+   const gchar *text;
+   gunichar c;
+   GString *str;
+   guint i;
 
    g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
    g_return_if_fail(GTK_IS_TEXT_BUFFER(buffer));
@@ -330,9 +337,38 @@ gb_source_snippet_chunk_insert (GbSourceSnippetChunk *chunk,
    }
 
    priv->offset_begin = gtk_text_iter_get_offset(location);
-   if (priv->text) {
-      gtk_text_buffer_insert(buffer, location, priv->text, -1);
+
+   if ((text = priv->text)) {
+      str = g_string_new(NULL);
+
+      for (text = priv->text;
+           (c = g_utf8_get_char(text));
+           text = g_utf8_next_char(text)) {
+         switch (c) {
+         case '\t':
+            if (use_spaces) {
+               for (i = 0; i < tab_size; i++) {
+                  g_string_append_c(str, ' ');
+               }
+            } else {
+               g_string_append_c(str, '\t');
+            }
+            break;
+         case '\n':
+            g_string_append_c(str, '\n');
+            g_string_append(str, line_prefix);
+            break;
+         default:
+            g_string_append_unichar(str, c);
+            break;
+         }
+      }
+
+      gtk_text_buffer_insert(buffer, location, str->str, str->len);
+
+      g_string_free(str, TRUE);
    }
+
    priv->offset_end = gtk_text_iter_get_offset(location);
 }
 

@@ -65,17 +65,19 @@ GtkTextMark     *gb_source_snippet_get_mark_end   (GbSourceSnippet      *snippet
 GType            gb_source_snippet_get_type       (void) G_GNUC_CONST;
 void             gb_source_snippet_insert         (GbSourceSnippet      *snippet,
                                                    GtkTextBuffer        *buffer,
-                                                   GtkTextIter          *location);
+                                                   GtkTextIter          *location,
+                                                   guint                 tab_size,
+                                                   gboolean              use_tabs);
 gboolean         gb_source_snippet_move_next      (GbSourceSnippet      *snippet);
 gboolean         gb_source_snippet_move_previous  (GbSourceSnippet      *snippet);
 void             gb_source_snippet_remove         (GbSourceSnippet      *snippet);
 GbSourceSnippet *gb_source_snippet_copy           (GbSourceSnippet      *snippet);
-void             gb_source_snippet_insert_text    (GbSourceSnippet      *snippet,
+void             gb_source_snippet_insert_text    (GbSourceSnippet      *snippet, /* Rename "inserted-text" */
                                                    GtkTextBuffer        *buffer,
                                                    GtkTextIter          *location,
                                                    const gchar          *text,
                                                    guint                 length);
-void             gb_source_snippet_delete_range   (GbSourceSnippet      *snippet,
+void             gb_source_snippet_delete_range   (GbSourceSnippet      *snippet, /* Rename "deleted-range" */
                                                    GtkTextBuffer        *buffer,
                                                    GtkTextIter          *begin,
                                                    GtkTextIter          *end);

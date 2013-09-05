@@ -66,7 +66,10 @@ gboolean              gb_source_snippet_chunk_get_modified     (GbSourceSnippetC
 void                  gb_source_snippet_chunk_finish           (GbSourceSnippetChunk *chunk);
 void                  gb_source_snippet_chunk_insert           (GbSourceSnippetChunk *chunk,
                                                                 GtkTextBuffer        *buffer,
-                                                                GtkTextIter          *location);
+                                                                GtkTextIter          *location,
+                                                                const gchar          *line_prefix,
+                                                                guint                 tab_size,
+                                                                gboolean              use_spaces);
 void                  gb_source_snippet_chunk_remove           (GbSourceSnippetChunk *chunk);
 GbSourceSnippetChunk *gb_source_snippet_chunk_copy             (GbSourceSnippetChunk *chunk);
 void                  gb_source_snippet_chunk_set_linked_chunk (GbSourceSnippetChunk *chunk,
