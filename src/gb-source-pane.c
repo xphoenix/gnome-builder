@@ -947,6 +947,11 @@ gb_source_pane_init (GbSourcePane *pane)
                              NULL);
    gtk_container_add(GTK_CONTAINER(priv->scroller), priv->view);
 
+   completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(priv->view));
+   g_object_set(completion,
+                "show-headers", FALSE,
+                NULL);
+
    priv->view_key_press_event_handler =
       g_signal_connect(priv->view, "key-press-event",
                        G_CALLBACK(view_key_press_event_cb),
@@ -964,10 +969,6 @@ gb_source_pane_init (GbSourcePane *pane)
                        G_CALLBACK(view_focus_out_event_cb),
                        completion);
 
-   completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(priv->view));
-   g_object_set(completion,
-                "show-headers", FALSE,
-                NULL);
    gtk_source_completion_block_interactive(completion);
 
    priv->snippets_provider =
