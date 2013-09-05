@@ -1,6 +1,7 @@
-EXTRA_DIST =
 CLEANFILES =
 DISTCLEANFILES =
+
+include Makefile.tests
 
 include data/Makefile.include
 include src/Makefile.include

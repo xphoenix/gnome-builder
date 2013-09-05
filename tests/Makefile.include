@@ -2,7 +2,7 @@ noinst_PROGRAMS = \
 	test-snippet-parser
 
 
-TEST_PROGS = \
+TEST_PROGS += \
 	test-snippet-parser
 
 
