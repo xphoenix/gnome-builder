@@ -377,15 +377,24 @@ static void
 gb_workspace_set_focus (GtkWindow *window,
                         GtkWidget *widget)
 {
+   GbWorkspacePrivate *priv;
    GbWorkspace *workspace = (GbWorkspace *)window;
 
    g_return_if_fail(GB_IS_WORKSPACE(workspace));
+
+   priv = workspace->priv;
 
    GTK_WINDOW_CLASS(gb_workspace_parent_class)->set_focus(window, widget);
 
    for (; widget; widget = gtk_widget_get_parent(widget)) {
       if (GB_IS_WORKSPACE_PANE(widget)) {
-         workspace->priv->current_pane = widget;
+         if (priv->current_pane) {
+            g_object_remove_weak_pointer(G_OBJECT(priv->current_pane),
+                                         (gpointer *)&priv->current_pane);
+         }
+         priv->current_pane = widget;
+         g_object_add_weak_pointer(G_OBJECT(widget),
+                                   (gpointer *)&priv->current_pane);
          break;
       }
    }
