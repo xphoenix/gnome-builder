@@ -628,7 +628,7 @@ gb_workspace_init_actions (GbWorkspace *workspace)
                                    "<Primary><Shift>t", "win.new-terminal",
                                    NULL);
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
-                                   "F11", "win.toggle-fullscreen",
+                                   "<Alt>Return", "win.toggle-fullscreen",
                                    NULL);
 
 #define ADD_PANE_ACCEL(n, k) G_STMT_START { \
