@@ -240,7 +240,7 @@ get_line_prefix (GtkTextBuffer *buffer,
                  GtkTextIter   *iter)
 {
    GtkTextIter begin;
-   GtkTextIter end;
+   GString *str;
    gunichar c;
 
    g_assert(GTK_IS_TEXT_BUFFER(buffer));
@@ -248,17 +248,22 @@ get_line_prefix (GtkTextBuffer *buffer,
 
    gtk_text_iter_assign(&begin, iter);
    gtk_text_iter_set_line_offset(&begin, 0);
-   gtk_text_iter_assign(&end, &begin);
 
-   while ((c = gtk_text_iter_get_char(&end))) {
+   str = g_string_new(NULL);
+
+   while (gtk_text_iter_compare(&begin, iter) < 0) {
+      c = gtk_text_iter_get_char(&begin);
       if (c == '\t' || c == ' ') {
-         gtk_text_iter_forward_char(&end);
-         continue;
+         g_string_append_unichar(str, c);
+      } else {
+         g_string_append_c(str, ' ');
       }
-      break;
+      if (!gtk_text_iter_forward_char(&begin)) {
+         break;
+      }
    }
 
-   return gtk_text_iter_get_text(&begin, &end);
+   return g_string_free(str, FALSE);
 }
 
 void
