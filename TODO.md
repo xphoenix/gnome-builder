@@ -5,9 +5,59 @@
  * When calling `gnome-builder' again from the command line, we need to
    make sure that we only bring the current window forward, rather than
    spawning a new instance of the window.
-
    Alternatively, we can make sure we support multiple projects open within
    one process space.
+ * How should we handle opening a file at startup before a project is
+   selected? Should we default to an unnamed, new project?
+
+## Multi-process
+
+ * For the resiliency of the application and to make it easier to test
+   for leaks, much work should be moved to sub-processes.
+
+   It is important that all of the various subprocesses are easy to write
+   and maintain and share the mutliprocess infrastructure.
+
+   A set of subprocesses might include:
+
+   - autocomplection for GIR
+
+     These need to load in various libraries potentially (if using typelib
+     instead of .gir files. It would be nice to keep them safe inside their
+     own daemon. Especially if they crash.
+
+   - autocompletion with libclang
+
+     Clang can crash and bring things down with it. Better to keep it
+     out of process.
+
+   - Type-highlighting can be pushed off to something out of process.
+
+   - Search is difficult and pushing that off into another process can
+     simplify the testing of it and each of the providers.
+
+
+## Multi-process Design
+
+This design also helps by allowing us to build everything as self-contained
+services that may be reused.
+
+ * Process 0: User Interface
+   - Autocompletion happens in process, with Trie of data that has
+     been parsed out of process. This is meant to keep it fast. It would
+     be nice if we could moved to mmap()'d version.
+   - The code that highlights sourceview lives in process, but the
+     part that tokenizes code is out of process. It returns type information
+     and positions.
+ * Process 1: Search Process
+   - Recycled occasionally. These types of programs really fragment memory.
+ * Process 2: Build Process (Automake)
+   - Will need concept of "tasks" with progress.
+ * Process 3: Execution Process
+ * Process 4: Debugger Process
+ * Process 5: C Tokenizer, Clang Services
+   - This process can try to tune how long it stays around. Useful to keep
+     things hot but recycle occasionally.
 
 ## Snippets
 
