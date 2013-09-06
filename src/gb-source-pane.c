@@ -882,7 +882,7 @@ gb_source_pane_init (GbSourcePane *pane)
                                      "margin-right", 100,
                                      "hexpand", TRUE,
                                      "visible", TRUE,
-                                     "width-chars", 32,
+                                     "width-chars", 48,
                                      NULL);
    gtk_container_add(GTK_CONTAINER(priv->search_bar), priv->search_entry);
    gtk_search_bar_connect_entry(GTK_SEARCH_BAR(priv->search_bar),
