@@ -325,7 +325,22 @@ gb_source_overlay_subtract_match (GbSourceOverlay   *overlay,
    r.width = MAX(rect.x + rect.width, rect2.x) - r.x;
    r.height = MAX(rect.y + rect.height, rect2.y + rect2.height) - r.y;
 
-   cairo_region_subtract_rectangle(region, &r);
+   {
+      GdkWindow *window;
+      gint width;
+
+      window = gtk_text_view_get_window (GTK_TEXT_VIEW (priv->source_view), GTK_TEXT_WINDOW_LEFT);
+      width = gdk_window_get_width (window);
+
+      if (r.x < width) {
+         r.width -= (width - r.x);
+         r.x = width;
+      }
+   }
+
+   if (r.width > 0) {
+      cairo_region_subtract_rectangle(region, &r);
+   }
 }
 
 static void
@@ -402,6 +417,7 @@ gb_source_overlay_do_draw (GbSourceOverlay *overlay,
 {
    GbSourceOverlayPrivate *priv;
    cairo_region_t *region;
+   GdkWindow *window;
    GdkRGBA fg1;
    GdkRGBA shade;
 
@@ -419,6 +435,21 @@ gb_source_overlay_do_draw (GbSourceOverlay *overlay,
    cairo_region_destroy(region);
    cairo_fill_preserve(cr);
    cairo_clip(cr);
+
+   {
+      GdkRectangle rect;
+
+      window = gtk_text_view_get_window (GTK_TEXT_VIEW (priv->source_view), GTK_TEXT_WINDOW_TEXT);
+      rect.width =  gdk_window_get_width (window);
+      rect.height =  gdk_window_get_height (window);
+
+      window = gtk_text_view_get_window (GTK_TEXT_VIEW (priv->source_view), GTK_TEXT_WINDOW_LEFT);
+      rect.x = gdk_window_get_width (window) - 2;
+      rect.y = 0;
+
+      gdk_cairo_rectangle (cr, &rect);
+      cairo_clip (cr);
+   }
 
    /*
     * Draw darker outer bubble line.
