@@ -1,18 +1,19 @@
 GLIB_COMPILE_RESOURCE = glib-compile-resources
 
 
-RESOURCE_FILES =
-RESOURCE_FILES += $(top_srcdir)/data/gb-application.gresource.xml
-RESOURCE_FILES += $(top_srcdir)/data/ui/gb-application-menu.ui
-RESOURCE_FILES += $(top_srcdir)/data/style-schemes/solarized-dark.xml
-RESOURCE_FILES += $(top_srcdir)/data/style-schemes/solarized-light.xml
+RESOURCE_FILES = \
+	data/gb-application.gresource.xml \
+	data/ui/gb-application-menu.ui \
+	data/style-schemes/solarized-dark.xml \
+	data/style-schemes/solarized-light.xml
 
 
 EXTRA_DIST += $(RESOURCE_FILES)
 
 
-CLEANFILES += $(top_builddir)/src/gb-application-resource.c
-CLEANFILES += $(top_builddir)/src/gb-application-resource.h
+CLEANFILES += \
+	src/gb-application-resource.c \
+	src/gb-application-resource.h
 
 
 RESOURCE_TARGET_C = $(top_builddir)/src/gb-application-resource.c
