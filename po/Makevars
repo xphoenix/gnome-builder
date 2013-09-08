@@ -1,0 +1,8 @@
+DOMAIN = gnome-builder-1.0
+XGETTEXT_OPTIONS = --keyword=_ --keyword=N_ --keyword=P_ --keyword=C_
+COPYRIGHT_HOLDER = Christian Hergert
+MSGID_BUGS_ADDRESS = http://bugzilla.gnome.org/enter_bug.cgi?product=gnome-builder
+EXTRA_LOCALE_CATEGORIES =
+
+top_builddir = ..
+

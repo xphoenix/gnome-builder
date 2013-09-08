@@ -18,7 +18,6 @@
 
 #include <glib/gi18n.h>
 
-#include "gb-action.h"
 #include "gb-application.h"
 #include "gb-source-pane.h"
 #include "gb-terminal-pane.h"

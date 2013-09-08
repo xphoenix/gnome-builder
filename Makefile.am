@@ -1,26 +1,21 @@
 CLEANFILES =
 DISTCLEANFILES =
+EXTRA_DIST = $(builderdoc_DATA)
 
-include Makefile.tests
-
-include data/Makefile.include
-include src/Makefile.include
-include tests/Makefile.include
+SUBDIRS = src tests
 
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 DISTCHECK_CONFIGURE_FLAGS = --enable-silent-rules
 
 builderdocdir = ${datadir}/doc/gnome-builder-@VERSION@
-builderdoc_DATA =
-builderdoc_DATA += COPYING
-builderdoc_DATA += NEWS
-builderdoc_DATA += README
+builderdoc_DATA = \
+	COPYING \
+	NEWS \
+	README
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA =
-pkgconfig_DATA += $(top_builddir)/gnome-builder-1.0.pc
-
-EXTRA_DIST += $(builderdoc_DATA)
+pkgconfig_DATA = \
+	$(top_builddir)/gnome-builder-1.0.pc
 
 dist-hook:
 	@if test -d "$(srcdir)/.git"; then                              \

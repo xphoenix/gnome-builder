@@ -26,8 +26,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wno-portability])
 AM_MAINTAINER_MODE([enable])
 
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
-AS_AM_REALLY_SILENT
+AM_SILENT_RULES([yes])
 
 # Check for programs
 AC_PROG_CC
@@ -80,6 +79,19 @@ dnl ************************************************************************
 dnl Check for clang headers.
 dnl ************************************************************************
 AC_CHECK_HEADER([clang-c/Index.h])
+
+
+dnl ************************************************************************
+dnl Localization
+dnl ************************************************************************
+AM_GNU_GETTEXT_VERSION([0.18])
+AM_GNU_GETTEXT([external])
+GETTEXT_PACKAGE="gnome-builder-1.0"
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],
+                   ["$GETTEXT_PACKAGE"],
+                   [The prefix for our gettext translation domains.])
+AS_ALL_LINGUAS
 
 
 dnl ************************************************************************
@@ -148,8 +160,13 @@ dnl ************************************************************************
 dnl Output
 dnl ************************************************************************
 AC_CONFIG_FILES([
-	Makefile
 	gnome-builder-1.0.pc
+
+	Makefile
+	src/Makefile
+	tests/Makefile
+
+	po/Makefile.in
 ])
 AC_OUTPUT
 

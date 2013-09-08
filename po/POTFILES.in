@@ -1,3 +1,36 @@
-# List of source files containing translatable strings.
-# Please keep this file sorted alphabetically.
-[encoding: UTF-8]
+# Keep sorted alphabetically!
+src/animation/gb-animation.c
+src/app/gb-application.c
+src/app/gb-file-filters.c
+src/compiler/gb-compiler.c
+src/debugger/gb-debugger.c
+src/docs/gb-docs-pane.c
+src/docs/gb-docs-provider.c
+src/gnome-builder.c
+src/language/gb-language.c
+src/profiler/gb-profiler.c
+src/project/gb-project.c
+src/project/gb-project-file.c
+src/source/gb-source-diff.c
+src/source/gb-source-gutter-renderer-compiler.c
+src/source/gb-source-gutter-renderer-diff.c
+src/source/gb-source-overlay.c
+src/source/gb-source-pane.c
+src/source/gb-source-snippet.c
+src/source/gb-source-snippet-chunk.c
+src/source/gb-source-snippet-completion-item.c
+src/source/gb-source-snippet-completion-provider.c
+src/source/gb-source-snippets-manager.c
+src/source/gb-source-view.c
+src/source/gb-source-view-state.c
+src/source/gb-source-view-state-snippet.c
+src/symbol/gb-symbol.c
+src/symbol/gb-symbol-combo-box.c
+src/symbol/gb-symbol-pane.c
+src/terminal/gb-terminal-pane.c
+src/workspace/gb-workspace.c
+src/workspace/gb-workspace-layout-splash.c
+src/workspace/gb-workspace-layout-switcher.c
+src/workspace/gb-workspace-pane.c
+src/workspace/gb-workspace-pane-group.c
+

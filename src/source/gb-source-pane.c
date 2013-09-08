@@ -18,7 +18,6 @@
 
 #include <glib/gi18n.h>
 #include <gtksourceview/gtksource.h>
-#include <nautilus/nautilus-floating-bar.h>
 
 #include "gb-animation.h"
 #include "gb-source-diff.h"
@@ -31,6 +30,7 @@
 #include "gb-source-snippets-manager.h"
 #include "gb-source-view.h"
 #include "gb-zoomable.h"
+#include "nautilus-floating-bar.h"
 
 struct _GbSourcePanePrivate
 {

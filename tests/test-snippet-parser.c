@@ -1,4 +1,4 @@
-#include "snippet-parser.h"
+#include "../src/source/snippet-parser.h"
 
 static const gchar *test1_data[] = {
    "snippet a\n",
