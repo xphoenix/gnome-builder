@@ -1,4 +1,4 @@
-/* gnome-builder.c
+/* gnome-builder-worker.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *
@@ -17,23 +17,14 @@
  */
 
 #include <glib/gi18n.h>
-#include <gtk/gtk.h>
-
-#include "gb-application.h"
 
 gint
 main (gint   argc,
       gchar *argv[])
 {
-   GApplication *application;
-   gint ret;
+   gint ret = 0;
 
-   g_set_prgname("gnome-builder");
-   g_set_application_name(_("Builder"));
-
-   application = G_APPLICATION(GB_APPLICATION_DEFAULT);
-   ret = g_application_run(application, argc, argv);
-   g_object_unref(application);
+   g_set_prgname("gnome-builder-worker");
 
    return ret;
 }

@@ -289,3 +289,6 @@ gnome_builder_LDADD = \
 	libtrie.la \
 	libworkspace.la
 
+
+bin_PROGRAMS += gnome-builder-worker
+gnome_builder_worker_SOURCES = gnome-builder-worker.c
