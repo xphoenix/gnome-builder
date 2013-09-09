@@ -16,10 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <glib.h>
 #include <gio/gio.h>
 #include <gio/gunixconnection.h>
 #include <stdlib.h>
 
+#include "gb-worker-typelib.h"
+
+static GMainLoop *gMainLoop;
 static gboolean gClang;
 static gboolean gTypelib;
 static int gDbusFd = -1;
@@ -57,6 +61,8 @@ main (gint   argc,
       return EXIT_FAILURE;
    }
 
+   gMainLoop = g_main_loop_new(NULL, FALSE);
+
    if (!(socket = g_socket_new_from_fd(gDbusFd, &error))) {
       g_printerr("%s\n", error->message);
       return EXIT_FAILURE;
@@ -80,12 +86,13 @@ main (gint   argc,
    }
 
    if (gTypelib) {
+      gb_worker_typelib_init(dbus_conn);
    }
 
    if (gClang) {
    }
 
-   g_usleep(G_USEC_PER_SEC * 1000);
+   g_main_loop_run(gMainLoop);
 
    return EXIT_SUCCESS;
 }

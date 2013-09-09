@@ -32,6 +32,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/symbol \
 	-I$(top_srcdir)/src/terminal \
 	-I$(top_srcdir)/src/trie \
+	-I$(top_srcdir)/src/worker \
 	-I$(top_srcdir)/src/workspace
 
 
@@ -276,7 +277,9 @@ gnome_builder_LDADD = \
 
 
 bin_PROGRAMS += gnome-builder-worker
-gnome_builder_worker_SOURCES = gnome-builder-worker.c
+gnome_builder_worker_SOURCES = \
+	gnome-builder-worker.c \
+	worker/gb-worker-typelib.c
 
 
 GLIB_COMPILE_RESOURCE = glib-compile-resources
