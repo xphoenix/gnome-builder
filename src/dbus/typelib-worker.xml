@@ -1,0 +1,22 @@
+<!DOCTYPE node PUBLIC
+'-//freedesktop//DTD D-BUS Object Introspection 1.0//EN'
+'http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd'>
+<node>
+  <!--
+      org.gnome.Builder.Typelib:
+      @short_description: typelib worker service.
+
+      This interface is used by gnome-builder to implement
+      typelib completion and other services.
+  -->
+
+  <interface name="org.gnome.Builder.Typelib">
+
+    <method name="Require">
+      <arg name="name" direction="in" type="s"/>
+      <arg name="version" direction="in" type="s"/>
+    </method>
+
+  </interface>
+
+</node>

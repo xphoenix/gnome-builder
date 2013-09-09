@@ -13,13 +13,13 @@ AM_CPPFLAGS = \
 	$(GTKSOURCEVIEW_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(VTE_CFLAGS) \
-	-DGETTEXT_PACKAGE=\""gnome-builder"\" \
 	-DG_LOG_DOMAIN=\"Builder\" \
 	-I$(top_srcdir)/src \
 	-I$(top_builddir)/src \
 	-I$(top_srcdir)/src/animation \
 	-I$(top_srcdir)/src/app \
 	-I$(top_srcdir)/src/compiler \
+	-I$(top_srcdir)/src/dbus \
 	-I$(top_srcdir)/src/debugger \
 	-I$(top_srcdir)/src/docs \
 	-I$(top_srcdir)/src/language \
@@ -86,6 +86,12 @@ libcompiler_la_SOURCES = \
 	compiler/gb-compiler-js.h \
 	compiler/gb-compiler-result.c \
 	compiler/gb-compiler-result.h
+
+
+noinst_LTLIBRARIES += libdbus.la
+libdbus_la_SOURCES = \
+	dbus/gb-dbus-typelib.c \
+	dbus/gb-dbus-typelib.h
 
 
 noinst_LTLIBRARIES += libdebugger.la
@@ -163,6 +169,7 @@ librunner_la_SOURCES = \
 noinst_LTLIBRARIES += libsource.la
 libsource_la_LIBADD = \
 	libcompiler.la \
+	libdbus.la \
 	libapp.la
 libsource_la_SOURCES = \
 	source/snippet-parser.c \
@@ -277,6 +284,7 @@ gnome_builder_LDADD = \
 
 
 bin_PROGRAMS += gnome-builder-worker
+gnome_builder_worker_LDADD = libdbus.la
 gnome_builder_worker_SOURCES = \
 	gnome-builder-worker.c \
 	worker/gb-worker-typelib.c
@@ -307,6 +315,18 @@ $(GB_APPLICATION_RESOURCE_C) $(GB_APPLICATION_RESOURCE_H): $(RESOURCE_FILES)
 		data/gb-application.gresource.xml
 	@mv $(GB_APPLICATION_RESOURCE_C).tmp $(GB_APPLICATION_RESOURCE_C)
 	@mv $(GB_APPLICATION_RESOURCE_H).tmp $(GB_APPLICATION_RESOURCE_H)
+
+
+GB_DBUS_TYPELIB_C = $(builddir)/dbus/gb-dbus-typelib.c
+GB_DBUS_TYPELIB_H = $(builddir)/dbus/gb-dbus-typelib.h
+
+
+$(GB_DBUS_TYPELIB_C) $(GB_DBUS_TYPELIB_H): $(srcdir)/dbus/typelib-worker.xml
+	$(AM_V_GEN)gdbus-codegen \
+		--interface-prefix org.gnome.Builder \
+		--c-namespace GbDBus \
+		--generate-c-code $(builddir)/dbus/gb-dbus-typelib \
+		$(srcdir)/dbus/typelib-worker.xml
 
 
 EXTRA_DIST = $(RESOURCE_FILES)
