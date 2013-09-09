@@ -378,6 +378,6 @@ init_provider (GtkSourceCompletionProviderIface *iface)
    iface->get_icon = provider_get_icon;
    iface->get_interactive_delay = provider_get_interactive_delay;
    iface->get_name = provider_get_name;
-   iface->populate = provider_populate;
    iface->get_priority = provider_get_priority;
+   iface->populate = provider_populate;
 }

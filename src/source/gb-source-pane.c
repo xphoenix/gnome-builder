@@ -28,6 +28,7 @@
 #include "gb-source-snippet-completion-provider.h"
 #include "gb-source-snippets.h"
 #include "gb-source-snippets-manager.h"
+#include "gb-source-typelib-completion-provider.h"
 #include "gb-source-view.h"
 #include "gb-zoomable.h"
 #include "nautilus-floating-bar.h"
@@ -43,6 +44,8 @@ struct _GbSourcePanePrivate
 
    GbSourceSnippets            *snippets;
    GtkSourceCompletionProvider *snippets_provider;
+
+   GtkSourceCompletionProvider *typelib_provider;
 
    GtkWidget *floating_bar;
    GtkWidget *overlay;
@@ -167,6 +170,11 @@ gb_source_pane_guess_language (GbSourcePane *pane,
       buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(priv->view));
       gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(buffer), l);
    }
+
+   /*
+    * TODO: Based on language, update completion provider language
+    *       so that it may provide the right format.
+    */
 
    g_clear_object(&info);
    g_free(base);
@@ -445,6 +453,7 @@ gb_source_pane_dispose (GObject *object)
    g_clear_object(&priv->search_settings);
    g_clear_object(&priv->snippets);
    g_clear_object(&priv->snippets_provider);
+   g_clear_object(&priv->typelib_provider);
 
    G_OBJECT_CLASS(gb_source_pane_parent_class)->dispose(object);
 }
@@ -976,6 +985,11 @@ gb_source_pane_init (GbSourcePane *pane)
                                                 priv->snippets);
    gtk_source_completion_add_provider(completion,
                                       priv->snippets_provider,
+                                      NULL);
+
+   pane->priv->typelib_provider = gb_source_typelib_completion_provider_new();
+   gtk_source_completion_add_provider(completion,
+                                      priv->typelib_provider,
                                       NULL);
 
    priv->diff = gb_source_diff_new(NULL, GTK_TEXT_BUFFER(priv->buffer));

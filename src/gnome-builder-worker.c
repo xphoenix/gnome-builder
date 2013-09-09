@@ -85,5 +85,7 @@ main (gint   argc,
    if (gClang) {
    }
 
+   g_usleep(G_USEC_PER_SEC * 1000);
+
    return EXIT_SUCCESS;
 }

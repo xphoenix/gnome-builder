@@ -190,6 +190,8 @@ libsource_la_SOURCES = \
 	source/gb-source-snippets.h \
 	source/gb-source-snippets-manager.c \
 	source/gb-source-snippets-manager.h \
+	source/gb-source-typelib-completion-provider.c \
+	source/gb-source-typelib-completion-provider.h \
 	source/gb-source-view.c \
 	source/gb-source-view.h \
 	source/gb-source-view-state.c \

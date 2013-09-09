@@ -58,6 +58,7 @@ void                   gb_multiprocess_manager_register       (GbMultiprocessMan
 GDBusConnection       *gb_multiprocess_manager_get_connection (GbMultiprocessManager  *manager,
                                                                const gchar            *name,
                                                                GError                **error);
+void                   gb_multiprocess_manager_shutdown       (GbMultiprocessManager  *manager);
 
 G_END_DECLS
 

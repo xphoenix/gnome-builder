@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <gio/gunixconnection.h>
 #include <glib/gi18n.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
@@ -84,6 +85,12 @@ worker_close_fds (Worker *worker)
 }
 
 static void
+worker_kill (Worker *worker)
+{
+   kill(worker->pid, SIGKILL);
+}
+
+static void
 worker_free (gpointer data)
 {
    Worker *worker = data;
@@ -123,6 +130,28 @@ worker_child_setup (gpointer data)
    Worker *worker = data;
 
    worker_close_fds(worker);
+}
+
+static void
+worker_child_watch (GPid     pid,
+                    gint     status,
+                    gpointer user_data)
+{
+   Worker *worker = user_data;
+
+   g_message("Worker \"%s\" exited with status %d", worker->name, status);
+
+   g_clear_object(&worker->dbus_conn);
+
+   close(worker->child_fd);
+   worker->child_fd = -1;
+
+   close(worker->parent_fd);
+   worker->parent_fd = -1;
+
+   worker->pid = 0;
+
+   g_spawn_close_pid(pid);
 }
 
 static void
@@ -167,6 +196,8 @@ worker_start (Worker *worker)
 
       working_dir = g_get_current_dir();
 
+      g_message("Worker \"%s\" spawning.", worker->name);
+
       argv = g_ptr_array_new_with_free_func(g_free);
       g_ptr_array_add(argv, g_strdup("gnome-builder-worker"));
       g_ptr_array_add(argv, g_strdup_printf("--dbus-fd=%d", worker->child_fd));
@@ -178,7 +209,8 @@ worker_start (Worker *worker)
       if (!g_spawn_async(working_dir,
                          (gchar **)argv->pdata,
                          env,
-                         G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
+                         (G_SPAWN_LEAVE_DESCRIPTORS_OPEN |
+                          G_SPAWN_DO_NOT_REAP_CHILD),
                          worker_child_setup,
                          worker,
                          &worker->pid,
@@ -190,6 +222,10 @@ worker_start (Worker *worker)
          g_error_free(error);
          return;
       }
+
+      g_child_watch_add(worker->pid,
+                        worker_child_watch,
+                        worker);
 
       g_ptr_array_unref(argv);
       g_free(working_dir);
@@ -222,6 +258,22 @@ worker_start (Worker *worker)
    }
 }
 
+void
+gb_multiprocess_manager_register (GbMultiprocessManager  *manager,
+                                  const gchar            *name,
+                                  gchar                 **argv)
+{
+   Worker *worker;
+
+   g_return_if_fail(GB_IS_MULTIPROCESS_MANAGER(manager));
+   g_return_if_fail(name);
+
+   worker = worker_new(name, argv);
+   g_hash_table_insert(manager->priv->registered,
+                       worker->name,
+                       worker);
+}
+
 GDBusConnection *
 gb_multiprocess_manager_get_connection (GbMultiprocessManager  *manager,
                                         const gchar            *name,
@@ -248,6 +300,22 @@ gb_multiprocess_manager_get_connection (GbMultiprocessManager  *manager,
    }
 
    return worker->dbus_conn;
+}
+
+static void
+kill_workers (gpointer key,
+              gpointer value,
+              gpointer user_data)
+{
+   Worker *worker = value;
+
+   worker_kill(worker);
+}
+
+void
+gb_multiprocess_manager_shutdown (GbMultiprocessManager *manager)
+{
+   g_hash_table_foreach(manager->priv->registered, kill_workers, NULL);
 }
 
 static void

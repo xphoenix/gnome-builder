@@ -23,6 +23,7 @@
 #include "gb-application.h"
 #include "gb-application-resource.h"
 #include "gb-file-filters.h"
+#include "gb-multiprocess-manager.h"
 #include "gb-source-pane.h"
 #include "gb-workspace.h"
 
@@ -262,6 +263,16 @@ failure:
 }
 
 static void
+gb_application_shutdown (GApplication *application)
+{
+   gb_multiprocess_manager_shutdown(GB_MULTIPROCESS_MANAGER_DEFAULT);
+
+   if (G_APPLICATION_CLASS(gb_application_parent_class)->shutdown) {
+      G_APPLICATION_CLASS(gb_application_parent_class)->shutdown(application);
+   }
+}
+
+static void
 gb_application_finalize (GObject *object)
 {
    G_OBJECT_CLASS(gb_application_parent_class)->finalize(object);
@@ -315,6 +326,7 @@ gb_application_class_init (GbApplicationClass *klass)
    application_class = G_APPLICATION_CLASS(klass);
    application_class->activate = gb_application_activate;
    application_class->command_line = gb_application_command_line;
+   application_class->shutdown = gb_application_shutdown;
 
    gParamSpecs[PROP_WORKSPACE] =
       g_param_spec_object("workspace",
