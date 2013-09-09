@@ -205,9 +205,40 @@ static const _ExtendedGDBusMethodInfo _gb_dbus_typelib_method_info_require =
   FALSE
 };
 
+static const _ExtendedGDBusArgInfo _gb_dbus_typelib_method_info_get_methods_IN_ARG_word =
+{
+  {
+    -1,
+    (gchar *) "word",
+    (gchar *) "s",
+    NULL
+  },
+  FALSE
+};
+
+static const _ExtendedGDBusArgInfo * const _gb_dbus_typelib_method_info_get_methods_IN_ARG_pointers[] =
+{
+  &_gb_dbus_typelib_method_info_get_methods_IN_ARG_word,
+  NULL
+};
+
+static const _ExtendedGDBusMethodInfo _gb_dbus_typelib_method_info_get_methods =
+{
+  {
+    -1,
+    (gchar *) "GetMethods",
+    (GDBusArgInfo **) &_gb_dbus_typelib_method_info_get_methods_IN_ARG_pointers,
+    NULL,
+    NULL
+  },
+  "handle-get-methods",
+  FALSE
+};
+
 static const _ExtendedGDBusMethodInfo * const _gb_dbus_typelib_method_info_pointers[] =
 {
   &_gb_dbus_typelib_method_info_require,
+  &_gb_dbus_typelib_method_info_get_methods,
   NULL
 };
 
@@ -265,6 +296,7 @@ gb_dbus_typelib_override_properties (GObjectClass *klass, guint property_id_begi
 /**
  * GbDBusTypelibIface:
  * @parent_iface: The parent interface.
+ * @handle_get_methods: Handler for the #GbDBusTypelib::handle-get-methods signal.
  * @handle_require: Handler for the #GbDBusTypelib::handle-require signal.
  *
  * Virtual table for the D-Bus interface <link linkend="gdbus-interface-org-gnome-Builder-Typelib.top_of_page">org.gnome.Builder.Typelib</link>.
@@ -300,6 +332,29 @@ gb_dbus_typelib_default_init (GbDBusTypelibIface *iface)
     G_TYPE_BOOLEAN,
     3,
     G_TYPE_DBUS_METHOD_INVOCATION, G_TYPE_STRING, G_TYPE_STRING);
+
+  /**
+   * GbDBusTypelib::handle-get-methods:
+   * @object: A #GbDBusTypelib.
+   * @invocation: A #GDBusMethodInvocation.
+   * @arg_word: Argument passed by remote caller.
+   *
+   * Signal emitted when a remote caller is invoking the <link linkend="gdbus-method-org-gnome-Builder-Typelib.GetMethods">GetMethods()</link> D-Bus method.
+   *
+   * If a signal handler returns %TRUE, it means the signal handler will handle the invocation (e.g. take a reference to @invocation and eventually call gb_dbus_typelib_complete_get_methods() or e.g. g_dbus_method_invocation_return_error() on it) and no order signal handlers will run. If no signal handler handles the invocation, the %G_DBUS_ERROR_UNKNOWN_METHOD error is returned.
+   *
+   * Returns: %TRUE if the invocation was handled, %FALSE to let other signal handlers run.
+   */
+  g_signal_new ("handle-get-methods",
+    G_TYPE_FROM_INTERFACE (iface),
+    G_SIGNAL_RUN_LAST,
+    G_STRUCT_OFFSET (GbDBusTypelibIface, handle_get_methods),
+    g_signal_accumulator_true_handled,
+    NULL,
+    g_cclosure_marshal_generic,
+    G_TYPE_BOOLEAN,
+    2,
+    G_TYPE_DBUS_METHOD_INVOCATION, G_TYPE_STRING);
 
 }
 
@@ -408,6 +463,104 @@ _out:
 }
 
 /**
+ * gb_dbus_typelib_call_get_methods:
+ * @proxy: A #GbDBusTypelibProxy.
+ * @arg_word: Argument to pass with the method invocation.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied or %NULL.
+ * @user_data: User data to pass to @callback.
+ *
+ * Asynchronously invokes the <link linkend="gdbus-method-org-gnome-Builder-Typelib.GetMethods">GetMethods()</link> D-Bus method on @proxy.
+ * When the operation is finished, @callback will be invoked in the <link linkend="g-main-context-push-thread-default">thread-default main loop</link> of the thread you are calling this method from.
+ * You can then call gb_dbus_typelib_call_get_methods_finish() to get the result of the operation.
+ *
+ * See gb_dbus_typelib_call_get_methods_sync() for the synchronous, blocking version of this method.
+ */
+void
+gb_dbus_typelib_call_get_methods (
+    GbDBusTypelib *proxy,
+    const gchar *arg_word,
+    GCancellable *cancellable,
+    GAsyncReadyCallback callback,
+    gpointer user_data)
+{
+  g_dbus_proxy_call (G_DBUS_PROXY (proxy),
+    "GetMethods",
+    g_variant_new ("(s)",
+                   arg_word),
+    G_DBUS_CALL_FLAGS_NONE,
+    -1,
+    cancellable,
+    callback,
+    user_data);
+}
+
+/**
+ * gb_dbus_typelib_call_get_methods_finish:
+ * @proxy: A #GbDBusTypelibProxy.
+ * @res: The #GAsyncResult obtained from the #GAsyncReadyCallback passed to gb_dbus_typelib_call_get_methods().
+ * @error: Return location for error or %NULL.
+ *
+ * Finishes an operation started with gb_dbus_typelib_call_get_methods().
+ *
+ * Returns: (skip): %TRUE if the call succeded, %FALSE if @error is set.
+ */
+gboolean
+gb_dbus_typelib_call_get_methods_finish (
+    GbDBusTypelib *proxy,
+    GAsyncResult *res,
+    GError **error)
+{
+  GVariant *_ret;
+  _ret = g_dbus_proxy_call_finish (G_DBUS_PROXY (proxy), res, error);
+  if (_ret == NULL)
+    goto _out;
+  g_variant_get (_ret,
+                 "()");
+  g_variant_unref (_ret);
+_out:
+  return _ret != NULL;
+}
+
+/**
+ * gb_dbus_typelib_call_get_methods_sync:
+ * @proxy: A #GbDBusTypelibProxy.
+ * @arg_word: Argument to pass with the method invocation.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: Return location for error or %NULL.
+ *
+ * Synchronously invokes the <link linkend="gdbus-method-org-gnome-Builder-Typelib.GetMethods">GetMethods()</link> D-Bus method on @proxy. The calling thread is blocked until a reply is received.
+ *
+ * See gb_dbus_typelib_call_get_methods() for the asynchronous version of this method.
+ *
+ * Returns: (skip): %TRUE if the call succeded, %FALSE if @error is set.
+ */
+gboolean
+gb_dbus_typelib_call_get_methods_sync (
+    GbDBusTypelib *proxy,
+    const gchar *arg_word,
+    GCancellable *cancellable,
+    GError **error)
+{
+  GVariant *_ret;
+  _ret = g_dbus_proxy_call_sync (G_DBUS_PROXY (proxy),
+    "GetMethods",
+    g_variant_new ("(s)",
+                   arg_word),
+    G_DBUS_CALL_FLAGS_NONE,
+    -1,
+    cancellable,
+    error);
+  if (_ret == NULL)
+    goto _out;
+  g_variant_get (_ret,
+                 "()");
+  g_variant_unref (_ret);
+_out:
+  return _ret != NULL;
+}
+
+/**
  * gb_dbus_typelib_complete_require:
  * @object: A #GbDBusTypelib.
  * @invocation: (transfer full): A #GDBusMethodInvocation.
@@ -418,6 +571,24 @@ _out:
  */
 void
 gb_dbus_typelib_complete_require (
+    GbDBusTypelib *object,
+    GDBusMethodInvocation *invocation)
+{
+  g_dbus_method_invocation_return_value (invocation,
+    g_variant_new ("()"));
+}
+
+/**
+ * gb_dbus_typelib_complete_get_methods:
+ * @object: A #GbDBusTypelib.
+ * @invocation: (transfer full): A #GDBusMethodInvocation.
+ *
+ * Helper function used in service implementations to finish handling invocations of the <link linkend="gdbus-method-org-gnome-Builder-Typelib.GetMethods">GetMethods()</link> D-Bus method. If you instead want to finish handling an invocation by returning an error, use g_dbus_method_invocation_return_error() or similar.
+ *
+ * This method will free @invocation, you cannot use it afterwards.
+ */
+void
+gb_dbus_typelib_complete_get_methods (
     GbDBusTypelib *object,
     GDBusMethodInvocation *invocation)
 {

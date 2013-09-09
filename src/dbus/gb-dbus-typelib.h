@@ -28,6 +28,11 @@ struct _GbDBusTypelibIface
 {
   GTypeInterface parent_iface;
 
+  gboolean (*handle_get_methods) (
+    GbDBusTypelib *object,
+    GDBusMethodInvocation *invocation,
+    const gchar *arg_word);
+
   gboolean (*handle_require) (
     GbDBusTypelib *object,
     GDBusMethodInvocation *invocation,
@@ -44,6 +49,10 @@ guint gb_dbus_typelib_override_properties (GObjectClass *klass, guint property_i
 
 /* D-Bus method call completion functions: */
 void gb_dbus_typelib_complete_require (
+    GbDBusTypelib *object,
+    GDBusMethodInvocation *invocation);
+
+void gb_dbus_typelib_complete_get_methods (
     GbDBusTypelib *object,
     GDBusMethodInvocation *invocation);
 
@@ -67,6 +76,24 @@ gboolean gb_dbus_typelib_call_require_sync (
     GbDBusTypelib *proxy,
     const gchar *arg_name,
     const gchar *arg_version,
+    GCancellable *cancellable,
+    GError **error);
+
+void gb_dbus_typelib_call_get_methods (
+    GbDBusTypelib *proxy,
+    const gchar *arg_word,
+    GCancellable *cancellable,
+    GAsyncReadyCallback callback,
+    gpointer user_data);
+
+gboolean gb_dbus_typelib_call_get_methods_finish (
+    GbDBusTypelib *proxy,
+    GAsyncResult *res,
+    GError **error);
+
+gboolean gb_dbus_typelib_call_get_methods_sync (
+    GbDBusTypelib *proxy,
+    const gchar *arg_word,
     GCancellable *cancellable,
     GError **error);
 

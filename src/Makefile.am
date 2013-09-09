@@ -284,7 +284,9 @@ gnome_builder_LDADD = \
 
 
 bin_PROGRAMS += gnome-builder-worker
-gnome_builder_worker_LDADD = libdbus.la
+gnome_builder_worker_LDADD = \
+	libdbus.la \
+	libtrie.la
 gnome_builder_worker_SOURCES = \
 	gnome-builder-worker.c \
 	worker/gb-worker-typelib.c
