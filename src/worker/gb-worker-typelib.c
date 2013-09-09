@@ -27,14 +27,80 @@ static Trie *gTrie;
 static guint gCount;
 
 static void
+load_function_info (Trie           *trie,
+                    GIRepository   *repository,
+                    const gchar    *namespace,
+                    GIFunctionInfo *info)
+{
+   const gchar *symbol;
+
+   symbol = g_function_info_get_symbol(info);
+   trie_insert(trie, symbol, GINT_TO_POINTER(1));
+}
+
+static void
+load_object_info (Trie         *trie,
+                  GIRepository *repository,
+                  const gchar  *namespace,
+                  GIObjectInfo *info)
+{
+   GIFunctionInfo *method;
+   const gchar *symbol;
+   guint n_methods;
+   guint i;
+
+   symbol = g_object_info_get_type_name(info);
+
+   trie_insert(trie, symbol, GSIZE_TO_POINTER(1));
+
+   n_methods = g_object_info_get_n_methods(info);
+   for (i = 0; i < n_methods; i++) {
+      method = g_object_info_get_method(info, i);
+      load_function_info(trie, repository, namespace, method);
+   }
+}
+
+static void
+load_info (Trie         *trie,
+           GIRepository *repository,
+           const gchar  *namespace,
+           GIBaseInfo   *info)
+{
+   if (GI_IS_FUNCTION_INFO(info)) {
+      load_function_info(trie, repository, namespace, (GIFunctionInfo *)info);
+   } else if (GI_IS_OBJECT_INFO(info)) {
+      load_object_info(trie, repository, namespace, (GIObjectInfo *)info);
+   }
+}
+
+static void
+load_namespace (Trie         *trie,
+                GIRepository *repository,
+                const gchar  *namespace)
+{
+   GIBaseInfo *info;
+   guint n_info;
+   guint i;
+
+   n_info = g_irepository_get_n_infos(repository, namespace);
+   for (i = 0; i < n_info; i++) {
+      info = g_irepository_get_info(repository, namespace, i);
+      load_info(trie, repository, namespace, info);
+   }
+}
+
+static void
 handle_require (GbDBusTypelib         *typelib,
                 GDBusMethodInvocation *method,
                 const gchar           *name,
                 const gchar           *version)
 {
+   GIRepository *repository;
    GError *error = NULL;
 
-   if (!g_irepository_require(g_irepository_get_default(),
+   repository = g_irepository_get_default();
+
+   if (!g_irepository_require(repository,
                               name,
                               version,
                               0,
@@ -42,6 +108,8 @@ handle_require (GbDBusTypelib         *typelib,
       g_dbus_method_invocation_take_error(method, error);
       return;
    }
+
+   load_namespace(gTrie, repository, name);
 
    g_dbus_method_invocation_return_value(method, NULL);
 }
@@ -69,19 +137,23 @@ handle_get_methods (GbDBusTypelib         *typelib,
    GVariantBuilder *builder;
    GVariant *value;
 
-   builder = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
    gCount = 0;
 
-   trie_traverse(gTrie,
-                 word,
-                 G_POST_ORDER,
-                 G_TRAVERSE_LEAVES,
-                 -1,
-                 traverse_cb,
-                 method);
+   builder = g_variant_builder_new(G_VARIANT_TYPE("as"));
 
-   g_dbus_method_invocation_return_value(method,
-                                         g_variant_builder_end(builder));
+   if (word && *word) {
+      trie_traverse(gTrie,
+                    word,
+                    G_POST_ORDER,
+                    G_TRAVERSE_LEAVES,
+                    -1,
+                    traverse_cb,
+                    builder);
+   }
+
+   value = g_variant_new("(as)", builder);
+   g_dbus_method_invocation_return_value(method, value);
+   g_variant_builder_unref(builder);
 }
 
 void

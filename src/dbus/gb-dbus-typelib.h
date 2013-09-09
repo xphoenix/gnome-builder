@@ -54,7 +54,8 @@ void gb_dbus_typelib_complete_require (
 
 void gb_dbus_typelib_complete_get_methods (
     GbDBusTypelib *object,
-    GDBusMethodInvocation *invocation);
+    GDBusMethodInvocation *invocation,
+    const gchar *const *words);
 
 
 
@@ -88,12 +89,14 @@ void gb_dbus_typelib_call_get_methods (
 
 gboolean gb_dbus_typelib_call_get_methods_finish (
     GbDBusTypelib *proxy,
+    gchar ***out_words,
     GAsyncResult *res,
     GError **error);
 
 gboolean gb_dbus_typelib_call_get_methods_sync (
     GbDBusTypelib *proxy,
     const gchar *arg_word,
+    gchar ***out_words,
     GCancellable *cancellable,
     GError **error);
 

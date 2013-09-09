@@ -18,7 +18,9 @@
 
 #include <gio/gio.h>
 #include <glib/gi18n.h>
+#include <gtksourceview/gtksourcecompletionitem.h>
 
+#include "gb-dbus-typelib.h"
 #include "gb-multiprocess-manager.h"
 #include "gb-source-typelib-completion-provider.h"
 
@@ -36,6 +38,7 @@ G_DEFINE_TYPE_EXTENDED(GbSourceTypelibCompletionProvider,
 struct _GbSourceTypelibCompletionProviderPrivate
 {
    GDBusConnection *peer;
+   GbDBusTypelib *proxy;
 };
 
 GtkSourceCompletionProvider *
@@ -62,6 +65,40 @@ get_peer (GbSourceTypelibCompletionProvider *provider)
    }
 
    return priv->peer;
+}
+
+static GbDBusTypelib *
+get_proxy (GbSourceTypelibCompletionProvider *provider)
+{
+   GbSourceTypelibCompletionProviderPrivate *priv = provider->priv;
+   GDBusConnection *peer;
+
+   if (!priv->proxy) {
+      peer = get_peer(provider);
+      if (!peer) {
+         return NULL;
+      }
+
+      priv->proxy = gb_dbus_typelib_proxy_new_sync(peer,
+                                                   G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                                   NULL,
+                                                   "/org/gnome/Builder/Typelib",
+                                                   NULL,
+                                                   NULL);
+      g_object_add_weak_pointer(G_OBJECT(priv->proxy),
+                                (gpointer *)&priv->proxy);
+
+      /*
+       * XXX: temporary for testing.
+       */
+      gb_dbus_typelib_call_require_sync(priv->proxy, "Gtk", "3.0", NULL, NULL);
+      gb_dbus_typelib_call_require_sync(priv->proxy, "Gdk", "3.0", NULL, NULL);
+      gb_dbus_typelib_call_require_sync(priv->proxy, "GLib", "2.0", NULL, NULL);
+      gb_dbus_typelib_call_require_sync(priv->proxy, "Gio", "2.0", NULL, NULL);
+      gb_dbus_typelib_call_require_sync(priv->proxy, "GObject", "2.0", NULL, NULL);
+   }
+
+   return priv->proxy;
 }
 
 static void
@@ -177,23 +214,44 @@ static void
 provider_populate (GtkSourceCompletionProvider *provider,
                    GtkSourceCompletionContext  *context)
 {
-   GDBusConnection *peer;
+   GbDBusTypelib *proxy;
    GtkTextIter iter;
+   GError *error = NULL;
+   gchar **words = NULL;
    gchar *word;
+   GList *list = NULL;
+   gint i;
 
-   peer = get_peer(GB_SOURCE_TYPELIB_COMPLETION_PROVIDER(provider));
-   if (!peer) {
-      g_warning("No dbus provider to communicate with.");
+   proxy = get_proxy(GB_SOURCE_TYPELIB_COMPLETION_PROVIDER(provider));
+   if (!proxy) {
+      g_warning("No dbus proxy.");
       return;
    }
-
-   g_print("DBUS: %p\n", peer);
 
    gtk_source_completion_context_get_iter(context, &iter);
    word = get_word(provider, &iter);
 
-   g_print("Searching for: %s\n", word);
+   if (!gb_dbus_typelib_call_get_methods_sync(proxy,
+                                              word,
+                                              &words,
+                                              NULL,
+                                              &error)) {
+      g_warning("%s\n", error->message);
+      g_error_free(error);
+   }
 
+   if (words) {
+      for (i = 0; words[i]; i++) {
+         GtkSourceCompletionItem *item;
+
+         item = gtk_source_completion_item_new(words[i], words[i], NULL, NULL);
+         list = g_list_prepend(list, item);
+      }
+   }
+
+   gtk_source_completion_context_add_proposals(context, provider, list, TRUE);
+
+   g_strfreev(words);
    g_free(word);
 }
 

@@ -19,6 +19,7 @@
 
     <method name="GetMethods">
       <arg name="word" direction="in" type="s"/>
+      <arg name="words" direction="out" type="as"/>
     </method>
 
   </interface>
