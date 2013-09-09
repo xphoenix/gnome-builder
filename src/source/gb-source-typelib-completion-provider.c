@@ -220,6 +220,7 @@ provider_populate (GtkSourceCompletionProvider *provider,
    gchar **words = NULL;
    gchar *word;
    GList *list = NULL;
+   gint len;
    gint i;
 
    proxy = get_proxy(GB_SOURCE_TYPELIB_COMPLETION_PROVIDER(provider));
@@ -230,6 +231,7 @@ provider_populate (GtkSourceCompletionProvider *provider,
 
    gtk_source_completion_context_get_iter(context, &iter);
    word = get_word(provider, &iter);
+   len = strlen(word);
 
    if (!gb_dbus_typelib_call_get_methods_sync(proxy,
                                               word,
@@ -243,9 +245,12 @@ provider_populate (GtkSourceCompletionProvider *provider,
    if (words) {
       for (i = 0; words[i]; i++) {
          GtkSourceCompletionItem *item;
+         gchar *markup;
 
-         item = gtk_source_completion_item_new(words[i], words[i], NULL, NULL);
+         markup = g_strdup_printf("<span color='#dcdcdc'>%s</span>%s", word, words[i] + len);
+         item = gtk_source_completion_item_new_with_markup(markup, words[i], NULL, NULL);
          list = g_list_prepend(list, item);
+         g_free(markup);
       }
    }
 
