@@ -1,33 +1,7 @@
 -include $(top_srcdir)/Makefile.introspection
 
-
 bin_PROGRAMS =
 noinst_LTLIBRARIES =
-EXTRA_DIST = $(RESOURCE_FILES)
-CLEANFILES = \
-	$(GB_APPLICATION_RESOURCE_C) \
-	$(GB_APPLICATION_RESOURCE_H)
-
-
-GLIB_COMPILE_RESOURCE = glib-compile-resources
-RESOURCE_FILES = \
-	data/gb-application.gresource.xml \
-	data/ui/gb-application-menu.ui \
-	data/style-schemes/solarized-dark.xml \
-	data/style-schemes/solarized-light.xml
-GB_APPLICATION_RESOURCE_C = $(builddir)/app/gb-application-resource.c
-GB_APPLICATION_RESOURCE_H = $(builddir)/app/gb-application-resource.h
-$(GB_APPLICATION_RESOURCE_C) $(GB_APPLICATION_RESOURCE_H): $(RESOURCE_FILES)
-	$(AM_V_GEN)$(GLIB_COMPILE_RESOURCE) \
-		--target=$(GB_APPLICATION_RESOURCE_C).tmp \
-		--generate-source --c-name=gb_application \
-		data/gb-application.gresource.xml
-	@$(GLIB_COMPILE_RESOURCE) \
-		--target=$(GB_APPLICATION_RESOURCE_H).tmp \
-		--generate-header --c-name=gb_application \
-		data/gb-application.gresource.xml
-	@mv $(GB_APPLICATION_RESOURCE_C).tmp $(GB_APPLICATION_RESOURCE_C)
-	@mv $(GB_APPLICATION_RESOURCE_H).tmp $(GB_APPLICATION_RESOURCE_H)
 
 
 AM_CPPFLAGS = \
@@ -49,6 +23,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/debugger \
 	-I$(top_srcdir)/src/docs \
 	-I$(top_srcdir)/src/language \
+	-I$(top_srcdir)/src/multiprocess \
 	-I$(top_srcdir)/src/nautilus \
 	-I$(top_srcdir)/src/profiler \
 	-I$(top_srcdir)/src/project \
@@ -87,7 +62,8 @@ libapp_la_DEPS = \
 	$(GB_APPLICATION_RESOURCE_C) \
 	$(GB_APPLICATION_RESOURCE_H)
 libapp_la_LIBADD = \
-	libanimation.la
+	libanimation.la \
+	libmultiprocess.la
 libapp_la_SOURCES = \
 	$(GB_APPLICATION_RESOURCE_C) \
 	$(GB_APPLICATION_RESOURCE_H) \
@@ -145,6 +121,12 @@ liblanguage_la_SOURCES = \
 	language/gb-language-formatter-js.h \
 	language/gb-language-js.c \
 	language/gb-language-js.h
+
+
+noinst_LTLIBRARIES += libmultiprocess.la
+libmultiprocess_la_SOURCES = \
+	multiprocess/gb-multiprocess-manager.c \
+	multiprocess/gb-multiprocess-manager.h
 
 
 noinst_LTLIBRARIES += libprofiler.la
@@ -280,6 +262,7 @@ gnome_builder_LDADD = \
 	libdebugger.la \
 	libdocs.la \
 	liblanguage.la \
+	libmultiprocess.la \
 	libprofiler.la \
 	libproject.la \
 	librunner.la \
@@ -292,3 +275,38 @@ gnome_builder_LDADD = \
 
 bin_PROGRAMS += gnome-builder-worker
 gnome_builder_worker_SOURCES = gnome-builder-worker.c
+
+
+GLIB_COMPILE_RESOURCE = glib-compile-resources
+
+
+RESOURCE_FILES = \
+	data/gb-application.gresource.xml \
+	data/ui/gb-application-menu.ui \
+	data/style-schemes/solarized-dark.xml \
+	data/style-schemes/solarized-light.xml
+
+
+GB_APPLICATION_RESOURCE_C = $(builddir)/app/gb-application-resource.c
+GB_APPLICATION_RESOURCE_H = $(builddir)/app/gb-application-resource.h
+
+
+$(GB_APPLICATION_RESOURCE_C) $(GB_APPLICATION_RESOURCE_H): $(RESOURCE_FILES)
+	$(AM_V_GEN)$(GLIB_COMPILE_RESOURCE) \
+		--target=$(GB_APPLICATION_RESOURCE_C).tmp \
+		--generate-source --c-name=gb_application \
+		data/gb-application.gresource.xml
+	@$(GLIB_COMPILE_RESOURCE) \
+		--target=$(GB_APPLICATION_RESOURCE_H).tmp \
+		--generate-header --c-name=gb_application \
+		data/gb-application.gresource.xml
+	@mv $(GB_APPLICATION_RESOURCE_C).tmp $(GB_APPLICATION_RESOURCE_C)
+	@mv $(GB_APPLICATION_RESOURCE_H).tmp $(GB_APPLICATION_RESOURCE_H)
+
+
+EXTRA_DIST = $(RESOURCE_FILES)
+
+
+CLEANFILES = \
+	$(GB_APPLICATION_RESOURCE_C) \
+	$(GB_APPLICATION_RESOURCE_H)
