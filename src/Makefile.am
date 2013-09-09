@@ -299,7 +299,9 @@ RESOURCE_FILES = \
 	data/gb-application.gresource.xml \
 	data/ui/gb-application-menu.ui \
 	data/style-schemes/solarized-dark.xml \
-	data/style-schemes/solarized-light.xml
+	data/style-schemes/solarized-light.xml \
+	data/icons/class-16x.png \
+	data/icons/method-16x.png
 
 
 GB_APPLICATION_RESOURCE_C = $(builddir)/app/gb-application-resource.c

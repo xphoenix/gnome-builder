@@ -33,6 +33,11 @@ struct _GbDBusTypelibIface
     GDBusMethodInvocation *invocation,
     const gchar *arg_word);
 
+  gboolean (*handle_get_objects) (
+    GbDBusTypelib *object,
+    GDBusMethodInvocation *invocation,
+    const gchar *arg_word);
+
   gboolean (*handle_require) (
     GbDBusTypelib *object,
     GDBusMethodInvocation *invocation,
@@ -53,6 +58,11 @@ void gb_dbus_typelib_complete_require (
     GDBusMethodInvocation *invocation);
 
 void gb_dbus_typelib_complete_get_methods (
+    GbDBusTypelib *object,
+    GDBusMethodInvocation *invocation,
+    const gchar *const *words);
+
+void gb_dbus_typelib_complete_get_objects (
     GbDBusTypelib *object,
     GDBusMethodInvocation *invocation,
     const gchar *const *words);
@@ -94,6 +104,26 @@ gboolean gb_dbus_typelib_call_get_methods_finish (
     GError **error);
 
 gboolean gb_dbus_typelib_call_get_methods_sync (
+    GbDBusTypelib *proxy,
+    const gchar *arg_word,
+    gchar ***out_words,
+    GCancellable *cancellable,
+    GError **error);
+
+void gb_dbus_typelib_call_get_objects (
+    GbDBusTypelib *proxy,
+    const gchar *arg_word,
+    GCancellable *cancellable,
+    GAsyncReadyCallback callback,
+    gpointer user_data);
+
+gboolean gb_dbus_typelib_call_get_objects_finish (
+    GbDBusTypelib *proxy,
+    gchar ***out_words,
+    GAsyncResult *res,
+    GError **error);
+
+gboolean gb_dbus_typelib_call_get_objects_sync (
     GbDBusTypelib *proxy,
     const gchar *arg_word,
     gchar ***out_words,

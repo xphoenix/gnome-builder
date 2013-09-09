@@ -20,6 +20,7 @@
 #include <glib/gi18n.h>
 #include <gtksourceview/gtksourcecompletionitem.h>
 
+#include "gb-application-resource.h"
 #include "gb-dbus-typelib.h"
 #include "gb-multiprocess-manager.h"
 #include "gb-source-typelib-completion-provider.h"
@@ -40,6 +41,9 @@ struct _GbSourceTypelibCompletionProviderPrivate
    GDBusConnection *peer;
    GbDBusTypelib *proxy;
 };
+
+static GdkPixbuf *gClassPixbuf;
+static GdkPixbuf *gMethodPixbuf;
 
 GtkSourceCompletionProvider *
 gb_source_typelib_completion_provider_new (void)
@@ -112,6 +116,7 @@ gb_source_typelib_completion_provider_class_init (GbSourceTypelibCompletionProvi
 {
    static const gchar *argv[] = { "--typelib", NULL };
    GObjectClass *object_class;
+   GError *error = NULL;
 
    object_class = G_OBJECT_CLASS(klass);
    object_class->finalize = gb_source_typelib_completion_provider_finalize;
@@ -120,6 +125,19 @@ gb_source_typelib_completion_provider_class_init (GbSourceTypelibCompletionProvi
    gb_multiprocess_manager_register(GB_MULTIPROCESS_MANAGER_DEFAULT,
                                     TYPELIB_WORKER_NAME,
                                     (gchar **)argv);
+
+   gClassPixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/class-16x.png", &error);
+   if (!gClassPixbuf) {
+      g_message("%s", error->message);
+      g_clear_error(&error);
+   }
+
+   gMethodPixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/method-16x.png", &error);
+   if (!gMethodPixbuf) {
+      g_message("%s", error->message);
+      g_clear_error(&error);
+   }
+
 }
 
 static void
@@ -248,7 +266,32 @@ provider_populate (GtkSourceCompletionProvider *provider,
          gchar *markup;
 
          markup = g_strdup_printf("<span color='#dcdcdc'>%s</span>%s", word, words[i] + len);
-         item = gtk_source_completion_item_new_with_markup(markup, words[i], NULL, NULL);
+         item = gtk_source_completion_item_new_with_markup(markup, words[i], gMethodPixbuf, NULL);
+         list = g_list_prepend(list, item);
+         g_free(markup);
+      }
+   }
+
+   g_strfreev(words);
+
+   words = NULL;
+
+   if (!gb_dbus_typelib_call_get_objects_sync(proxy,
+                                              word,
+                                              &words,
+                                              NULL,
+                                              &error)) {
+      g_warning("%s\n", error->message);
+      g_error_free(error);
+   }
+
+   if (words) {
+      for (i = 0; words[i]; i++) {
+         GtkSourceCompletionItem *item;
+         gchar *markup;
+
+         markup = g_strdup_printf("<span color='#dcdcdc'>%s</span>%s", word, words[i] + len);
+         item = gtk_source_completion_item_new_with_markup(markup, words[i], gClassPixbuf, NULL);
          list = g_list_prepend(list, item);
          g_free(markup);
       }
@@ -257,6 +300,9 @@ provider_populate (GtkSourceCompletionProvider *provider,
    gtk_source_completion_context_add_proposals(context, provider, list, TRUE);
 
    g_strfreev(words);
+
+   words = NULL;
+
    g_free(word);
 }
 

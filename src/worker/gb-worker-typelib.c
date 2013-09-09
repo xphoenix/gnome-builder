@@ -24,23 +24,22 @@
 
 static GbDBusTypelib *gSkeleton;
 static Trie *gTrie;
+static Trie *gTrieObjects;
 static guint gCount;
 
 static void
-load_function_info (Trie           *trie,
-                    GIRepository   *repository,
+load_function_info (GIRepository   *repository,
                     const gchar    *namespace,
                     GIFunctionInfo *info)
 {
    const gchar *symbol;
 
    symbol = g_function_info_get_symbol(info);
-   trie_insert(trie, symbol, GINT_TO_POINTER(1));
+   trie_insert(gTrie, symbol, GINT_TO_POINTER(1));
 }
 
 static void
-load_object_info (Trie         *trie,
-                  GIRepository *repository,
+load_object_info (GIRepository *repository,
                   const gchar  *namespace,
                   GIObjectInfo *info)
 {
@@ -51,31 +50,29 @@ load_object_info (Trie         *trie,
 
    symbol = g_object_info_get_type_name(info);
 
-   trie_insert(trie, symbol, GSIZE_TO_POINTER(1));
+   trie_insert(gTrieObjects, symbol, GSIZE_TO_POINTER(1));
 
    n_methods = g_object_info_get_n_methods(info);
    for (i = 0; i < n_methods; i++) {
       method = g_object_info_get_method(info, i);
-      load_function_info(trie, repository, namespace, method);
+      load_function_info(repository, namespace, method);
    }
 }
 
 static void
-load_info (Trie         *trie,
-           GIRepository *repository,
+load_info (GIRepository *repository,
            const gchar  *namespace,
            GIBaseInfo   *info)
 {
    if (GI_IS_FUNCTION_INFO(info)) {
-      load_function_info(trie, repository, namespace, (GIFunctionInfo *)info);
+      load_function_info(repository, namespace, (GIFunctionInfo *)info);
    } else if (GI_IS_OBJECT_INFO(info)) {
-      load_object_info(trie, repository, namespace, (GIObjectInfo *)info);
+      load_object_info(repository, namespace, (GIObjectInfo *)info);
    }
 }
 
 static void
-load_namespace (Trie         *trie,
-                GIRepository *repository,
+load_namespace (GIRepository *repository,
                 const gchar  *namespace)
 {
    GIBaseInfo *info;
@@ -85,7 +82,7 @@ load_namespace (Trie         *trie,
    n_info = g_irepository_get_n_infos(repository, namespace);
    for (i = 0; i < n_info; i++) {
       info = g_irepository_get_info(repository, namespace, i);
-      load_info(trie, repository, namespace, info);
+      load_info(repository, namespace, info);
    }
 }
 
@@ -109,7 +106,7 @@ handle_require (GbDBusTypelib         *typelib,
       return;
    }
 
-   load_namespace(gTrie, repository, name);
+   load_namespace(repository, name);
 
    g_dbus_method_invocation_return_value(method, NULL);
 }
@@ -156,17 +153,46 @@ handle_get_methods (GbDBusTypelib         *typelib,
    g_variant_builder_unref(builder);
 }
 
+static void
+handle_get_objects (GbDBusTypelib         *typelib,
+                    GDBusMethodInvocation *method,
+                    const gchar           *word)
+{
+   GVariantBuilder *builder;
+   GVariant *value;
+
+   gCount = 0;
+
+   builder = g_variant_builder_new(G_VARIANT_TYPE("as"));
+
+   if (word && *word) {
+      trie_traverse(gTrieObjects,
+                    word,
+                    G_POST_ORDER,
+                    G_TRAVERSE_LEAVES,
+                    -1,
+                    traverse_cb,
+                    builder);
+   }
+
+   value = g_variant_new("(as)", builder);
+   g_dbus_method_invocation_return_value(method, value);
+   g_variant_builder_unref(builder);
+}
+
 void
 gb_worker_typelib_init (GDBusConnection *connection)
 {
    GError *error = NULL;
 
    gTrie = trie_new(NULL);
+   gTrieObjects = trie_new(NULL);
 
    gSkeleton = gb_dbus_typelib_skeleton_new();
 
    g_signal_connect(gSkeleton, "handle-require", G_CALLBACK(handle_require), NULL);
    g_signal_connect(gSkeleton, "handle-get-methods", G_CALLBACK(handle_get_methods), NULL);
+   g_signal_connect(gSkeleton, "handle-get-objects", G_CALLBACK(handle_get_objects), NULL);
 
    if (!g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(gSkeleton),
                                          connection,
