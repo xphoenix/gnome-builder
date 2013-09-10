@@ -131,12 +131,12 @@ handle_get_methods (GbDBusTypelib         *typelib,
                     GDBusMethodInvocation *method,
                     const gchar           *word)
 {
-   GVariantBuilder *builder;
+   GVariantBuilder builder;
    GVariant *value;
 
    gCount = 0;
 
-   builder = g_variant_builder_new(G_VARIANT_TYPE("as"));
+   g_variant_builder_init(&builder, G_VARIANT_TYPE("as"));
 
    if (word && *word) {
       trie_traverse(gTrie,
@@ -145,12 +145,11 @@ handle_get_methods (GbDBusTypelib         *typelib,
                     G_TRAVERSE_LEAVES,
                     -1,
                     traverse_cb,
-                    builder);
+                    &builder);
    }
 
-   value = g_variant_new("(as)", builder);
+   value = g_variant_new("(as)", &builder);
    g_dbus_method_invocation_return_value(method, value);
-   g_variant_builder_unref(builder);
 }
 
 static void
@@ -158,12 +157,12 @@ handle_get_objects (GbDBusTypelib         *typelib,
                     GDBusMethodInvocation *method,
                     const gchar           *word)
 {
-   GVariantBuilder *builder;
+   GVariantBuilder builder;
    GVariant *value;
 
    gCount = 0;
 
-   builder = g_variant_builder_new(G_VARIANT_TYPE("as"));
+   g_variant_builder_init(&builder, G_VARIANT_TYPE("as"));
 
    if (word && *word) {
       trie_traverse(gTrieObjects,
@@ -172,12 +171,11 @@ handle_get_objects (GbDBusTypelib         *typelib,
                     G_TRAVERSE_LEAVES,
                     -1,
                     traverse_cb,
-                    builder);
+                    &builder);
    }
 
-   value = g_variant_new("(as)", builder);
+   value = g_variant_new("(as)", &builder);
    g_dbus_method_invocation_return_value(method, value);
-   g_variant_builder_unref(builder);
 }
 
 void
