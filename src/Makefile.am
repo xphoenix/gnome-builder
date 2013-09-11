@@ -28,6 +28,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/profiler \
 	-I$(top_srcdir)/src/project \
 	-I$(top_srcdir)/src/runner \
+	-I$(top_srcdir)/src/search \
 	-I$(top_srcdir)/src/source \
 	-I$(top_srcdir)/src/symbol \
 	-I$(top_srcdir)/src/terminal \
@@ -166,6 +167,12 @@ librunner_la_SOURCES = \
 	runner/gb-runner-program.h
 
 
+noinst_LTLIBRARIES += libsearch.la
+libsearch_la_SOURCES = \
+	search/gb-search-completion.c \
+	search/gb-search-completion.h
+
+
 noinst_LTLIBRARIES += libsource.la
 libsource_la_LIBADD = \
 	libcompiler.la \
@@ -242,6 +249,7 @@ noinst_LTLIBRARIES += libworkspace.la
 libworkspace_la_LIBADD = \
 	libanimation.la \
 	libproject.la \
+	libsearch.la \
 	libterminal.la
 libworkspace_la_SOURCES = \
 	workspace/gb-workspace.c \
@@ -276,6 +284,7 @@ gnome_builder_LDADD = \
 	libprofiler.la \
 	libproject.la \
 	librunner.la \
+	libsearch.la \
 	libsource.la \
 	libsymbol.la \
 	libterminal.la \

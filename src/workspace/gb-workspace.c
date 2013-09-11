@@ -20,6 +20,7 @@
 
 #include "gb-animation.h"
 #include "gb-application.h"
+#include "gb-search-completion.h"
 #include "gb-source-pane.h"
 #include "gb-terminal-pane.h"
 #include "gb-workspace.h"
@@ -414,6 +415,19 @@ gb_workspace_set_focus (GtkWindow *window,
 }
 
 static void
+gb_workspace_global_search (GSimpleAction *action,
+                            GVariant      *parameter,
+                            gpointer       user_data)
+{
+   GbWorkspace *workspace = user_data;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+
+   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(workspace->priv->search),
+                                TRUE);
+}
+
+static void
 gb_workspace_select_pane (GSimpleAction *action,
                           GVariant      *parameter,
                           gpointer       user_data)
@@ -547,7 +561,7 @@ show_global_search (GtkWidget *widget,
    }
 
    gb_object_animate(workspace->priv->search_adj,
-                     GB_ANIMATION_EASE_IN_OUT_QUAD, 500, NULL,
+                     GB_ANIMATION_EASE_IN_OUT_QUAD, 250, NULL,
                      "value", value,
                      NULL);
 
@@ -668,6 +682,7 @@ gb_workspace_init_actions (GbWorkspace *workspace)
 {
    static const GActionEntry entries[] = {
       { "close-pane", gb_workspace_close_pane },
+      { "global-search", gb_workspace_global_search },
       { "new-file", gb_workspace_new_file },
       { "new-terminal", gb_workspace_new_terminal },
       { "save-pane", gb_workspace_save_pane },
@@ -704,6 +719,9 @@ gb_workspace_init_actions (GbWorkspace *workspace)
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
                                    "<Alt>Return", "win.toggle-fullscreen",
                                    NULL);
+   gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
+                                   "<Primary>period", "win.global-search",
+                                   NULL);
 
 #define ADD_PANE_ACCEL(n, k) G_STMT_START { \
    GVariant *v; \
@@ -730,6 +748,7 @@ static void
 gb_workspace_init (GbWorkspace *workspace)
 {
    GbWorkspacePrivate *priv;
+   GtkEntryCompletion *completion;
    GMenuModel *menu;
    GtkBuilder *builder;
    GtkWidget *box;
@@ -781,6 +800,10 @@ gb_workspace_init (GbWorkspace *workspace)
                                      NULL);
    gtk_overlay_add_overlay(GTK_OVERLAY(priv->switcher_overlay),
                            priv->search_entry);
+
+   completion = gb_search_completion_new();
+   gtk_entry_set_completion(GTK_ENTRY(priv->search_entry), completion);
+   g_object_unref(completion);
 
    priv->search_adj = g_object_new(GTK_TYPE_ADJUSTMENT,
                                    "value", 0.0,
