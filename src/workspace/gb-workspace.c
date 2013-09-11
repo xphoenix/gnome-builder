@@ -18,6 +18,7 @@
 
 #include <glib/gi18n.h>
 
+#include "gb-animation.h"
 #include "gb-application.h"
 #include "gb-source-pane.h"
 #include "gb-terminal-pane.h"
@@ -36,6 +37,8 @@ struct _GbWorkspacePrivate
 
    gboolean is_fullscreen;
 
+   GtkAdjustment *search_adj;
+
    GtkWidget *build;
    GtkWidget *current_pane;
    GtkWidget *edit;
@@ -45,8 +48,10 @@ struct _GbWorkspacePrivate
    GtkWidget *notebook;
    GtkWidget *run;
    GtkWidget *search;
+   GtkWidget *search_entry;
    GtkWidget *splash;
    GtkWidget *switcher;
+   GtkWidget *switcher_overlay;
    GtkWidget *vbox;
 };
 
@@ -115,7 +120,7 @@ gb_workspace_set_project (GbWorkspace *workspace,
       gtk_widget_show(priv->run);
       gtk_widget_show(priv->search);
       gtk_header_bar_set_custom_title(GTK_HEADER_BAR(priv->header),
-                                      priv->switcher);
+                                      priv->switcher_overlay);
    } else {
       gtk_widget_hide(priv->build);
       gtk_widget_hide(priv->menu);
@@ -526,6 +531,49 @@ gb_workspace_window_state_event (GtkWidget           *widget,
    }
 }
 
+static gboolean
+show_global_search (GtkWidget *widget,
+                    gpointer   user_data)
+{
+   GbWorkspace *workspace = user_data;
+   gdouble value = 2.0;
+
+   g_assert(GTK_IS_TOGGLE_BUTTON(widget));
+   g_assert(GB_IS_WORKSPACE(workspace));
+
+   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+      gtk_adjustment_set_value(workspace->priv->search_adj, 0.0);
+      value = 1.0;
+   }
+
+   gb_object_animate(workspace->priv->search_adj,
+                     GB_ANIMATION_EASE_IN_OUT_QUAD, 500, NULL,
+                     "value", value,
+                     NULL);
+
+   gtk_widget_grab_focus(workspace->priv->search_entry);
+
+   return FALSE;
+}
+
+static gboolean
+get_child_position (GtkOverlay   *overlay,
+                    GtkWidget    *widget,
+                    GdkRectangle *alloc,
+                    gpointer      user_data)
+{
+   GbWorkspacePrivate *priv;
+   GbWorkspace *workspace = user_data;
+
+   priv = workspace->priv;
+
+   gtk_widget_get_allocation(GTK_WIDGET(overlay), alloc);
+
+   alloc->x = 0;
+   alloc->y = -alloc->height;
+   alloc->y += gtk_adjustment_get_value(priv->search_adj) * alloc->height;
+}
+
 static void
 gb_workspace_finalize (GObject *object)
 {
@@ -533,6 +581,7 @@ gb_workspace_finalize (GObject *object)
 
    priv = GB_WORKSPACE(object)->priv;
 
+   g_clear_object(&priv->search_adj);
    g_clear_object(&priv->project);
 
    G_OBJECT_CLASS(gb_workspace_parent_class)->finalize(object);
@@ -713,9 +762,35 @@ gb_workspace_init (GbWorkspace *workspace)
                              NULL);
    gtk_container_add(GTK_CONTAINER(workspace), priv->vbox);
 
+   priv->switcher_overlay = g_object_new(GTK_TYPE_OVERLAY,
+                                         "visible", TRUE,
+                                         NULL);
+   g_signal_connect(priv->switcher_overlay,
+                    "get-child-position",
+                    G_CALLBACK(get_child_position),
+                    workspace);
+
    priv->switcher = g_object_new(GB_TYPE_WORKSPACE_LAYOUT_SWITCHER,
                                  "visible", TRUE,
                                  NULL);
+   gtk_container_add(GTK_CONTAINER(priv->switcher_overlay),
+                     priv->switcher);
+
+   priv->search_entry = g_object_new(GTK_TYPE_SEARCH_ENTRY,
+                                     "visible", TRUE,
+                                     NULL);
+   gtk_overlay_add_overlay(GTK_OVERLAY(priv->switcher_overlay),
+                           priv->search_entry);
+
+   priv->search_adj = g_object_new(GTK_TYPE_ADJUSTMENT,
+                                   "value", 0.0,
+                                   "lower", 0.0,
+                                   "upper", 2.0,
+                                   NULL);
+   g_signal_connect_swapped(priv->search_adj,
+                            "value-changed",
+                            G_CALLBACK(gtk_widget_queue_resize),
+                            priv->search_entry);
 
    image = g_object_new(GTK_TYPE_IMAGE,
                         "icon-name", "edit-find-symbolic",
@@ -727,6 +802,10 @@ gb_workspace_init (GbWorkspace *workspace)
                                "hexpand", FALSE,
                                "visible", FALSE,
                                NULL);
+   g_signal_connect(priv->search,
+                    "clicked",
+                    G_CALLBACK(show_global_search),
+                    workspace);
    gtk_header_bar_pack_end(GTK_HEADER_BAR(priv->header), priv->search);
 
    builder = gtk_builder_new();
