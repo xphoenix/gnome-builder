@@ -17,15 +17,27 @@
  */
 
 #include <girepository.h>
+#include <string.h>
 
-#include "gb-worker-typelib.h"
 #include "gb-dbus-typelib.h"
+#include "gb-search-fuzzy.h"
+#include "gb-worker-typelib.h"
 #include "trie.h"
 
 static GbDBusTypelib *gSkeleton;
 static Trie *gTrie;
 static Trie *gTrieObjects;
 static guint gCount;
+
+static GPtrArray     *gMethods;
+static GbSearchFuzzy *gFuzzy;
+
+struct match
+{
+   gint    word;
+   gfloat  score;
+   gchar  *highlight;
+};
 
 static void
 load_function_info (GIRepository   *repository,
@@ -35,6 +47,7 @@ load_function_info (GIRepository   *repository,
    const gchar *symbol;
 
    symbol = g_function_info_get_symbol(info);
+   g_ptr_array_add(gMethods, g_strdup(symbol));
    trie_insert(gTrie, symbol, GINT_TO_POINTER(1));
 }
 
@@ -126,30 +139,104 @@ traverse_cb (Trie        *trie,
    return (gCount == 1000);
 }
 
+static gint
+sort_by_score (gconstpointer a,
+            gconstpointer b)
+{
+   const struct match *ma = a;
+   const struct match *mb = b;
+
+   if (ma->score < mb->score) {
+      return 1;
+   }
+
+   if (ma->score > mb->score) {
+      return -1;
+   }
+
+   return 0;
+}
+
+static inline gboolean
+should_insert (GArray *ar,
+               gint    score)
+{
+   struct match *m;
+
+   if (ar->len >= 1000) {
+      m = &g_array_index(ar, struct match, ar->len - 1);
+      return (score < m->score);
+   }
+
+   return TRUE;
+}
+
 static void
 handle_get_methods (GbDBusTypelib         *typelib,
                     GDBusMethodInvocation *method,
                     const gchar           *word)
 {
    GVariantBuilder builder;
+   const gchar *haystack;
+   struct match match;
+   struct match *m;
    GVariant *value;
+   GArray *matches;
+   gint i;
 
-   gCount = 0;
-
-   g_variant_builder_init(&builder, G_VARIANT_TYPE("as"));
-
-   if (word && *word) {
-      trie_traverse(gTrie,
-                    word,
-                    G_POST_ORDER,
-                    G_TRAVERSE_LEAVES,
-                    -1,
-                    traverse_cb,
-                    &builder);
+   if (!word || !*word) {
+      g_variant_builder_init(&builder, G_VARIANT_TYPE("a(ssd)"));
+      value = g_variant_new("(a(ssd))", &builder);
+      g_dbus_method_invocation_return_value(method, value);
+      return;
    }
 
-   value = g_variant_new("(as)", &builder);
+   matches = g_array_sized_new(FALSE, FALSE, sizeof *m, 1000);
+
+   for (i = 0; i < gMethods->len; i++) {
+      haystack = g_ptr_array_index(gMethods, i);
+
+      match.highlight = gb_search_fuzzy_match_score_highlight(gFuzzy,
+                                                              haystack,
+                                                              word,
+                                                              &match.score);
+      if (!match.highlight) {
+         continue;
+      }
+
+      match.word = i;
+
+      if (matches->len == 1000) {
+         m = &g_array_index(matches, struct match, matches->len - 1);
+         if (m->score < match.score) {
+            g_free(m->highlight);
+            memcpy(m, &match, sizeof match);
+         }
+      } else {
+         g_array_append_val(matches, match);
+      }
+
+      g_array_sort(matches, sort_by_score);
+   }
+
+   g_variant_builder_init(&builder, G_VARIANT_TYPE("a(ssd)"));
+
+   for (i = 0; i < matches->len; i++) {
+      m = &g_array_index(matches, struct match, i);
+      haystack = g_ptr_array_index(gMethods, m->word);
+      g_variant_builder_add(&builder, "(ssd)", haystack, m->highlight, m->score);
+   }
+
+   value = g_variant_new("(a(ssd))", &builder);
+
    g_dbus_method_invocation_return_value(method, value);
+
+   for (i = 0; i < matches->len; i++) {
+      m = &g_array_index(matches, struct match, i);
+      g_free(m->highlight);
+   }
+
+   g_array_unref(matches);
 }
 
 static void
@@ -182,6 +269,9 @@ void
 gb_worker_typelib_init (GDBusConnection *connection)
 {
    GError *error = NULL;
+
+   gMethods = g_ptr_array_new_with_free_func(g_free);
+   gFuzzy = g_object_new(GB_TYPE_SEARCH_FUZZY, NULL);
 
    gTrie = trie_new(NULL);
    gTrieObjects = trie_new(NULL);

@@ -419,12 +419,15 @@ gb_workspace_global_search (GSimpleAction *action,
                             GVariant      *parameter,
                             gpointer       user_data)
 {
+   GtkToggleButton *button;
    GbWorkspace *workspace = user_data;
+   gboolean active;
 
    g_return_if_fail(GB_IS_WORKSPACE(workspace));
 
-   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(workspace->priv->search),
-                                TRUE);
+   button = GTK_TOGGLE_BUTTON(workspace->priv->search);
+   active = gtk_toggle_button_get_active(button);
+   gtk_toggle_button_set_active(button, !active);
 }
 
 static void
@@ -550,14 +553,18 @@ show_global_search (GtkWidget *widget,
                     gpointer   user_data)
 {
    GbWorkspace *workspace = user_data;
+   GtkWidget *focus;
    gdouble value = 2.0;
 
    g_assert(GTK_IS_TOGGLE_BUTTON(widget));
    g_assert(GB_IS_WORKSPACE(workspace));
 
+   focus = workspace->priv->layout;
+
    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
       gtk_adjustment_set_value(workspace->priv->search_adj, 0.0);
       value = 1.0;
+      focus = workspace->priv->search_entry;
    }
 
    gb_object_animate(workspace->priv->search_adj,
@@ -565,7 +572,8 @@ show_global_search (GtkWidget *widget,
                      "value", value,
                      NULL);
 
-   gtk_widget_grab_focus(workspace->priv->search_entry);
+
+   gtk_widget_grab_focus(focus);
 
    return FALSE;
 }

@@ -222,12 +222,12 @@ static const _ExtendedGDBusArgInfo * const _gb_dbus_typelib_method_info_get_meth
   NULL
 };
 
-static const _ExtendedGDBusArgInfo _gb_dbus_typelib_method_info_get_methods_OUT_ARG_words =
+static const _ExtendedGDBusArgInfo _gb_dbus_typelib_method_info_get_methods_OUT_ARG_matches =
 {
   {
     -1,
-    (gchar *) "words",
-    (gchar *) "as",
+    (gchar *) "matches",
+    (gchar *) "a(ssd)",
     NULL
   },
   FALSE
@@ -235,7 +235,7 @@ static const _ExtendedGDBusArgInfo _gb_dbus_typelib_method_info_get_methods_OUT_
 
 static const _ExtendedGDBusArgInfo * const _gb_dbus_typelib_method_info_get_methods_OUT_ARG_pointers[] =
 {
-  &_gb_dbus_typelib_method_info_get_methods_OUT_ARG_words,
+  &_gb_dbus_typelib_method_info_get_methods_OUT_ARG_matches,
   NULL
 };
 
@@ -587,7 +587,7 @@ gb_dbus_typelib_call_get_methods (
 /**
  * gb_dbus_typelib_call_get_methods_finish:
  * @proxy: A #GbDBusTypelibProxy.
- * @out_words: (out): Return location for return parameter or %NULL to ignore.
+ * @out_matches: (out): Return location for return parameter or %NULL to ignore.
  * @res: The #GAsyncResult obtained from the #GAsyncReadyCallback passed to gb_dbus_typelib_call_get_methods().
  * @error: Return location for error or %NULL.
  *
@@ -598,7 +598,7 @@ gb_dbus_typelib_call_get_methods (
 gboolean
 gb_dbus_typelib_call_get_methods_finish (
     GbDBusTypelib *proxy,
-    gchar ***out_words,
+    GVariant **out_matches,
     GAsyncResult *res,
     GError **error)
 {
@@ -607,8 +607,8 @@ gb_dbus_typelib_call_get_methods_finish (
   if (_ret == NULL)
     goto _out;
   g_variant_get (_ret,
-                 "(^as)",
-                 out_words);
+                 "(@a(ssd))",
+                 out_matches);
   g_variant_unref (_ret);
 _out:
   return _ret != NULL;
@@ -618,7 +618,7 @@ _out:
  * gb_dbus_typelib_call_get_methods_sync:
  * @proxy: A #GbDBusTypelibProxy.
  * @arg_word: Argument to pass with the method invocation.
- * @out_words: (out): Return location for return parameter or %NULL to ignore.
+ * @out_matches: (out): Return location for return parameter or %NULL to ignore.
  * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @error: Return location for error or %NULL.
  *
@@ -632,7 +632,7 @@ gboolean
 gb_dbus_typelib_call_get_methods_sync (
     GbDBusTypelib *proxy,
     const gchar *arg_word,
-    gchar ***out_words,
+    GVariant **out_matches,
     GCancellable *cancellable,
     GError **error)
 {
@@ -648,8 +648,8 @@ gb_dbus_typelib_call_get_methods_sync (
   if (_ret == NULL)
     goto _out;
   g_variant_get (_ret,
-                 "(^as)",
-                 out_words);
+                 "(@a(ssd))",
+                 out_matches);
   g_variant_unref (_ret);
 _out:
   return _ret != NULL;
@@ -781,7 +781,7 @@ gb_dbus_typelib_complete_require (
  * gb_dbus_typelib_complete_get_methods:
  * @object: A #GbDBusTypelib.
  * @invocation: (transfer full): A #GDBusMethodInvocation.
- * @words: Parameter to return.
+ * @matches: Parameter to return.
  *
  * Helper function used in service implementations to finish handling invocations of the <link linkend="gdbus-method-org-gnome-Builder-Typelib.GetMethods">GetMethods()</link> D-Bus method. If you instead want to finish handling an invocation by returning an error, use g_dbus_method_invocation_return_error() or similar.
  *
@@ -791,11 +791,11 @@ void
 gb_dbus_typelib_complete_get_methods (
     GbDBusTypelib *object,
     GDBusMethodInvocation *invocation,
-    const gchar *const *words)
+    GVariant *matches)
 {
   g_dbus_method_invocation_return_value (invocation,
-    g_variant_new ("(^as)",
-                   words));
+    g_variant_new ("(@a(ssd))",
+                   matches));
 }
 
 /**

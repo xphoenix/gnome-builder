@@ -95,15 +95,15 @@ get_proxy (GbSourceTypelibCompletionProvider *provider)
       /*
        * XXX: temporary for testing.
        */
-      gb_dbus_typelib_call_require_sync(priv->proxy, "cairo", "1.0", NULL, NULL);
+      //gb_dbus_typelib_call_require_sync(priv->proxy, "cairo", "1.0", NULL, NULL);
       gb_dbus_typelib_call_require_sync(priv->proxy, "Gtk", "3.0", NULL, NULL);
-      gb_dbus_typelib_call_require_sync(priv->proxy, "Gdk", "3.0", NULL, NULL);
-      gb_dbus_typelib_call_require_sync(priv->proxy, "GdkX11", "3.0", NULL, NULL);
+      //gb_dbus_typelib_call_require_sync(priv->proxy, "Gdk", "3.0", NULL, NULL);
+      //gb_dbus_typelib_call_require_sync(priv->proxy, "GdkX11", "3.0", NULL, NULL);
       gb_dbus_typelib_call_require_sync(priv->proxy, "GLib", "2.0", NULL, NULL);
-      gb_dbus_typelib_call_require_sync(priv->proxy, "Gio", "2.0", NULL, NULL);
+      //gb_dbus_typelib_call_require_sync(priv->proxy, "Gio", "2.0", NULL, NULL);
       gb_dbus_typelib_call_require_sync(priv->proxy, "GObject", "2.0", NULL, NULL);
-      gb_dbus_typelib_call_require_sync(priv->proxy, "Pango", "1.0", NULL, NULL);
-      gb_dbus_typelib_call_require_sync(priv->proxy, "PangoCairo", "1.0", NULL, NULL);
+      //gb_dbus_typelib_call_require_sync(priv->proxy, "Pango", "1.0", NULL, NULL);
+      //gb_dbus_typelib_call_require_sync(priv->proxy, "PangoCairo", "1.0", NULL, NULL);
    }
 
    return priv->proxy;
@@ -240,6 +240,7 @@ provider_populate (GtkSourceCompletionProvider *provider,
    GtkTextIter iter;
    GError *error = NULL;
    gchar **words = NULL;
+   GVariant *matches = NULL;
    gchar *word;
    GList *list = NULL;
    gint len;
@@ -257,26 +258,35 @@ provider_populate (GtkSourceCompletionProvider *provider,
 
    if (!gb_dbus_typelib_call_get_methods_sync(proxy,
                                               word,
-                                              &words,
+                                              &matches,
                                               NULL,
                                               &error)) {
       g_warning("%s\n", error->message);
       g_error_free(error);
    }
 
-   if (words) {
-      for (i = 0; words[i]; i++) {
-         GtkSourceCompletionItem *item;
-         gchar *markup;
+   if (matches) {
+      GVariantIter *viter;
+      const gchar *text;
+      const gchar *markup;
+      gdouble score;
 
-         markup = g_strdup_printf("<span color='#dcdcdc'>%s</span>%s", word, words[i] + len);
-         item = gtk_source_completion_item_new_with_markup(markup, words[i], gMethodPixbuf, NULL);
+      g_variant_get(matches, "a(ssd)", &viter);
+      while (g_variant_iter_loop(viter, "(ssd)", &text, &markup, &score)) {
+         GtkSourceCompletionItem *item;
+         //gchar *markup;
+
+         //markup = g_strdup_printf("<span color='#dcdcdc'>%s</span>%s", word, words[i] + len);
+         item = gtk_source_completion_item_new_with_markup(markup, text, gMethodPixbuf, NULL);
          list = g_list_prepend(list, item);
-         g_free(markup);
+         //g_free(markup);
       }
+
+      list = g_list_reverse(list);
    }
 
-   g_strfreev(words);
+   g_variant_unref(matches);
+   //g_strfreev(words);
 
    words = NULL;
 

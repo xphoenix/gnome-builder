@@ -170,7 +170,9 @@ librunner_la_SOURCES = \
 noinst_LTLIBRARIES += libsearch.la
 libsearch_la_SOURCES = \
 	search/gb-search-completion.c \
-	search/gb-search-completion.h
+	search/gb-search-completion.h \
+	search/gb-search-fuzzy.c \
+	search/gb-search-fuzzy.h
 
 
 noinst_LTLIBRARIES += libsource.la
@@ -295,6 +297,7 @@ gnome_builder_LDADD = \
 bin_PROGRAMS += gnome-builder-worker
 gnome_builder_worker_LDADD = \
 	libdbus.la \
+	libsearch.la \
 	libtrie.la
 gnome_builder_worker_SOURCES = \
 	gnome-builder-worker.c \
