@@ -2,10 +2,12 @@ include $(top_srcdir)/Makefile.tests
 
 
 noinst_PROGRAMS = \
+	test-search-fuzzy \
 	test-snippet-parser
 
 
 TEST_PROGS += \
+	test-search-fuzzy \
 	test-snippet-parser
 
 
@@ -32,6 +34,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/profiler \
 	-I$(top_srcdir)/src/project \
 	-I$(top_srcdir)/src/runner \
+	-I$(top_srcdir)/src/search \
 	-I$(top_srcdir)/src/source \
 	-I$(top_srcdir)/src/symbol \
 	-I$(top_srcdir)/src/terminal \
@@ -41,3 +44,7 @@ AM_CPPFLAGS = \
 
 test_snippet_parser_SOURCES = test-snippet-parser.c
 test_snippet_parser_LDADD = $(top_builddir)/src/libsource.la
+
+
+test_search_fuzzy_SOURCES = test-search-fuzzy.c
+test_search_fuzzy_LDADD = $(top_builddir)/src/libsearch.la
