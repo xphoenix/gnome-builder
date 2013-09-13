@@ -239,8 +239,8 @@ provider_populate (GtkSourceCompletionProvider *provider,
    GbDBusTypelib *proxy;
    GtkTextIter iter;
    GError *error = NULL;
-   gchar **words = NULL;
    GVariant *matches = NULL;
+   gchar **words = NULL;
    gchar *word;
    GList *list = NULL;
    gint len;
@@ -274,21 +274,13 @@ provider_populate (GtkSourceCompletionProvider *provider,
       g_variant_get(matches, "a(ssd)", &viter);
       while (g_variant_iter_loop(viter, "(ssd)", &text, &markup, &score)) {
          GtkSourceCompletionItem *item;
-         //gchar *markup;
 
-         //markup = g_strdup_printf("<span color='#dcdcdc'>%s</span>%s", word, words[i] + len);
          item = gtk_source_completion_item_new_with_markup(markup, text, gMethodPixbuf, NULL);
          list = g_list_prepend(list, item);
-         //g_free(markup);
       }
-
-      list = g_list_reverse(list);
    }
 
    g_variant_unref(matches);
-   //g_strfreev(words);
-
-   words = NULL;
 
    if (!gb_dbus_typelib_call_get_objects_sync(proxy,
                                               word,
@@ -302,15 +294,13 @@ provider_populate (GtkSourceCompletionProvider *provider,
    if (words) {
       for (i = 0; words[i]; i++) {
          GtkSourceCompletionItem *item;
-         gchar *markup;
 
-         markup = g_strdup_printf("<span color='#dcdcdc'>%s</span>%s", word, words[i] + len);
-         item = gtk_source_completion_item_new_with_markup(markup, words[i], gClassPixbuf, NULL);
+         item = gtk_source_completion_item_new(words[i], words[i], gClassPixbuf, NULL);
          list = g_list_prepend(list, item);
-         g_free(markup);
       }
    }
 
+   list = g_list_reverse(list);
    gtk_source_completion_context_add_proposals(context, provider, list, TRUE);
 
    g_strfreev(words);
