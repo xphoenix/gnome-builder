@@ -171,8 +171,8 @@ noinst_LTLIBRARIES += libsearch.la
 libsearch_la_SOURCES = \
 	search/gb-search-completion.c \
 	search/gb-search-completion.h \
-	search/gb-search-fuzzy.c \
-	search/gb-search-fuzzy.h
+	search/fuzzy.c \
+	search/fuzzy.h
 
 
 noinst_LTLIBRARIES += libsource.la
