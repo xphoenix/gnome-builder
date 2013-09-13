@@ -22,14 +22,10 @@
 #include "fuzzy.h"
 #include "gb-dbus-typelib.h"
 #include "gb-worker-typelib.h"
-#include "trie.h"
 
 static GbDBusTypelib *gSkeleton;
-static Trie *gTrie;
-static Trie *gTrieObjects;
-static guint gCount;
-
-static Fuzzy     *gFuzzy;
+static Fuzzy         *gFuzzyMethods;
+static Fuzzy         *gFuzzyObjects;
 
 static void
 load_function_info (GIRepository   *repository,
@@ -39,7 +35,7 @@ load_function_info (GIRepository   *repository,
    const gchar *symbol;
 
    symbol = g_function_info_get_symbol(info);
-   fuzzy_insert(gFuzzy, symbol);
+   fuzzy_insert(gFuzzyMethods, symbol);
 }
 
 static void
@@ -54,7 +50,7 @@ load_object_info (GIRepository *repository,
 
    symbol = g_object_info_get_type_name(info);
 
-   trie_insert(gTrieObjects, symbol, GSIZE_TO_POINTER(1));
+   fuzzy_insert(gFuzzyObjects, symbol);
 
    n_methods = g_object_info_get_n_methods(info);
    for (i = 0; i < n_methods; i++) {
@@ -110,26 +106,15 @@ handle_require (GbDBusTypelib         *typelib,
       return;
    }
 
-   fuzzy_begin_bulk_insert(gFuzzy);
+   fuzzy_begin_bulk_insert(gFuzzyMethods);
+   fuzzy_begin_bulk_insert(gFuzzyObjects);
+
    load_namespace(repository, name);
-   fuzzy_end_bulk_insert(gFuzzy);
+
+   fuzzy_end_bulk_insert(gFuzzyMethods);
+   fuzzy_end_bulk_insert(gFuzzyObjects);
 
    g_dbus_method_invocation_return_value(method, NULL);
-}
-
-static gboolean
-traverse_cb (Trie        *trie,
-             const gchar *key,
-             gpointer     value,
-             gpointer     user_data)
-{
-   GVariantBuilder *builder = user_data;
-
-   gCount++;
-
-   g_variant_builder_add(builder, "s", key);
-
-   return (gCount == 1000);
 }
 
 static void
@@ -151,7 +136,7 @@ handle_get_methods (GbDBusTypelib         *typelib,
       return;
    }
 
-   matches = fuzzy_match(gFuzzy, word, 1000);
+   matches = fuzzy_match(gFuzzyMethods, word, 1000);
 
    g_variant_builder_init(&builder, G_VARIANT_TYPE("a(ssd)"));
 
@@ -176,24 +161,23 @@ handle_get_objects (GbDBusTypelib         *typelib,
                     const gchar           *word)
 {
    GVariantBuilder builder;
+   FuzzyMatch *match;
    GVariant *value;
-
-   gCount = 0;
+   GArray *matches;
+   guint i;
 
    g_variant_builder_init(&builder, G_VARIANT_TYPE("as"));
 
-   if (word && *word) {
-      trie_traverse(gTrieObjects,
-                    word,
-                    G_POST_ORDER,
-                    G_TRAVERSE_LEAVES,
-                    -1,
-                    traverse_cb,
-                    &builder);
+   matches = fuzzy_match(gFuzzyObjects, word, 1000);
+   for (i = 0; i < matches->len; i++) {
+      match = &g_array_index(matches, FuzzyMatch, i);
+      g_variant_builder_add(&builder, "s", match->text);
    }
 
    value = g_variant_new("(as)", &builder);
    g_dbus_method_invocation_return_value(method, value);
+
+   g_array_unref(matches);
 }
 
 void
@@ -201,10 +185,8 @@ gb_worker_typelib_init (GDBusConnection *connection)
 {
    GError *error = NULL;
 
-   gFuzzy = fuzzy_new();
-
-   gTrie = trie_new(NULL);
-   gTrieObjects = trie_new(NULL);
+   gFuzzyMethods = fuzzy_new();
+   gFuzzyObjects = fuzzy_new();
 
    gSkeleton = gb_dbus_typelib_skeleton_new();
 
