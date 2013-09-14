@@ -142,11 +142,10 @@ handle_get_methods (GbDBusTypelib         *typelib,
 
    for (i = 0; i < matches->len; i++) {
       match = &g_array_index(matches, FuzzyMatch, i);
-      score = match->score / (gdouble)strlen(match->text);
       g_variant_builder_add(&builder, "(ssd)",
                             match->text,
                             match->text,
-                            score);
+                            match->score);
    }
 
    value = g_variant_new("(a(ssd))", &builder);

@@ -95,15 +95,15 @@ get_proxy (GbSourceTypelibCompletionProvider *provider)
       /*
        * XXX: temporary for testing.
        */
-      //gb_dbus_typelib_call_require_sync(priv->proxy, "cairo", "1.0", NULL, NULL);
+      gb_dbus_typelib_call_require_sync(priv->proxy, "cairo", "1.0", NULL, NULL);
       gb_dbus_typelib_call_require_sync(priv->proxy, "Gtk", "3.0", NULL, NULL);
-      //gb_dbus_typelib_call_require_sync(priv->proxy, "Gdk", "3.0", NULL, NULL);
-      //gb_dbus_typelib_call_require_sync(priv->proxy, "GdkX11", "3.0", NULL, NULL);
+      gb_dbus_typelib_call_require_sync(priv->proxy, "Gdk", "3.0", NULL, NULL);
+      gb_dbus_typelib_call_require_sync(priv->proxy, "GdkX11", "3.0", NULL, NULL);
       gb_dbus_typelib_call_require_sync(priv->proxy, "GLib", "2.0", NULL, NULL);
-      //gb_dbus_typelib_call_require_sync(priv->proxy, "Gio", "2.0", NULL, NULL);
+      gb_dbus_typelib_call_require_sync(priv->proxy, "Gio", "2.0", NULL, NULL);
       gb_dbus_typelib_call_require_sync(priv->proxy, "GObject", "2.0", NULL, NULL);
-      //gb_dbus_typelib_call_require_sync(priv->proxy, "Pango", "1.0", NULL, NULL);
-      //gb_dbus_typelib_call_require_sync(priv->proxy, "PangoCairo", "1.0", NULL, NULL);
+      gb_dbus_typelib_call_require_sync(priv->proxy, "Pango", "1.0", NULL, NULL);
+      gb_dbus_typelib_call_require_sync(priv->proxy, "PangoCairo", "1.0", NULL, NULL);
    }
 
    return priv->proxy;

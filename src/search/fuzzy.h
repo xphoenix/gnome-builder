@@ -29,7 +29,7 @@ typedef struct _FuzzyMatch FuzzyMatch;
 struct _FuzzyMatch
 {
    const gchar *text;
-   gint         score;
+   gfloat       score;
 };
 
 Fuzzy     *fuzzy_new               (void);

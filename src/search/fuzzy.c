@@ -79,16 +79,16 @@ static gint
 fuzzy_match_compare (gconstpointer a,
                      gconstpointer b)
 {
-   gboolean ret;
-
    const FuzzyMatch *ma = a;
    const FuzzyMatch *mb = b;
 
-   if ((ret = (ma->score - mb->score)) == 0) {
-      return g_strcmp0(ma->text, mb->text);
+   if (ma->score < mb->score) {
+      return 1;
+   } else if (ma->score > mb->score) {
+      return -1;
    }
 
-   return ret;
+   return g_strcmp0(ma->text, mb->text);
 }
 
 
@@ -189,6 +189,10 @@ fuzzy_insert (Fuzzy       *fuzzy,
    g_return_if_fail(text);
    g_return_if_fail(fuzzy->id_to_text->len < ((1 << 20) - 1));
 
+   if (!*text) {
+      return;
+   }
+
    g_ptr_array_add(fuzzy->id_to_text,
                    g_string_chunk_insert(fuzzy->chunk, text));
 
@@ -263,7 +267,7 @@ fuzzy_do_match (FuzzyLookup *lookup,
          break;
       }
 
-      iter_score = score - 1 + (iter->pos - item->pos);
+      iter_score = score + (iter->pos - item->pos);
 
       if ((table_index + 1) < lookup->n_tables) {
          if (fuzzy_do_match(lookup, iter, table_index + 1, iter_score)) {
@@ -366,7 +370,7 @@ fuzzy_match (Fuzzy       *fuzzy,
       while (g_hash_table_iter_next(&iter, &key, &value)) {
          match.text = g_ptr_array_index(fuzzy->id_to_text,
                                         GPOINTER_TO_INT(key));
-         match.score = GPOINTER_TO_INT(value);
+         match.score = 1.0 / (strlen(match.text) + GPOINTER_TO_INT(value));
          g_array_append_val(matches, match);
       }
 
