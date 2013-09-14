@@ -23,16 +23,36 @@
 #include "fuzzy.h"
 
 
+#ifndef FUZZY_GROW_HEAP_BY
+#define FUZZY_GROW_HEAP_BY 4096
+#endif
+
+
+/**
+ * SECTION:fuzzy
+ * @title: Fuzzy Matching
+ * @short_description: Fuzzy matching for GLib based programs.
+ *
+ * TODO:
+ *
+ * It is a programming error to modify #Fuzzy while holding onto an array
+ * of #FuzzyMatch elements. The position of strings within the FuzzyMatch
+ * may no longer be valid.
+ */
+
+
 typedef struct _FuzzyItem   FuzzyItem;
 typedef struct _FuzzyLookup FuzzyLookup;
 
 
 struct _Fuzzy
 {
-   GStringChunk *chunk;
-   GPtrArray    *id_to_text;
-   GPtrArray    *char_tables;
-   gboolean      in_bulk_insert;
+   gchar     *heap;
+   gsize      heap_length;
+   gsize      heap_offset;
+   GArray    *id_to_text_offset;
+   GPtrArray *char_tables;
+   gboolean  in_bulk_insert;
 };
 
 
@@ -107,8 +127,10 @@ fuzzy_new (void)
    gint i;
 
    fuzzy = g_new0(Fuzzy, 1);
-   fuzzy->chunk = g_string_chunk_new(4096);
-   fuzzy->id_to_text = g_ptr_array_new();
+   fuzzy->heap_length = FUZZY_GROW_HEAP_BY;
+   fuzzy->heap = g_malloc(fuzzy->heap_length);
+   fuzzy->heap_offset = 0;
+   fuzzy->id_to_text_offset = g_array_new(FALSE, FALSE, sizeof(gsize));
    fuzzy->char_tables = g_ptr_array_new();
    g_ptr_array_set_free_func(fuzzy->char_tables,
                              (GDestroyNotify)g_array_unref);
@@ -119,6 +141,34 @@ fuzzy_new (void)
    }
 
    return fuzzy;
+}
+
+
+static gsize
+fuzzy_heap_insert (Fuzzy       *fuzzy,
+                   const gchar *text)
+{
+   gsize offset;
+   gsize req_bytes;
+   gsize len;
+
+   g_assert(fuzzy);
+   g_assert(text);
+
+   len = strlen(text) + 1;
+   req_bytes = fuzzy->heap_offset + len;
+
+   if (req_bytes > fuzzy->heap_length) {
+      fuzzy->heap_length = (((req_bytes / FUZZY_GROW_HEAP_BY) + 1) *
+                            FUZZY_GROW_HEAP_BY);
+      fuzzy->heap = g_realloc(fuzzy->heap, fuzzy->heap_length);
+   }
+
+   offset = fuzzy->heap_offset;
+   memcpy(fuzzy->heap + offset, text, len);
+   fuzzy->heap_offset += len;
+
+   return offset;
 }
 
 
@@ -181,22 +231,27 @@ fuzzy_insert (Fuzzy       *fuzzy,
 {
    FuzzyItem item;
    GArray *table;
+   gsize offset;
    guint idx;
    gint id;
    gint i;
 
    g_return_if_fail(fuzzy);
    g_return_if_fail(text);
-   g_return_if_fail(fuzzy->id_to_text->len < ((1 << 20) - 1));
+   g_return_if_fail(fuzzy->id_to_text_offset->len < ((1 << 20) - 1));
 
    if (!*text) {
       return;
    }
 
-   g_ptr_array_add(fuzzy->id_to_text,
-                   g_string_chunk_insert(fuzzy->chunk, text));
+   /*
+    * Insert the string into our heap.
+    * Track the offset within the heap since the heap could realloc.
+    */
+   offset = fuzzy_heap_insert(fuzzy, text);
+   g_array_append_val(fuzzy->id_to_text_offset, offset);
 
-   id = fuzzy->id_to_text->len - 1;
+   id = fuzzy->id_to_text_offset->len - 1;
 
    for (i = 0; text[i]; i++) {
       idx = text[i];
@@ -224,11 +279,13 @@ void
 fuzzy_free (Fuzzy *fuzzy)
 {
    if (fuzzy) {
-      g_string_chunk_free(fuzzy->chunk);
-      fuzzy->chunk = NULL;
+      g_free(fuzzy->heap);
+      fuzzy->heap = 0;
+      fuzzy->heap_offset = 0;
+      fuzzy->heap_length = 0;
 
-      g_ptr_array_unref(fuzzy->id_to_text);
-      fuzzy->id_to_text = NULL;
+      g_array_unref(fuzzy->id_to_text_offset);
+      fuzzy->id_to_text_offset = NULL;
 
       g_ptr_array_unref(fuzzy->char_tables);
       fuzzy->char_tables = NULL;
@@ -287,6 +344,20 @@ fuzzy_do_match (FuzzyLookup *lookup,
    }
 
    return FALSE;
+}
+
+
+static const gchar *
+fuzzy_get_string (Fuzzy *fuzzy,
+                  gint   id)
+{
+   gsize offset;
+
+   g_assert(fuzzy);
+   g_assert(id >= 0);
+
+   offset = g_array_index(fuzzy->id_to_text_offset, gsize, id);
+   return fuzzy->heap + offset;
 }
 
 
@@ -354,7 +425,7 @@ fuzzy_match (Fuzzy       *fuzzy,
    } else {
       for (i = 0; i < root->len; i++) {
          item = &g_array_index(root, FuzzyItem, i);
-         match.text = g_ptr_array_index(fuzzy->id_to_text, item->id);
+         match.text = fuzzy_get_string(fuzzy, item->id);
          match.score = 0;
          g_array_append_val(matches, match);
       }
@@ -368,8 +439,7 @@ fuzzy_match (Fuzzy       *fuzzy,
 
       g_hash_table_iter_init(&iter, lookup.matches);
       while (g_hash_table_iter_next(&iter, &key, &value)) {
-         match.text = g_ptr_array_index(fuzzy->id_to_text,
-                                        GPOINTER_TO_INT(key));
+         match.text = fuzzy_get_string(fuzzy, GPOINTER_TO_INT(key));
          match.score = 1.0 / (strlen(match.text) + GPOINTER_TO_INT(value));
          g_array_append_val(matches, match);
       }
