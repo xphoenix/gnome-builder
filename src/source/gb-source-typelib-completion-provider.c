@@ -244,12 +244,13 @@ get_methods_cb (GObject      *object,
 
    closure = (gpointer *)user_data;
 
-   if (!gb_dbus_typelib_call_get_methods_finish(
-         GB_DBUS_TYPELIB(object),
-         &matches,
-         result,
-         &error)) {
-      g_warning("%s", error->message);
+   if (!gb_dbus_typelib_call_get_methods_finish(GB_DBUS_TYPELIB(object),
+                                                &matches,
+                                                result,
+                                                &error)) {
+      if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+         g_warning("%s", error->message);
+      }
       goto cleanup;
    }
 
