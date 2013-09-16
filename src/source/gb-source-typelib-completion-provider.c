@@ -23,6 +23,7 @@
 #include "gb-application-resource.h"
 #include "gb-dbus-typelib.h"
 #include "gb-multiprocess-manager.h"
+#include "gb-source-typelib-completion-item.h"
 #include "gb-source-typelib-completion-provider.h"
 
 #define TYPELIB_WORKER_NAME "typelib-completion-provider"
@@ -260,13 +261,17 @@ get_methods_cb (GObject      *object,
       const gchar *markup;
       gdouble score;
 
-      g_variant_get(matches, "a(ssd)", &viter);
-      while (g_variant_iter_loop(viter, "(ssd)", &text, &markup, &score)) {
+      g_variant_get(matches, "a(sd)", &viter);
+      while (g_variant_iter_loop(viter, "(sd)", &text, &score)) {
          GtkSourceCompletionItem *item;
 
-         item = gtk_source_completion_item_new_with_markup(markup, text, gMethodPixbuf, NULL);
+         item = g_object_new(GB_TYPE_SOURCE_TYPELIB_COMPLETION_ITEM,
+                             "icon", gMethodPixbuf,
+                             "search-term", (gchar *)closure[2],
+                             "text", text,
+                             NULL);
          if (!item) {
-            g_error("Failed to create with markup: %s", markup);
+            g_error("Failed to create item.");
          }
          list = g_list_prepend(list, item);
       }
@@ -283,6 +288,7 @@ get_methods_cb (GObject      *object,
 cleanup:
    g_object_unref(closure[0]);
    g_object_unref(closure[1]);
+   g_free(closure[2]);
    g_free(closure);
 }
 
@@ -308,13 +314,14 @@ provider_populate (GtkSourceCompletionProvider *provider,
       return;
    }
 
-   closure = g_new0(gpointer, 2);
-   closure[0] = g_object_ref(provider);
-   closure[1] = g_object_ref(context);
-
    gtk_source_completion_context_get_iter(context, &iter);
    word = get_word(provider, &iter);
    len = strlen(word);
+
+   closure = g_new0(gpointer, 2);
+   closure[0] = g_object_ref(provider);
+   closure[1] = g_object_ref(context);
+   closure[2] = g_strdup(word);
 
    cancellable = g_cancellable_new();
    g_signal_connect_object(context,

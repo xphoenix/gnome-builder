@@ -19,7 +19,7 @@
 
     <method name="GetMethods">
       <arg name="word" direction="in" type="s"/>
-      <arg name="matches" direction="out" type="a(ssd)"/>
+      <arg name="matches" direction="out" type="a(sd)"/>
     </method>
 
     <method name="GetObjects">

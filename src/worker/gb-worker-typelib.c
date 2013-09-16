@@ -19,7 +19,6 @@
 #include <girepository.h>
 #include <string.h>
 
-#include "highlight.h"
 #include "fuzzy.h"
 #include "gb-dbus-typelib.h"
 #include "gb-worker-typelib.h"
@@ -131,29 +130,24 @@ handle_get_methods (GbDBusTypelib         *typelib,
    gint i;
 
    if (!word || !*word) {
-      g_variant_builder_init(&builder, G_VARIANT_TYPE("a(ssd)"));
-      value = g_variant_new("(a(ssd))", &builder);
+      g_variant_builder_init(&builder, G_VARIANT_TYPE("a(sd)"));
+      value = g_variant_new("(a(sd))", &builder);
       g_dbus_method_invocation_return_value(method, value);
       return;
    }
 
    matches = fuzzy_match(gFuzzyMethods, word, 1000);
 
-   g_variant_builder_init(&builder, G_VARIANT_TYPE("a(ssd)"));
+   g_variant_builder_init(&builder, G_VARIANT_TYPE("a(sd)"));
 
    for (i = 0; i < matches->len; i++) {
-      gchar *markup;
-
       match = &g_array_index(matches, FuzzyMatch, i);
-      markup = highlight_substrings(match->text, word, "<u>", "</u>");
-      g_variant_builder_add(&builder, "(ssd)",
+      g_variant_builder_add(&builder, "(sd)",
                             match->text,
-                            markup,
                             match->score);
-      g_free(markup);
    }
 
-   value = g_variant_new("(a(ssd))", &builder);
+   value = g_variant_new("(a(sd))", &builder);
    g_dbus_method_invocation_return_value(g_object_ref(method), value);
 
    g_array_unref(matches);
