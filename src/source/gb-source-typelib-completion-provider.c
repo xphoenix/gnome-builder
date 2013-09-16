@@ -233,36 +233,24 @@ provider_get_name (GtkSourceCompletionProvider *provider)
 }
 
 static void
-provider_populate (GtkSourceCompletionProvider *provider,
-                   GtkSourceCompletionContext  *context)
+get_methods_cb (GObject      *object,
+                GAsyncResult *result,
+                gpointer      user_data)
 {
-   GbDBusTypelib *proxy;
-   GtkTextIter iter;
+   GVariant *matches;
+   gpointer *closure;
    GError *error = NULL;
-   GVariant *matches = NULL;
-   gchar **words = NULL;
-   gchar *word;
    GList *list = NULL;
-   gint len;
-   gint i;
 
-   proxy = get_proxy(GB_SOURCE_TYPELIB_COMPLETION_PROVIDER(provider));
-   if (!proxy) {
-      g_warning("No dbus proxy.");
-      return;
-   }
+   closure = (gpointer *)user_data;
 
-   gtk_source_completion_context_get_iter(context, &iter);
-   word = get_word(provider, &iter);
-   len = strlen(word);
-
-   if (!gb_dbus_typelib_call_get_methods_sync(proxy,
-                                              word,
-                                              &matches,
-                                              NULL,
-                                              &error)) {
-      g_warning("%s\n", error->message);
-      g_error_free(error);
+   if (!gb_dbus_typelib_call_get_methods_finish(
+         GB_DBUS_TYPELIB(object),
+         &matches,
+         result,
+         &error)) {
+      g_warning("%s", error->message);
+      goto cleanup;
    }
 
    if (matches) {
@@ -276,12 +264,73 @@ provider_populate (GtkSourceCompletionProvider *provider,
          GtkSourceCompletionItem *item;
 
          item = gtk_source_completion_item_new_with_markup(markup, text, gMethodPixbuf, NULL);
+         if (!item) {
+            g_error("Failed to create with markup: %s", markup);
+         }
          list = g_list_prepend(list, item);
       }
+
+      list = g_list_reverse(list);
+
+      g_variant_unref(matches);
    }
 
-   g_variant_unref(matches);
+   gtk_source_completion_context_add_proposals(closure[1], closure[0], list, TRUE);
+   g_list_foreach(list, (GFunc)g_object_unref, NULL);
+   g_list_free(list);
 
+cleanup:
+   g_object_unref(closure[0]);
+   g_object_unref(closure[1]);
+   g_free(closure);
+}
+
+static void
+provider_populate (GtkSourceCompletionProvider *provider,
+                   GtkSourceCompletionContext  *context)
+{
+   GbDBusTypelib *proxy;
+   GCancellable *cancellable;
+   GtkTextIter iter;
+   GError *error = NULL;
+   GVariant *matches = NULL;
+   gpointer *closure;
+   //gchar **words = NULL;
+   gchar *word;
+   GList *list = NULL;
+   gint len;
+   gint i;
+
+   proxy = get_proxy(GB_SOURCE_TYPELIB_COMPLETION_PROVIDER(provider));
+   if (!proxy) {
+      g_warning("No dbus proxy.");
+      return;
+   }
+
+   closure = g_new0(gpointer, 2);
+   closure[0] = g_object_ref(provider);
+   closure[1] = g_object_ref(context);
+
+   gtk_source_completion_context_get_iter(context, &iter);
+   word = get_word(provider, &iter);
+   len = strlen(word);
+
+   cancellable = g_cancellable_new();
+   g_signal_connect_object(context,
+                           "cancelled",
+                           G_CALLBACK(g_cancellable_cancel),
+                           cancellable,
+                           G_CONNECT_SWAPPED);
+
+   gb_dbus_typelib_call_get_methods(proxy,
+                                    word,
+                                    cancellable,
+                                    get_methods_cb,
+                                    closure);
+
+   g_object_unref(cancellable);
+
+#if 0
    if (!gb_dbus_typelib_call_get_objects_sync(proxy,
                                               word,
                                               &words,
@@ -308,6 +357,7 @@ provider_populate (GtkSourceCompletionProvider *provider,
    words = NULL;
 
    g_free(word);
+#endif
 }
 
 static void
