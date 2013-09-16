@@ -149,7 +149,7 @@ handle_get_methods (GbDBusTypelib         *typelib,
    }
 
    value = g_variant_new("(a(ssd))", &builder);
-   g_dbus_method_invocation_return_value(method, value);
+   g_dbus_method_invocation_return_value(g_object_ref(method), value);
 
    g_array_unref(matches);
 }
