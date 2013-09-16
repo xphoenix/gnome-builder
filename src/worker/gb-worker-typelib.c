@@ -19,6 +19,7 @@
 #include <girepository.h>
 #include <string.h>
 
+#include "highlight.h"
 #include "fuzzy.h"
 #include "gb-dbus-typelib.h"
 #include "gb-worker-typelib.h"
@@ -141,11 +142,15 @@ handle_get_methods (GbDBusTypelib         *typelib,
    g_variant_builder_init(&builder, G_VARIANT_TYPE("a(ssd)"));
 
    for (i = 0; i < matches->len; i++) {
+      gchar *markup;
+
       match = &g_array_index(matches, FuzzyMatch, i);
+      markup = highlight_substrings(match->text, word, "<u>", "</u>");
       g_variant_builder_add(&builder, "(ssd)",
                             match->text,
-                            match->text,
+                            markup,
                             match->score);
+      g_free(markup);
    }
 
    value = g_variant_new("(a(ssd))", &builder);
