@@ -813,6 +813,7 @@ gb_workspace_init (GbWorkspace *workspace)
    GtkBuilder *builder;
    GtkWidget *box;
    GtkWidget *image;
+   gboolean rtl;
 
    workspace->priv = G_TYPE_INSTANCE_GET_PRIVATE(workspace,
                                                  GB_TYPE_WORKSPACE,
@@ -821,6 +822,8 @@ gb_workspace_init (GbWorkspace *workspace)
    priv = workspace->priv;
 
    gb_workspace_init_actions(workspace);
+
+   rtl = gtk_widget_get_direction (GTK_WIDGET(workspace)) == GTK_TEXT_DIR_RTL;
 
    gtk_window_set_hide_titlebar_when_maximized(GTK_WINDOW(workspace), FALSE);
 
@@ -1001,7 +1004,8 @@ gb_workspace_init (GbWorkspace *workspace)
    gtk_container_add(GTK_CONTAINER(box), priv->build);
 
    image = g_object_new(GTK_TYPE_IMAGE,
-                        "icon-name", "media-playback-start-symbolic",
+                        "icon-name", rtl ?  "media-playback-start-rtl-symbolic" :
+                                            "media-playback-start-symbolic",
                         "icon-size", GTK_ICON_SIZE_MENU,
                         "visible", TRUE,
                         NULL);
