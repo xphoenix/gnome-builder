@@ -28,6 +28,7 @@
 
 #include <glib/gi18n.h>
 
+#include "fuzzy.h"
 #include "gb-search-completion.h"
 #include "gb-workspace.h"
 #include "gb-workspace-pane.h"
@@ -41,9 +42,11 @@ G_DEFINE_TYPE(GbWorkspaceSearchProvider,
 struct _GbWorkspaceSearchProviderPrivate
 {
    GbWorkspace *workspace;
-   GPtrArray   *panes;
 
-   guint pane_added_handler;
+   GPtrArray   *panes;
+   guint        pane_added_handler;
+
+   Fuzzy       *fuzzy;
 };
 
 enum
@@ -64,6 +67,8 @@ gb_workspace_search_provider_populate (GbSearchProvider *provider,
    GbWorkspacePane *pane;
    const gchar *name;
    GtkTreeIter iter;
+   FuzzyMatch *match;
+   GArray *matches;
    gchar *highlight;
    gchar *markup;
    guint i;
@@ -74,8 +79,12 @@ gb_workspace_search_provider_populate (GbSearchProvider *provider,
 
    priv = GB_WORKSPACE_SEARCH_PROVIDER(provider)->priv;
 
-   for (i = 0; i < priv->panes->len; i++) {
-      pane = g_ptr_array_index(priv->panes, i);
+   matches = fuzzy_match(priv->fuzzy, search_term, 100);
+
+   for (i = 0; i < matches->len; i++) {
+      match = &g_array_index(matches, FuzzyMatch, i);
+
+      pane = match->value;
       name = gb_workspace_pane_get_title(pane);
 
       highlight = highlight_substrings(name, search_term, "<b>", "</b>");
@@ -95,7 +104,31 @@ gb_workspace_search_provider_populate (GbSearchProvider *provider,
       g_free(markup);
    }
 
+   g_array_unref(matches);
+
    g_print("Request to populate: search_term=%s\n", search_term);
+}
+
+static void
+on_pane_title_changed (GbWorkspacePane           *pane,
+                       GParamSpec                *pspec,
+                       GbWorkspaceSearchProvider *provider)
+{
+   GbWorkspaceSearchProviderPrivate *priv;
+   const gchar *title;
+
+   g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
+   g_return_if_fail(pspec);
+   g_return_if_fail(GB_IS_WORKSPACE_SEARCH_PROVIDER(provider));
+
+   priv = provider->priv;
+
+   /*
+    * TODO: Remove by value.
+    */
+
+   title = gb_workspace_pane_get_title(pane);
+   fuzzy_insert(priv->fuzzy, title, pane);
 }
 
 static void
@@ -103,7 +136,23 @@ on_pane_added (GbWorkspace               *workspace,
                GbWorkspacePane           *pane,
                GbWorkspaceSearchProvider *provider)
 {
+   GbWorkspaceSearchProviderPrivate *priv = provider->priv;
+
    g_ptr_array_add(provider->priv->panes, pane);
+
+   /*
+    * TODO: Track changes in uri/filename.
+    *       Make sure we remove it.
+    */
+
+   fuzzy_insert(priv->fuzzy,
+                gb_workspace_pane_get_title(pane),
+                pane);
+
+   g_signal_connect(pane,
+                    "notify::title",
+                    G_CALLBACK(on_pane_title_changed),
+                    provider);
 }
 
 static void
@@ -245,4 +294,6 @@ gb_workspace_search_provider_init (GbWorkspaceSearchProvider *provider)
    gb_search_provider_set_name(GB_SEARCH_PROVIDER(provider), _("Workspace"));
 
    provider->priv->panes = g_ptr_array_new();
+
+   provider->priv->fuzzy = fuzzy_new();
 }
