@@ -609,6 +609,35 @@ get_child_position (GtkOverlay   *overlay,
 }
 
 static void
+hide_global_search (GbWorkspace *workspace)
+{
+   GbWorkspacePrivate *priv;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+
+   priv = workspace->priv;
+
+   gtk_entry_set_text(GTK_ENTRY(priv->search_entry), "");
+   g_object_set(priv->search,
+                "active", FALSE,
+                NULL);
+}
+
+static void
+on_search_entry_activate (GbWorkspace *workspace,
+                          GtkEntry    *entry)
+{
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+   g_return_if_fail(GTK_IS_ENTRY(entry));
+
+   /*
+    * TODO: Activate the selected completion.
+    */
+
+   hide_global_search(workspace);
+}
+
+static void
 on_search_entry_changed (GbWorkspace *workspace,
                          GtkEntry    *entry)
 {
@@ -864,6 +893,11 @@ gb_workspace_init (GbWorkspace *workspace)
    g_signal_connect_object(priv->search_entry,
                            "changed",
                            G_CALLBACK(on_search_entry_changed),
+                           workspace,
+                           G_CONNECT_SWAPPED);
+   g_signal_connect_object(priv->search_entry,
+                           "activate",
+                           G_CALLBACK(on_search_entry_activate),
                            workspace,
                            G_CONNECT_SWAPPED);
    gtk_overlay_add_overlay(GTK_OVERLAY(priv->switcher_overlay),
