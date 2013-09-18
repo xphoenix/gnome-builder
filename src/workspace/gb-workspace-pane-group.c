@@ -62,6 +62,28 @@ gb_workspace_pane_group_close (GbWorkspacePaneGroup *group,
                         GTK_WIDGET(pane));
 }
 
+void
+gb_workspace_pane_group_set_current_pane (GbWorkspacePaneGroup *group,
+                                          GbWorkspacePane      *pane)
+{
+   GbWorkspacePaneGroupPrivate *priv;
+   gint page;
+
+   g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
+   g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
+
+   priv = group->priv;
+
+   gtk_container_child_get(GTK_CONTAINER(priv->notebook),
+                           GTK_WIDGET(pane),
+                           "position", &page,
+                           NULL);
+
+   if (page >= 0) {
+      gtk_notebook_set_current_page(GTK_NOTEBOOK(priv->notebook), page);
+   }
+}
+
 static void
 gb_workspace_pane_group_close_clicked (GtkButton            *button,
                                        GbWorkspacePaneGroup *group)

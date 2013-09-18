@@ -50,13 +50,15 @@ struct _GbWorkspacePaneGroupClass
    GtkGridClass parent_class;
 };
 
-GType gb_workspace_pane_group_get_type     (void) G_GNUC_CONST;
-void  gb_workspace_pane_group_close        (GbWorkspacePaneGroup *group,
-                                            GbWorkspacePane      *pane);
-void  gb_workspace_pane_group_set_page     (GbWorkspacePaneGroup *group,
-                                            gint                  page_num);
-void  gb_workspace_pane_group_fullscreen   (GbWorkspacePaneGroup *group);
-void  gb_workspace_pane_group_unfullscreen (GbWorkspacePaneGroup *group);
+GType gb_workspace_pane_group_get_type         (void) G_GNUC_CONST;
+void  gb_workspace_pane_group_close            (GbWorkspacePaneGroup *group,
+                                                GbWorkspacePane      *pane);
+void  gb_workspace_pane_group_set_page         (GbWorkspacePaneGroup *group,
+                                                gint                  page_num);
+void  gb_workspace_pane_group_set_current_pane (GbWorkspacePaneGroup *group,
+                                                GbWorkspacePane      *pane);
+void  gb_workspace_pane_group_fullscreen       (GbWorkspacePaneGroup *group);
+void  gb_workspace_pane_group_unfullscreen     (GbWorkspacePaneGroup *group);
 
 G_END_DECLS
 

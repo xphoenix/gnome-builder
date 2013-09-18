@@ -92,6 +92,7 @@ gboolean     gb_workspace_pane_save_finish        (GbWorkspacePane      *pane,
                                                    GAsyncResult         *result,
                                                    GError              **error);
 void         gb_workspace_pane_unfullscreen       (GbWorkspacePane      *pane);
+void         gb_workspace_pane_raise              (GbWorkspacePane      *pane);
 
 G_END_DECLS
 

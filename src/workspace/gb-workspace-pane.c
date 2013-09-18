@@ -91,6 +91,25 @@ gb_workspace_pane_unfullscreen (GbWorkspacePane *pane)
 }
 
 void
+gb_workspace_pane_raise (GbWorkspacePane *pane)
+{
+   GtkWidget *parent;
+
+   g_return_if_fail(GB_IS_WORKSPACE_PANE(pane));
+
+   for (parent = gtk_widget_get_parent(GTK_WIDGET(pane));
+        !GB_IS_WORKSPACE_PANE_GROUP(parent);
+        parent = gtk_widget_get_parent(parent)) {
+   }
+
+   if (GB_IS_WORKSPACE_PANE_GROUP(parent)) {
+      gb_workspace_pane_group_set_current_pane(
+            GB_WORKSPACE_PANE_GROUP(parent),
+            pane);
+   }
+}
+
+void
 gb_workspace_pane_set_icon_name (GbWorkspacePane *pane,
                                  const gchar     *icon_name)
 {

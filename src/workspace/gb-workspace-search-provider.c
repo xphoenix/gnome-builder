@@ -202,6 +202,8 @@ gb_workspace_search_provider_activate (GbSearchProvider *provider,
 
    g_print("Activated: %s\n", gb_workspace_pane_get_uri(pane));
 
+   gb_workspace_pane_raise(pane);
+
    g_object_unref(pane);
 }
 
