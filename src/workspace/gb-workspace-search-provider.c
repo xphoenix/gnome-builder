@@ -79,7 +79,7 @@ gb_workspace_search_provider_populate (GbSearchProvider *provider,
       name = gb_workspace_pane_get_title(pane);
 
       highlight = highlight_substrings(name, search_term, "<b>", "</b>");
-      markup = g_strdup_printf(_("%s\n<small>Switch to file %s.</small>"),
+      markup = g_strdup_printf(_("%s\n<small>Switch to %s.</small>"),
                                highlight,
                                name);
 
