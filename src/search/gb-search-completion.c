@@ -17,6 +17,7 @@
  */
 
 #include <glib/gi18n.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include "gb-search-completion.h"
 
@@ -26,13 +27,42 @@ G_DEFINE_TYPE(GbSearchCompletion,
 
 struct _GbSearchCompletionPrivate
 {
-   gpointer dummy;
+   GPtrArray *providers;
+};
+
+enum
+{
+   COLUMN_PIXBUF,
+   COLUMN_MARKUP,
+   COLUMN_LAST
 };
 
 GtkEntryCompletion *
 gb_search_completion_new (void)
 {
    return g_object_new(GB_TYPE_SEARCH_COMPLETION, NULL);
+}
+
+void
+gb_search_completion_add_provider (GbSearchCompletion *completion,
+                                   GbSearchProvider   *provider)
+{
+   g_return_if_fail(GB_IS_SEARCH_COMPLETION(completion));
+   g_return_if_fail(GB_IS_SEARCH_PROVIDER(provider));
+
+   g_ptr_array_add(completion->priv->providers, g_object_ref(provider));
+   /* TODO: sort */
+   /* TODO: invalidate completions */
+}
+
+void
+gb_search_completion_remove_provider (GbSearchCompletion *completion,
+                                      GbSearchProvider   *provider)
+{
+   g_return_if_fail(GB_IS_SEARCH_COMPLETION(completion));
+   g_return_if_fail(GB_IS_SEARCH_PROVIDER(provider));
+
+   g_ptr_array_remove(completion->priv->providers, provider);
 }
 
 static void
@@ -54,8 +84,37 @@ gb_search_completion_class_init (GbSearchCompletionClass *klass)
 static void
 gb_search_completion_init (GbSearchCompletion *completion)
 {
+   GtkCellRenderer *renderer;
+   GtkTreeStore *model;
+
    completion->priv =
       G_TYPE_INSTANCE_GET_PRIVATE(completion,
                                   GB_TYPE_SEARCH_COMPLETION,
                                   GbSearchCompletionPrivate);
+
+   completion->priv->providers = g_ptr_array_new();
+   g_ptr_array_set_free_func(completion->priv->providers, g_object_unref);
+
+   model = gtk_tree_store_new(2, GDK_TYPE_PIXBUF, G_TYPE_STRING);
+
+   g_object_set(completion,
+                "model", model,
+                "text-column", 1,
+                NULL);
+
+   renderer = g_object_new(GTK_TYPE_CELL_RENDERER_PIXBUF,
+                           "height", 16,
+                           "width", 16,
+                           "xpad", 3,
+                           NULL);
+   gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(completion), renderer, FALSE);
+   gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(completion), renderer,
+                                 "pixbuf", COLUMN_PIXBUF);
+
+   renderer = g_object_new(GTK_TYPE_CELL_RENDERER_TEXT,
+                           "xalign", 0.0f,
+                           NULL);
+   gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(completion), renderer, TRUE);
+   gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(completion), renderer,
+                                 "markup", COLUMN_MARKUP);
 }

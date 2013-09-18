@@ -21,6 +21,8 @@
 
 #include <gtk/gtk.h>
 
+#include "gb-search-provider.h"
+
 G_BEGIN_DECLS
 
 #define GB_TYPE_SEARCH_COMPLETION            (gb_search_completion_get_type())
@@ -48,8 +50,12 @@ struct _GbSearchCompletionClass
    GtkEntryCompletionClass parent_class;
 };
 
-GType               gb_search_completion_get_type (void) G_GNUC_CONST;
-GtkEntryCompletion *gb_search_completion_new      (void);
+GType               gb_search_completion_get_type        (void) G_GNUC_CONST;
+GtkEntryCompletion *gb_search_completion_new             (void);
+void                gb_search_completion_add_provider    (GbSearchCompletion *completion,
+                                                          GbSearchProvider   *provider);
+void                gb_search_completion_remove_provider (GbSearchCompletion *completion,
+                                                          GbSearchProvider   *provider);
 
 G_END_DECLS
 
