@@ -113,6 +113,15 @@ gb_search_completion_match_selected (GtkEntryCompletion *completion,
    return TRUE;
 }
 
+static gboolean
+gb_search_completion_match_func (GtkEntryCompletion *completion,
+                                 const gchar        *key,
+                                 GtkTreeIter        *iter,
+                                 gpointer            user_data)
+{
+   return TRUE;
+}
+
 static void
 gb_search_completion_constructed (GObject *object)
 {
@@ -192,4 +201,9 @@ gb_search_completion_init (GbSearchCompletion *completion)
                                                 G_TYPE_STRING,
                                                 GB_TYPE_SEARCH_PROVIDER,
                                                 G_TYPE_OBJECT);
+
+   gtk_entry_completion_set_match_func(GTK_ENTRY_COMPLETION(completion),
+                                       gb_search_completion_match_func,
+                                       NULL,
+                                       NULL);
 }
