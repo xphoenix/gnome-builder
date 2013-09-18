@@ -101,6 +101,8 @@ on_open_activated (GSimpleAction *action,
    GtkWidget *parent = NULL;
    GtkWidget *pane;
    GtkDialog *dialog;
+   GSList *iter;
+   GSList *uris;
    GList *windows;
    GFile *file;
    char *projects_path;
@@ -111,6 +113,7 @@ on_open_activated (GSimpleAction *action,
 
    dialog = g_object_new(GTK_TYPE_FILE_CHOOSER_DIALOG,
                          "action", GTK_FILE_CHOOSER_ACTION_OPEN,
+                         "select-multiple", TRUE,
                          "title", _("Open File"),
                          "transient-for", parent,
                          NULL);
@@ -137,16 +140,20 @@ on_open_activated (GSimpleAction *action,
                           NULL);
 
    if (gtk_dialog_run(dialog) == GTK_RESPONSE_OK) {
-      if ((file = gtk_file_chooser_get_file(GTK_FILE_CHOOSER(dialog)))) {
+      uris = gtk_file_chooser_get_uris(GTK_FILE_CHOOSER(dialog));
+      for (iter = uris; iter; iter = iter->next) {
          pane = g_object_new(GB_TYPE_SOURCE_PANE,
                              "visible", TRUE,
                              NULL);
          gtk_container_add(GTK_CONTAINER(parent), pane);
+         file = g_file_new_for_uri(iter->data);
          gb_source_pane_load_async(GB_SOURCE_PANE(pane), file,
                                    NULL, NULL, NULL);
          g_object_unref(file);
          gtk_widget_grab_focus(pane);
       }
+      g_slist_foreach(uris, (GFunc)g_free, NULL);
+      g_slist_free(uris);
    }
 
    gtk_widget_destroy(GTK_WIDGET(dialog));
