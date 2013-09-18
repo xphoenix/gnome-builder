@@ -51,16 +51,23 @@ struct _GbSearchProviderClass
                      const gchar      *search_term,
                      GtkListStore     *store);
 
-   gpointer reserved[7];
+   void (*activate) (GbSearchProvider *provider,
+                     GtkTreeModel     *model,
+                     GtkTreeIter      *iter);
+
+   gpointer reserved[8];
 };
 
-GType        gb_search_provider_get_type   (void) G_GNUC_CONST;
-void         gb_search_provider_set_name   (GbSearchProvider *provider,
-                                            const gchar      *name);
+void         gb_search_provider_activate   (GbSearchProvider *provider,
+                                            GtkTreeModel     *model,
+                                            GtkTreeIter      *iter);
 const gchar *gb_search_provider_get_name   (GbSearchProvider *provider);
+GType        gb_search_provider_get_type   (void) G_GNUC_CONST;
 void         gb_search_provider_populate   (GbSearchProvider *provider,
                                             const gchar      *search_term,
                                             GtkListStore     *store);
+void         gb_search_provider_set_name   (GbSearchProvider *provider,
+                                            const gchar      *name);
 
 G_END_DECLS
 

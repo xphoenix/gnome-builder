@@ -30,7 +30,9 @@
 
 #include "gb-search-completion.h"
 #include "gb-workspace.h"
+#include "gb-workspace-pane.h"
 #include "gb-workspace-search-provider.h"
+#include "highlight.h"
 
 G_DEFINE_TYPE(GbWorkspaceSearchProvider,
               gb_workspace_search_provider,
@@ -39,6 +41,9 @@ G_DEFINE_TYPE(GbWorkspaceSearchProvider,
 struct _GbWorkspaceSearchProviderPrivate
 {
    GbWorkspace *workspace;
+   GPtrArray   *panes;
+
+   guint pane_added_handler;
 };
 
 enum
@@ -55,19 +60,50 @@ gb_workspace_search_provider_populate (GbSearchProvider *provider,
                                        const gchar      *search_term,
                                        GtkListStore     *store)
 {
+   GbWorkspaceSearchProviderPrivate *priv;
+   GbWorkspacePane *pane;
+   const gchar *name;
    GtkTreeIter iter;
+   gchar *highlight;
+   gchar *markup;
+   guint i;
 
    g_assert(GB_IS_WORKSPACE_SEARCH_PROVIDER(provider));
    g_assert(search_term);
    g_assert(GTK_IS_LIST_STORE(store));
 
-   gtk_list_store_append(store, &iter);
-   gtk_list_store_set(store, &iter,
-                      GB_SEARCH_COMPLETION_COLUMN_MARKUP, "<b>test mark</b>up",
-                      GB_SEARCH_COMPLETION_COLUMN_TEXT, "test markup",
-                      -1);
+   priv = GB_WORKSPACE_SEARCH_PROVIDER(provider)->priv;
+
+   for (i = 0; i < priv->panes->len; i++) {
+      pane = g_ptr_array_index(priv->panes, i);
+      name = gb_workspace_pane_get_title(pane);
+
+      highlight = highlight_substrings(name, search_term, "<b>", "</b>");
+      markup = g_strdup_printf(_("%s\n<small>Switch to file %s.</small>"),
+                               highlight,
+                               name);
+
+      gtk_list_store_append(store, &iter);
+      gtk_list_store_set(store, &iter,
+                         GB_SEARCH_COMPLETION_COLUMN_MARKUP, markup,
+                         GB_SEARCH_COMPLETION_COLUMN_TEXT, name,
+                         GB_SEARCH_COMPLETION_COLUMN_PROVIDER, provider,
+                         GB_SEARCH_COMPLETION_COLUMN_OBJECT, pane,
+                         -1);
+
+      g_free(highlight);
+      g_free(markup);
+   }
 
    g_print("Request to populate: search_term=%s\n", search_term);
+}
+
+static void
+on_pane_added (GbWorkspace               *workspace,
+               GbWorkspacePane           *pane,
+               GbWorkspaceSearchProvider *provider)
+{
+   g_ptr_array_add(provider->priv->panes, pane);
 }
 
 static void
@@ -82,6 +118,8 @@ gb_workspace_search_provider_set_workspace (GbWorkspaceSearchProvider *provider,
    priv = provider->priv;
 
    if (priv->workspace) {
+      g_signal_handler_disconnect(priv->workspace,
+                                  priv->pane_added_handler);
       g_object_remove_weak_pointer(G_OBJECT(priv->workspace),
                                    (gpointer *)&priv->workspace);
       priv->workspace = NULL;
@@ -91,15 +129,48 @@ gb_workspace_search_provider_set_workspace (GbWorkspaceSearchProvider *provider,
       priv->workspace = workspace;
       g_object_add_weak_pointer(G_OBJECT(priv->workspace),
                                 (gpointer *)&priv->workspace);
+      priv->pane_added_handler = g_signal_connect(priv->workspace,
+                                                  "pane-added",
+                                                  G_CALLBACK(on_pane_added),
+                                                  provider);
    }
+}
+
+static void
+gb_workspace_search_provider_activate (GbSearchProvider *provider,
+                                       GtkTreeModel     *model,
+                                       GtkTreeIter      *iter)
+{
+   GbWorkspacePane *pane;
+
+   g_return_if_fail(GB_IS_WORKSPACE_SEARCH_PROVIDER(provider));
+   g_return_if_fail(GTK_IS_TREE_MODEL(model));
+   g_return_if_fail(iter);
+
+   gtk_tree_model_get(model, iter,
+                      GB_SEARCH_COMPLETION_COLUMN_OBJECT, &pane,
+                      -1);
+
+   g_print("Activated: %s\n", gb_workspace_pane_get_uri(pane));
+
+   g_object_unref(pane);
+}
+
+static void
+gb_workspace_search_provider_dispose (GObject *object)
+{
+   GbWorkspaceSearchProvider *provider = GB_WORKSPACE_SEARCH_PROVIDER(object);
+
+   gb_workspace_search_provider_set_workspace(provider, NULL);
 }
 
 static void
 gb_workspace_search_provider_finalize (GObject *object)
 {
-   GbWorkspaceSearchProviderPrivate *priv;
+   GbWorkspaceSearchProviderPrivate *priv = GB_WORKSPACE_SEARCH_PROVIDER(object)->priv;
 
-   priv = GB_WORKSPACE_SEARCH_PROVIDER(object)->priv;
+   g_ptr_array_unref(priv->panes);
+   priv->panes = NULL;
 
    G_OBJECT_CLASS(gb_workspace_search_provider_parent_class)->finalize(object);
 }
@@ -143,12 +214,14 @@ gb_workspace_search_provider_class_init (GbWorkspaceSearchProviderClass *klass)
    GbSearchProviderClass *provider_class;
 
    object_class = G_OBJECT_CLASS(klass);
+   object_class->dispose = gb_workspace_search_provider_dispose;
    object_class->finalize = gb_workspace_search_provider_finalize;
    object_class->get_property = gb_workspace_search_provider_get_property;
    object_class->set_property = gb_workspace_search_provider_set_property;
    g_type_class_add_private(object_class, sizeof(GbWorkspaceSearchProviderPrivate));
 
    provider_class = GB_SEARCH_PROVIDER_CLASS(klass);
+   provider_class->activate = gb_workspace_search_provider_activate;
    provider_class->populate = gb_workspace_search_provider_populate;
 
    gParamSpecs[PROP_WORKSPACE] =
@@ -170,4 +243,6 @@ gb_workspace_search_provider_init (GbWorkspaceSearchProvider *provider)
                                   GbWorkspaceSearchProviderPrivate);
 
    gb_search_provider_set_name(GB_SEARCH_PROVIDER(provider), _("Workspace"));
+
+   provider->priv->panes = g_ptr_array_new();
 }

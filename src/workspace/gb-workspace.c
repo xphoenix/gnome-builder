@@ -65,7 +65,15 @@ enum
    LAST_PROP
 };
 
+enum
+{
+   PANE_ADDED,
+   PANE_REMOVED,
+   LAST_SIGNAL
+};
+
 static GParamSpec *gParamSpecs[LAST_PROP];
+static guint       gSignals[LAST_SIGNAL];
 
 G_DEFINE_TYPE_WITH_PRIVATE(GbWorkspace,
                            gb_workspace,
@@ -165,7 +173,10 @@ gb_workspace_add (GtkContainer *container,
    GbWorkspacePrivate *priv = GB_WORKSPACE(container)->priv;
 
    if (GB_IS_WORKSPACE_PANE(child)) {
+      g_object_ref(child);
       gtk_container_add(GTK_CONTAINER(priv->layout), child);
+      g_signal_emit(container, gSignals[PANE_ADDED], 0, child);
+      g_object_unref(child);
    } else {
       GTK_CONTAINER_CLASS(gb_workspace_parent_class)->add(container, child);
    }
@@ -699,6 +710,28 @@ gb_workspace_class_init (GbWorkspaceClass *klass)
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_PROJECT,
                                    gParamSpecs[PROP_PROJECT]);
+
+   gSignals[PANE_ADDED] = g_signal_new("pane-added",
+                                       GB_TYPE_WORKSPACE,
+                                       G_SIGNAL_RUN_FIRST,
+                                       0,
+                                       NULL,
+                                       NULL,
+                                       g_cclosure_marshal_VOID__OBJECT,
+                                       G_TYPE_NONE,
+                                       1,
+                                       GB_TYPE_WORKSPACE_PANE);
+
+   gSignals[PANE_REMOVED] = g_signal_new("pane-removed",
+                                         GB_TYPE_WORKSPACE,
+                                         G_SIGNAL_RUN_FIRST,
+                                         0,
+                                         NULL,
+                                         NULL,
+                                         g_cclosure_marshal_VOID__OBJECT,
+                                         G_TYPE_NONE,
+                                         1,
+                                         GB_TYPE_WORKSPACE_PANE);
 
    g_io_extension_point_register("org.gnome.Builder.Workspace");
 }

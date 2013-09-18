@@ -73,6 +73,24 @@ gb_search_provider_populate (GbSearchProvider *provider,
    }
 }
 
+void
+gb_search_provider_activate (GbSearchProvider *provider,
+                             GtkTreeModel     *model,
+                             GtkTreeIter      *iter)
+{
+   GbSearchProviderClass *klass;
+
+   g_return_if_fail(GB_IS_SEARCH_PROVIDER(provider));
+   g_return_if_fail(GTK_IS_TREE_MODEL(model));
+   g_return_if_fail(iter);
+
+   klass = GB_SEARCH_PROVIDER_GET_CLASS(provider);
+
+   if (klass->activate) {
+      klass->activate(provider, model, iter);
+   }
+}
+
 static void
 gb_search_provider_finalize (GObject *object)
 {

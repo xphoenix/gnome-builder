@@ -87,6 +87,32 @@ gb_search_completion_remove_provider (GbSearchCompletion *completion,
    g_ptr_array_remove(completion->priv->providers, provider);
 }
 
+gboolean
+gb_search_completion_match_selected (GtkEntryCompletion *completion,
+                                     GtkTreeModel       *model,
+                                     GtkTreeIter        *iter)
+{
+   GbSearchCompletionPrivate *priv;
+   GbSearchProvider *provider;
+
+   g_return_val_if_fail(GB_IS_SEARCH_COMPLETION(completion), FALSE);
+   g_return_val_if_fail(GTK_IS_LIST_STORE(model), FALSE);
+   g_return_val_if_fail(iter, FALSE);
+
+   priv = GB_SEARCH_COMPLETION(completion)->priv;
+
+   gtk_tree_model_get(model, iter,
+                      GB_SEARCH_COMPLETION_COLUMN_PROVIDER, &provider,
+                      -1);
+
+   if (provider) {
+      gb_search_provider_activate(provider, model, iter);
+      g_object_unref(provider);
+   }
+
+   return TRUE;
+}
+
 static void
 gb_search_completion_constructed (GObject *object)
 {
@@ -136,11 +162,15 @@ static void
 gb_search_completion_class_init (GbSearchCompletionClass *klass)
 {
    GObjectClass *object_class;
+   GtkEntryCompletionClass *completion_class;
 
    object_class = G_OBJECT_CLASS(klass);
    object_class->constructed = gb_search_completion_constructed;
    object_class->finalize = gb_search_completion_finalize;
    g_type_class_add_private(object_class, sizeof(GbSearchCompletionPrivate));
+
+   completion_class = GTK_ENTRY_COMPLETION_CLASS(klass);
+   completion_class->match_selected = gb_search_completion_match_selected;
 }
 
 static void
@@ -156,8 +186,10 @@ gb_search_completion_init (GbSearchCompletion *completion)
    completion->priv->providers = g_ptr_array_new();
    g_ptr_array_set_free_func(completion->priv->providers, g_object_unref);
 
-   completion->priv->model = gtk_list_store_new(3,
+   completion->priv->model = gtk_list_store_new(5,
                                                 GDK_TYPE_PIXBUF,
                                                 G_TYPE_STRING,
-                                                G_TYPE_STRING);
+                                                G_TYPE_STRING,
+                                                GB_TYPE_SEARCH_PROVIDER,
+                                                G_TYPE_OBJECT);
 }
