@@ -28,19 +28,24 @@ typedef struct _FuzzyMatch FuzzyMatch;
 
 struct _FuzzyMatch
 {
-   const gchar *text;
+   const gchar *key;
+   gpointer     value;
    gfloat       score;
 };
 
-Fuzzy     *fuzzy_new               (void);
-void       fuzzy_begin_bulk_insert (Fuzzy       *fuzzy);
-void       fuzzy_end_bulk_insert   (Fuzzy       *fuzzy);
-void       fuzzy_insert            (Fuzzy       *fuzzy,
-                                    const gchar *text);
-GArray    *fuzzy_match             (Fuzzy       *fuzzy,
-                                    const gchar *needle,
-                                    gsize        max_matches);
-void       fuzzy_free              (Fuzzy       *fuzzy);
+Fuzzy     *fuzzy_new                (void);
+Fuzzy     *fuzzy_new_with_free_func (GDestroyNotify  free_func);
+void       fuzzy_set_free_func      (Fuzzy          *fuzzy,
+                                     GDestroyNotify  free_func);
+void       fuzzy_begin_bulk_insert  (Fuzzy          *fuzzy);
+void       fuzzy_end_bulk_insert    (Fuzzy          *fuzzy);
+void       fuzzy_insert             (Fuzzy          *fuzzy,
+                                     const gchar    *key,
+                                     gpointer        value);
+GArray    *fuzzy_match              (Fuzzy          *fuzzy,
+                                     const gchar    *needle,
+                                     gsize           max_matches);
+void       fuzzy_free               (Fuzzy          *fuzzy);
 
 G_END_DECLS
 

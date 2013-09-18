@@ -35,7 +35,7 @@ load_function_info (GIRepository   *repository,
    const gchar *symbol;
 
    symbol = g_function_info_get_symbol(info);
-   fuzzy_insert(gFuzzyMethods, symbol);
+   fuzzy_insert(gFuzzyMethods, symbol, NULL);
 }
 
 static void
@@ -50,7 +50,7 @@ load_object_info (GIRepository *repository,
 
    symbol = g_object_info_get_type_name(info);
 
-   fuzzy_insert(gFuzzyObjects, symbol);
+   fuzzy_insert(gFuzzyObjects, symbol, NULL);
 
    n_methods = g_object_info_get_n_methods(info);
    for (i = 0; i < n_methods; i++) {
@@ -143,7 +143,7 @@ handle_get_methods (GbDBusTypelib         *typelib,
    for (i = 0; i < matches->len; i++) {
       match = &g_array_index(matches, FuzzyMatch, i);
       g_variant_builder_add(&builder, "(sd)",
-                            match->text,
+                            match->key,
                             match->score);
    }
 
@@ -169,7 +169,7 @@ handle_get_objects (GbDBusTypelib         *typelib,
    matches = fuzzy_match(gFuzzyObjects, word, 1000);
    for (i = 0; i < matches->len; i++) {
       match = &g_array_index(matches, FuzzyMatch, i);
-      g_variant_builder_add(&builder, "s", match->text);
+      g_variant_builder_add(&builder, "s", match->key);
    }
 
    value = g_variant_new("(as)", &builder);

@@ -47,12 +47,13 @@ typedef struct _FuzzyLookup FuzzyLookup;
 
 struct _Fuzzy
 {
-   gchar     *heap;
-   gsize      heap_length;
-   gsize      heap_offset;
-   GArray    *id_to_text_offset;
-   GPtrArray *char_tables;
-   gboolean  in_bulk_insert;
+   gchar          *heap;
+   gsize           heap_length;
+   gsize           heap_offset;
+   GArray         *id_to_text_offset;
+   GPtrArray      *id_to_value;
+   GPtrArray      *char_tables;
+   gboolean        in_bulk_insert;
 };
 
 
@@ -108,7 +109,7 @@ fuzzy_match_compare (gconstpointer a,
       return -1;
    }
 
-   return g_strcmp0(ma->text, mb->text);
+   return g_strcmp0(ma->key, mb->key);
 }
 
 
@@ -130,6 +131,7 @@ fuzzy_new (void)
    fuzzy->heap_length = FUZZY_GROW_HEAP_BY;
    fuzzy->heap = g_malloc(fuzzy->heap_length);
    fuzzy->heap_offset = 0;
+   fuzzy->id_to_value = g_ptr_array_new();
    fuzzy->id_to_text_offset = g_array_new(FALSE, FALSE, sizeof(gsize));
    fuzzy->char_tables = g_ptr_array_new();
    g_ptr_array_set_free_func(fuzzy->char_tables,
@@ -141,6 +143,28 @@ fuzzy_new (void)
    }
 
    return fuzzy;
+}
+
+
+Fuzzy *
+fuzzy_new_with_free_func (GDestroyNotify free_func)
+{
+   Fuzzy *fuzzy;
+
+   fuzzy = fuzzy_new();
+   fuzzy_set_free_func(fuzzy, free_func);
+
+   return fuzzy;
+}
+
+
+void
+fuzzy_set_free_func (Fuzzy          *fuzzy,
+                     GDestroyNotify  free_func)
+{
+   g_return_if_fail(fuzzy);
+
+   g_ptr_array_set_free_func(fuzzy->id_to_value, free_func);
 }
 
 
@@ -219,15 +243,17 @@ fuzzy_end_bulk_insert (Fuzzy *fuzzy)
 /**
  * fuzzy_insert:
  * @fuzzy: (in): A #Fuzzy.
- * @text: (in): An ASCII string.
+ * @key: (in): An ASCII string.
+ * @value: (in): A value to associate with key.
  *
  * Inserts a string into the fuzzy matcher.
  *
- * Note that @text MUST be an ascii string. UTF-8 is not supported.
+ * Note that @key MUST be an ascii string. UTF-8 is not supported.
  */
 void
 fuzzy_insert (Fuzzy       *fuzzy,
-              const gchar *text)
+              const gchar *key,
+              gpointer     value)
 {
    FuzzyItem item;
    GArray *table;
@@ -237,10 +263,10 @@ fuzzy_insert (Fuzzy       *fuzzy,
    gint i;
 
    g_return_if_fail(fuzzy);
-   g_return_if_fail(text);
+   g_return_if_fail(key);
    g_return_if_fail(fuzzy->id_to_text_offset->len < ((1 << 20) - 1));
 
-   if (!*text) {
+   if (!*key) {
       return;
    }
 
@@ -248,13 +274,15 @@ fuzzy_insert (Fuzzy       *fuzzy,
     * Insert the string into our heap.
     * Track the offset within the heap since the heap could realloc.
     */
-   offset = fuzzy_heap_insert(fuzzy, text);
+   offset = fuzzy_heap_insert(fuzzy, key);
    g_array_append_val(fuzzy->id_to_text_offset, offset);
+   g_ptr_array_add(fuzzy->id_to_value, value);
+   g_assert_cmpint(fuzzy->id_to_value->len, ==, fuzzy->id_to_text_offset->len);
 
    id = fuzzy->id_to_text_offset->len - 1;
 
-   for (i = 0; text[i]; i++) {
-      idx = text[i];
+   for (i = 0; key[i]; i++) {
+      idx = key[i];
       table = g_ptr_array_index(fuzzy->char_tables, idx);
 
       item.id = id;
@@ -286,6 +314,9 @@ fuzzy_free (Fuzzy *fuzzy)
 
       g_array_unref(fuzzy->id_to_text_offset);
       fuzzy->id_to_text_offset = NULL;
+
+      g_ptr_array_unref(fuzzy->id_to_value);
+      fuzzy->id_to_value = NULL;
 
       g_ptr_array_unref(fuzzy->char_tables);
       fuzzy->char_tables = NULL;
@@ -425,7 +456,8 @@ fuzzy_match (Fuzzy       *fuzzy,
    } else {
       for (i = 0; i < root->len; i++) {
          item = &g_array_index(root, FuzzyItem, i);
-         match.text = fuzzy_get_string(fuzzy, item->id);
+         match.key = fuzzy_get_string(fuzzy, item->id);
+         match.value = g_ptr_array_index(fuzzy->id_to_value, item->id);
          match.score = 0;
          g_array_append_val(matches, match);
       }
@@ -439,8 +471,10 @@ fuzzy_match (Fuzzy       *fuzzy,
 
       g_hash_table_iter_init(&iter, lookup.matches);
       while (g_hash_table_iter_next(&iter, &key, &value)) {
-         match.text = fuzzy_get_string(fuzzy, GPOINTER_TO_INT(key));
-         match.score = 1.0 / (strlen(match.text) + GPOINTER_TO_INT(value));
+         match.key = fuzzy_get_string(fuzzy, GPOINTER_TO_INT(key));
+         match.score = 1.0 / (strlen(match.key) + GPOINTER_TO_INT(value));
+         match.value = g_ptr_array_index(fuzzy->id_to_value,
+                                         GPOINTER_TO_INT(key));
          g_array_append_val(matches, match);
       }
 
