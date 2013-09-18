@@ -317,7 +317,8 @@ RESOURCE_FILES = \
 	data/style-schemes/solarized-dark.xml \
 	data/style-schemes/solarized-light.xml \
 	data/icons/class-16x.png \
-	data/icons/method-16x.png
+	data/icons/method-16x.png \
+	data/icons/template-16x.png
 
 
 GB_APPLICATION_RESOURCE_C = $(builddir)/app/gb-application-resource.c

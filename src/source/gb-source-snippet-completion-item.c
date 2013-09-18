@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <gio/gio.h>
 #include <glib/gi18n.h>
 
 #include "gb-source-snippet-completion-item.h"
@@ -42,6 +43,7 @@ enum
 };
 
 static GParamSpec *gParamSpecs[LAST_PROP];
+static GdkPixbuf  *gPixbuf;
 
 GtkSourceCompletionProposal *
 gb_source_snippet_completion_item_new (GbSourceSnippet *snippet)
@@ -134,6 +136,8 @@ gb_source_snippet_completion_item_class_init (GbSourceSnippetCompletionItemClass
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_SNIPPET,
                                    gParamSpecs[PROP_SNIPPET]);
+
+   gPixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/template-16x.png", NULL);
 }
 
 static void
@@ -158,8 +162,15 @@ get_label (GtkSourceCompletionProposal *p)
    return g_strdup(trigger);
 }
 
+static GdkPixbuf *
+get_icon (GtkSourceCompletionProposal *proposal)
+{
+   return g_object_ref(gPixbuf);
+}
+
 static void
 init_proposal_iface (GtkSourceCompletionProposalIface *iface)
 {
    iface->get_label = get_label;
+   iface->get_icon = get_icon;
 }
