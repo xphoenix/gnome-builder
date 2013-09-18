@@ -27,7 +27,8 @@ G_DEFINE_TYPE(GbSearchCompletion,
 
 struct _GbSearchCompletionPrivate
 {
-   GPtrArray *providers;
+   GPtrArray    *providers;
+   GtkListStore *model;
 };
 
 enum
@@ -56,6 +57,27 @@ gb_search_completion_add_provider (GbSearchCompletion *completion,
 }
 
 void
+gb_search_completion_reload (GbSearchCompletion *completion,
+                             const gchar        *search_term)
+{
+   GbSearchCompletionPrivate *priv;
+   GbSearchProvider *provider;
+   guint i;
+
+   g_return_if_fail(GB_IS_SEARCH_COMPLETION(completion));
+   g_return_if_fail(search_term && *search_term);
+
+   priv = completion->priv;
+
+   gtk_list_store_clear(priv->model);
+
+   for (i = 0; i < priv->providers->len; i++) {
+      provider = g_ptr_array_index(priv->providers, i);
+      gb_search_provider_populate(provider, search_term, priv->model);
+   }
+}
+
+void
 gb_search_completion_remove_provider (GbSearchCompletion *completion,
                                       GbSearchProvider   *provider)
 {
@@ -66,8 +88,47 @@ gb_search_completion_remove_provider (GbSearchCompletion *completion,
 }
 
 static void
+gb_search_completion_constructed (GObject *object)
+{
+   GbSearchCompletionPrivate *priv = GB_SEARCH_COMPLETION(object)->priv;
+   GtkCellRenderer *renderer;
+
+   g_object_set(object,
+                "model", priv->model,
+                "text-column", GB_SEARCH_COMPLETION_COLUMN_TEXT,
+                NULL);
+
+   renderer = g_object_new(GTK_TYPE_CELL_RENDERER_PIXBUF,
+                           "height", 16,
+                           "width", 16,
+                           "xpad", 3,
+                           NULL);
+   gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(object), renderer, FALSE);
+   gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(object), renderer,
+                                 "pixbuf", COLUMN_PIXBUF);
+
+   renderer = g_object_new(GTK_TYPE_CELL_RENDERER_TEXT,
+                           "xalign", 0.0f,
+                           NULL);
+   gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(object), renderer, TRUE);
+   gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(object), renderer,
+                                 "markup", COLUMN_MARKUP);
+
+   if (G_OBJECT_CLASS(gb_search_completion_parent_class)->constructed) {
+      G_OBJECT_CLASS(gb_search_completion_parent_class)->constructed(object);
+   }
+}
+
+static void
 gb_search_completion_finalize (GObject *object)
 {
+   GbSearchCompletionPrivate *priv = GB_SEARCH_COMPLETION(object)->priv;
+
+   g_ptr_array_unref(priv->providers);
+   priv->providers = NULL;
+
+   g_clear_object(&priv->model);
+
    G_OBJECT_CLASS(gb_search_completion_parent_class)->finalize(object);
 }
 
@@ -77,6 +138,7 @@ gb_search_completion_class_init (GbSearchCompletionClass *klass)
    GObjectClass *object_class;
 
    object_class = G_OBJECT_CLASS(klass);
+   object_class->constructed = gb_search_completion_constructed;
    object_class->finalize = gb_search_completion_finalize;
    g_type_class_add_private(object_class, sizeof(GbSearchCompletionPrivate));
 }
@@ -85,7 +147,6 @@ static void
 gb_search_completion_init (GbSearchCompletion *completion)
 {
    GtkCellRenderer *renderer;
-   GtkTreeStore *model;
 
    completion->priv =
       G_TYPE_INSTANCE_GET_PRIVATE(completion,
@@ -95,26 +156,8 @@ gb_search_completion_init (GbSearchCompletion *completion)
    completion->priv->providers = g_ptr_array_new();
    g_ptr_array_set_free_func(completion->priv->providers, g_object_unref);
 
-   model = gtk_tree_store_new(2, GDK_TYPE_PIXBUF, G_TYPE_STRING);
-
-   g_object_set(completion,
-                "model", model,
-                "text-column", 1,
-                NULL);
-
-   renderer = g_object_new(GTK_TYPE_CELL_RENDERER_PIXBUF,
-                           "height", 16,
-                           "width", 16,
-                           "xpad", 3,
-                           NULL);
-   gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(completion), renderer, FALSE);
-   gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(completion), renderer,
-                                 "pixbuf", COLUMN_PIXBUF);
-
-   renderer = g_object_new(GTK_TYPE_CELL_RENDERER_TEXT,
-                           "xalign", 0.0f,
-                           NULL);
-   gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(completion), renderer, TRUE);
-   gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(completion), renderer,
-                                 "markup", COLUMN_MARKUP);
+   completion->priv->model = gtk_list_store_new(3,
+                                                GDK_TYPE_PIXBUF,
+                                                G_TYPE_STRING,
+                                                G_TYPE_STRING);
 }

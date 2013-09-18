@@ -58,19 +58,18 @@ gb_search_provider_set_name (GbSearchProvider *provider,
 void
 gb_search_provider_populate (GbSearchProvider *provider,
                              const gchar      *search_term,
-                             GtkTreeStore     *store,
-                             GtkTreeIter      *parent)
+                             GtkListStore     *store)
 {
    GbSearchProviderClass *klass;
 
    g_return_if_fail(GB_IS_SEARCH_PROVIDER(provider));
    g_return_if_fail(search_term);
-   g_return_if_fail(GTK_IS_TREE_STORE(store));
+   g_return_if_fail(GTK_IS_LIST_STORE(store));
 
    klass = GB_SEARCH_PROVIDER_GET_CLASS(provider);
 
    if (klass->populate) {
-      klass->populate(provider, search_term, store, parent);
+      klass->populate(provider, search_term, store);
    }
 }
 

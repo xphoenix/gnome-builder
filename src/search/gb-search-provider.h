@@ -49,8 +49,7 @@ struct _GbSearchProviderClass
 
    void (*populate) (GbSearchProvider *provider,
                      const gchar      *search_term,
-                     GtkTreeStore     *store,
-                     GtkTreeIter      *parent);
+                     GtkListStore     *store);
 
    gpointer reserved[7];
 };
@@ -61,8 +60,7 @@ void         gb_search_provider_set_name   (GbSearchProvider *provider,
 const gchar *gb_search_provider_get_name   (GbSearchProvider *provider);
 void         gb_search_provider_populate   (GbSearchProvider *provider,
                                             const gchar      *search_term,
-                                            GtkTreeStore     *store,
-                                            GtkTreeIter      *parent);
+                                            GtkListStore     *store);
 
 G_END_DECLS
 

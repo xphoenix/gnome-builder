@@ -30,6 +30,7 @@
 #include "gb-workspace-layout-switcher.h"
 #include "gb-workspace-pane.h"
 #include "gb-workspace-pane-group.h"
+#include "gb-workspace-search-provider.h"
 #include "gb-zoomable.h"
 
 struct _GbWorkspacePrivate
@@ -597,6 +598,23 @@ get_child_position (GtkOverlay   *overlay,
 }
 
 static void
+on_search_entry_changed (GbWorkspace *workspace,
+                         GtkEntry    *entry)
+{
+   GtkEntryCompletion *completion;
+   const gchar *text;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+   g_return_if_fail(GTK_IS_ENTRY(entry));
+
+   text = gtk_entry_get_text(entry);
+   if (text && *text) {
+      completion = gtk_entry_get_completion(entry);
+      gb_search_completion_reload(GB_SEARCH_COMPLETION(completion), text);
+   }
+}
+
+static void
 gb_workspace_finalize (GObject *object)
 {
    GbWorkspacePrivate *priv;
@@ -757,6 +775,7 @@ gb_workspace_init (GbWorkspace *workspace)
 {
    GbWorkspacePrivate *priv;
    GtkEntryCompletion *completion;
+   GbSearchProvider *provider;
    GMenuModel *menu;
    GtkBuilder *builder;
    GtkWidget *box;
@@ -806,11 +825,24 @@ gb_workspace_init (GbWorkspace *workspace)
    priv->search_entry = g_object_new(GTK_TYPE_SEARCH_ENTRY,
                                      "visible", TRUE,
                                      NULL);
+   g_signal_connect_object(priv->search_entry,
+                           "changed",
+                           G_CALLBACK(on_search_entry_changed),
+                           workspace,
+                           G_CONNECT_SWAPPED);
    gtk_overlay_add_overlay(GTK_OVERLAY(priv->switcher_overlay),
                            priv->search_entry);
 
    completion = gb_search_completion_new();
    gtk_entry_set_completion(GTK_ENTRY(priv->search_entry), completion);
+
+   provider = g_object_new(GB_TYPE_WORKSPACE_SEARCH_PROVIDER,
+                           "name", _("Workspace"),
+                           "workspace", workspace,
+                           NULL);
+   gb_search_completion_add_provider(GB_SEARCH_COMPLETION(completion),
+                                     provider);
+
    g_object_unref(completion);
 
    priv->search_adj = g_object_new(GTK_TYPE_ADJUSTMENT,

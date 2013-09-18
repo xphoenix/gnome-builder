@@ -35,6 +35,7 @@ G_BEGIN_DECLS
 
 typedef struct _GbSearchCompletion        GbSearchCompletion;
 typedef struct _GbSearchCompletionClass   GbSearchCompletionClass;
+typedef enum   _GbSearchCompletionColumn  GbSearchCompletionColumn;
 typedef struct _GbSearchCompletionPrivate GbSearchCompletionPrivate;
 
 struct _GbSearchCompletion
@@ -50,12 +51,21 @@ struct _GbSearchCompletionClass
    GtkEntryCompletionClass parent_class;
 };
 
+enum _GbSearchCompletionColumn
+{
+   GB_SEARCH_COMPLETION_COLUMN_PIXBUF = 0,
+   GB_SEARCH_COMPLETION_COLUMN_MARKUP = 1,
+   GB_SEARCH_COMPLETION_COLUMN_TEXT   = 2,
+};
+
 GType               gb_search_completion_get_type        (void) G_GNUC_CONST;
 GtkEntryCompletion *gb_search_completion_new             (void);
 void                gb_search_completion_add_provider    (GbSearchCompletion *completion,
                                                           GbSearchProvider   *provider);
 void                gb_search_completion_remove_provider (GbSearchCompletion *completion,
                                                           GbSearchProvider   *provider);
+void                gb_search_completion_reload          (GbSearchCompletion *completion,
+                                                          const gchar        *search_term);
 
 G_END_DECLS
 

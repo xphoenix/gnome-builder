@@ -274,6 +274,8 @@ libworkspace_la_SOURCES = \
 	workspace/gb-workspace-pane-group.h \
 	workspace/gb-workspace-pane.c \
 	workspace/gb-workspace-pane.h \
+	workspace/gb-workspace-search-provider.c \
+	workspace/gb-workspace-search-provider.h \
 	workspace/gb-zoomable.c \
 	workspace/gb-zoomable.h \
 	nautilus/nautilus-floating-bar.c \
