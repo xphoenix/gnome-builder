@@ -24,7 +24,7 @@
 
     <method name="GetObjects">
       <arg name="word" direction="in" type="s"/>
-      <arg name="words" direction="out" type="as"/>
+      <arg name="words" direction="out" type="a(sd)"/>
     </method>
 
   </interface>

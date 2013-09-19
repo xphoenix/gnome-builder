@@ -161,19 +161,30 @@ handle_get_objects (GbDBusTypelib         *typelib,
    GVariantBuilder builder;
    FuzzyMatch *match;
    GVariant *value;
+   gdouble score;
    GArray *matches;
-   guint i;
+   gint i;
 
-   g_variant_builder_init(&builder, G_VARIANT_TYPE("as"));
-
-   matches = fuzzy_match(gFuzzyObjects, word, 1000);
-   for (i = 0; i < matches->len; i++) {
-      match = &g_array_index(matches, FuzzyMatch, i);
-      g_variant_builder_add(&builder, "s", match->key);
+   if (!word || !*word) {
+      g_variant_builder_init(&builder, G_VARIANT_TYPE("a(sd)"));
+      value = g_variant_new("(a(sd))", &builder);
+      g_dbus_method_invocation_return_value(method, value);
+      return;
    }
 
-   value = g_variant_new("(as)", &builder);
-   g_dbus_method_invocation_return_value(method, value);
+   matches = fuzzy_match(gFuzzyObjects, word, 100);
+
+   g_variant_builder_init(&builder, G_VARIANT_TYPE("a(sd)"));
+
+   for (i = 0; i < matches->len; i++) {
+      match = &g_array_index(matches, FuzzyMatch, i);
+      g_variant_builder_add(&builder, "(sd)",
+                            match->key,
+                            match->score);
+   }
+
+   value = g_variant_new("(a(sd))", &builder);
+   g_dbus_method_invocation_return_value(g_object_ref(method), value);
 
    g_array_unref(matches);
 }
