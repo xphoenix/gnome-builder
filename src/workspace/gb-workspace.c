@@ -651,7 +651,24 @@ on_search_entry_changed (GbWorkspace *workspace,
    if (text && *text) {
       completion = gtk_entry_get_completion(entry);
       gb_search_completion_reload(GB_SEARCH_COMPLETION(completion), text);
+      gb_search_completion_select_first(GB_SEARCH_COMPLETION(completion));
    }
+}
+
+static gboolean
+on_search_completion_match_selected (GbWorkspace        *workspace,
+                                     GtkTreeModel       *model,
+                                     GtkTreeIter        *iter,
+                                     GtkEntryCompletion *completion)
+{
+   g_return_val_if_fail(GB_IS_WORKSPACE(workspace), FALSE);
+   g_return_val_if_fail(GTK_IS_TREE_MODEL(model), FALSE);
+   g_return_val_if_fail(iter, FALSE);
+   g_return_val_if_fail(GTK_IS_ENTRY_COMPLETION(completion), FALSE);
+
+   hide_global_search(workspace);
+
+   return FALSE;
 }
 
 static void
@@ -904,6 +921,11 @@ gb_workspace_init (GbWorkspace *workspace)
                            priv->search_entry);
 
    completion = gb_search_completion_new();
+   g_signal_connect_object(completion,
+                           "match-selected",
+                           G_CALLBACK(on_search_completion_match_selected),
+                           workspace,
+                           (G_CONNECT_AFTER | G_CONNECT_SWAPPED));
    gtk_entry_set_completion(GTK_ENTRY(priv->search_entry), completion);
 
    provider = g_object_new(GB_TYPE_WORKSPACE_SEARCH_PROVIDER,

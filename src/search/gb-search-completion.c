@@ -31,13 +31,6 @@ struct _GbSearchCompletionPrivate
    GtkListStore *model;
 };
 
-enum
-{
-   COLUMN_PIXBUF,
-   COLUMN_MARKUP,
-   COLUMN_LAST
-};
-
 GtkEntryCompletion *
 gb_search_completion_new (void)
 {
@@ -87,6 +80,16 @@ gb_search_completion_remove_provider (GbSearchCompletion *completion,
    g_ptr_array_remove(completion->priv->providers, provider);
 }
 
+void
+gb_search_completion_select_first (GbSearchCompletion *completion)
+{
+   g_return_if_fail(GB_IS_SEARCH_COMPLETION(completion));
+
+   /*
+    * TODO:
+    */
+}
+
 gboolean
 gb_search_completion_match_selected (GtkEntryCompletion *completion,
                                      GtkTreeModel       *model,
@@ -110,7 +113,7 @@ gb_search_completion_match_selected (GtkEntryCompletion *completion,
       g_object_unref(provider);
    }
 
-   return TRUE;
+   return FALSE;
 }
 
 static gboolean
@@ -135,19 +138,21 @@ gb_search_completion_constructed (GObject *object)
 
    renderer = g_object_new(GTK_TYPE_CELL_RENDERER_PIXBUF,
                            "height", 16,
-                           "width", 16,
-                           "xpad", 3,
+                           "width", 22,
+                           "xpad", 6,
                            NULL);
    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(object), renderer, FALSE);
    gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(object), renderer,
-                                 "pixbuf", COLUMN_PIXBUF);
+                                 "icon-name",
+                                 GB_SEARCH_COMPLETION_COLUMN_ICON_NAME);
 
    renderer = g_object_new(GTK_TYPE_CELL_RENDERER_TEXT,
                            "xalign", 0.0f,
                            NULL);
    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(object), renderer, TRUE);
    gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(object), renderer,
-                                 "markup", COLUMN_MARKUP);
+                                 "markup",
+                                 GB_SEARCH_COMPLETION_COLUMN_MARKUP);
 
    if (G_OBJECT_CLASS(gb_search_completion_parent_class)->constructed) {
       G_OBJECT_CLASS(gb_search_completion_parent_class)->constructed(object);
@@ -196,7 +201,7 @@ gb_search_completion_init (GbSearchCompletion *completion)
    g_ptr_array_set_free_func(completion->priv->providers, g_object_unref);
 
    completion->priv->model = gtk_list_store_new(5,
-                                                GDK_TYPE_PIXBUF,
+                                                G_TYPE_STRING,
                                                 G_TYPE_STRING,
                                                 G_TYPE_STRING,
                                                 GB_TYPE_SEARCH_PROVIDER,

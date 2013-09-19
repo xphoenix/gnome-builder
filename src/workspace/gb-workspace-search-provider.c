@@ -66,6 +66,7 @@ gb_workspace_search_provider_populate (GbSearchProvider *provider,
    GbWorkspaceSearchProviderPrivate *priv;
    GbWorkspacePane *pane;
    const gchar *name;
+   const gchar *icon_name;
    GtkTreeIter iter;
    FuzzyMatch *match;
    GArray *matches;
@@ -86,6 +87,7 @@ gb_workspace_search_provider_populate (GbSearchProvider *provider,
 
       pane = match->value;
       name = gb_workspace_pane_get_title(pane);
+      icon_name = gb_workspace_pane_get_icon_name(pane);
 
       highlight = highlight_substrings(name, search_term, "<b>", "</b>");
       markup = g_strdup_printf(_("%s\n<small>Switch to %s.</small>"),
@@ -94,6 +96,7 @@ gb_workspace_search_provider_populate (GbSearchProvider *provider,
 
       gtk_list_store_append(store, &iter);
       gtk_list_store_set(store, &iter,
+                         GB_SEARCH_COMPLETION_COLUMN_ICON_NAME, icon_name,
                          GB_SEARCH_COMPLETION_COLUMN_MARKUP, markup,
                          GB_SEARCH_COMPLETION_COLUMN_TEXT, name,
                          GB_SEARCH_COMPLETION_COLUMN_PROVIDER, provider,

@@ -53,11 +53,11 @@ struct _GbSearchCompletionClass
 
 enum _GbSearchCompletionColumn
 {
-   GB_SEARCH_COMPLETION_COLUMN_PIXBUF   = 0,
-   GB_SEARCH_COMPLETION_COLUMN_MARKUP   = 1,
-   GB_SEARCH_COMPLETION_COLUMN_TEXT     = 2,
-   GB_SEARCH_COMPLETION_COLUMN_PROVIDER = 3,
-   GB_SEARCH_COMPLETION_COLUMN_OBJECT   = 4,
+   GB_SEARCH_COMPLETION_COLUMN_ICON_NAME = 0,
+   GB_SEARCH_COMPLETION_COLUMN_MARKUP    = 1,
+   GB_SEARCH_COMPLETION_COLUMN_TEXT      = 2,
+   GB_SEARCH_COMPLETION_COLUMN_PROVIDER  = 3,
+   GB_SEARCH_COMPLETION_COLUMN_OBJECT    = 4,
 };
 
 GType               gb_search_completion_get_type        (void) G_GNUC_CONST;
@@ -68,6 +68,7 @@ void                gb_search_completion_remove_provider (GbSearchCompletion *co
                                                           GbSearchProvider   *provider);
 void                gb_search_completion_reload          (GbSearchCompletion *completion,
                                                           const gchar        *search_term);
+void                gb_search_completion_select_first    (GbSearchCompletion *completion);
 
 G_END_DECLS
 
