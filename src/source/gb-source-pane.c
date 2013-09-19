@@ -20,6 +20,7 @@
 #include <gtksourceview/gtksource.h>
 
 #include "gb-animation.h"
+#include "gb-language-c-completion-provider.h"
 #include "gb-source-diff.h"
 #include "gb-source-gutter-renderer-diff.h"
 #include "gb-source-overlay.h"
@@ -169,6 +170,17 @@ gb_source_pane_guess_language (GbSourcePane *pane,
    if (l) {
       buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(priv->view));
       gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(buffer), l);
+
+      if (!g_strcmp0(gtk_source_language_get_id(l), "c")) {
+         GtkSourceCompletionProvider *provider;
+         GtkSourceCompletion *completion;
+
+         completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(priv->view));
+         provider = g_object_new(GB_TYPE_LANGUAGE_C_COMPLETION_PROVIDER,
+                                 NULL);
+         gtk_source_completion_add_provider(completion, provider, NULL);
+         g_object_unref(provider);
+      }
    }
 
    /*

@@ -116,11 +116,15 @@ libdocs_la_SOURCES = \
 
 
 noinst_LTLIBRARIES += liblanguage.la
+liblanguage_LIBADD = \
+	libtrie.la
 liblanguage_la_SOURCES = \
 	language/gb-language.c \
 	language/gb-language.h \
 	language/gb-language-c.c \
 	language/gb-language-c.h \
+	language/gb-language-c-completion-provider.c \
+	language/gb-language-c-completion-provider.h \
 	language/gb-language-formatter.c \
 	language/gb-language-formatter.h \
 	language/gb-language-formatter-c.c \
@@ -181,9 +185,10 @@ libsearch_la_SOURCES = \
 
 noinst_LTLIBRARIES += libsource.la
 libsource_la_LIBADD = \
+	libapp.la \
 	libcompiler.la \
 	libdbus.la \
-	libapp.la
+	liblanguage.la
 libsource_la_SOURCES = \
 	source/snippet-parser.c \
 	source/snippet-parser.h \
@@ -321,6 +326,7 @@ RESOURCE_FILES = \
 	data/style-schemes/solarized-dark.xml \
 	data/style-schemes/solarized-light.xml \
 	data/icons/class-16x.png \
+	data/icons/keyword-16x.png \
 	data/icons/method-16x.png \
 	data/icons/static-16x.png \
 	data/icons/template-16x.png
