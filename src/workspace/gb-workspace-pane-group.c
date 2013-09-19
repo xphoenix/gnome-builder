@@ -488,6 +488,7 @@ gb_workspace_pane_group_init (GbWorkspacePaneGroup *group)
 
    priv->notebook = g_object_new(GTK_TYPE_NOTEBOOK,
                                  "hexpand", TRUE,
+                                 "scrollable", TRUE,
                                  "show-border", FALSE,
                                  "show-tabs", TRUE,
                                  "vexpand", TRUE,
