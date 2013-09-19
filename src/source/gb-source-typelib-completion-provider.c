@@ -253,6 +253,7 @@ complete_cb (GObject      *object,
    gpointer *closure;
    GError *error = NULL;
    GList *list = NULL;
+   guint flags;
 
    closure = (gpointer *)user_data;
 
@@ -272,12 +273,26 @@ complete_cb (GObject      *object,
       const gchar *markup;
       gdouble score;
 
-      g_variant_get(matches, "a(sd)", &viter);
-      while (g_variant_iter_loop(viter, "(sd)", &text, &score)) {
+      g_variant_get(matches, "a(sid)", &viter);
+      while (g_variant_iter_loop(viter, "(sid)", &text, &flags, &score)) {
          GtkSourceCompletionItem *item;
+         GdkPixbuf *pixbuf;
+
+         switch ((flags & 0xFF)) {
+         case 1:
+            pixbuf = gClassPixbuf;
+            break;
+         case 2:
+         case 3:
+            pixbuf = gMethodPixbuf;
+            break;
+         default:
+            pixbuf = NULL;
+            break;
+         }
 
          item = g_object_new(GB_TYPE_SOURCE_TYPELIB_COMPLETION_ITEM,
-                             "icon", NULL, /* Get from type */
+                             "icon", pixbuf,
                              "search-term", (gchar *)closure[2],
                              "text", text,
                              NULL);

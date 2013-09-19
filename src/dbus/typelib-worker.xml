@@ -19,7 +19,7 @@
 
     <method name="Complete">
       <arg name="word" direction="in" type="s"/>
-      <arg name="matches" direction="out" type="a(sd)"/>
+      <arg name="matches" direction="out" type="a(sid)"/>
     </method>
 
   </interface>

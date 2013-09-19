@@ -26,15 +26,20 @@
 static GbDBusTypelib *gSkeleton;
 static Fuzzy         *gFuzzy;
 
+#define TYPE_CLASS    GINT_TO_POINTER(1)
+#define TYPE_METHOD   GINT_TO_POINTER(2)
+#define TYPE_FUNCTION GINT_TO_POINTER(3)
+
 static void
 load_function_info (GIRepository   *repository,
                     const gchar    *namespace,
-                    GIFunctionInfo *info)
+                    GIFunctionInfo *info,
+                    gpointer        flags)
 {
    const gchar *symbol;
 
    symbol = g_function_info_get_symbol(info);
-   fuzzy_insert(gFuzzy, symbol, NULL);
+   fuzzy_insert(gFuzzy, symbol, flags);
 }
 
 static void
@@ -49,12 +54,12 @@ load_object_info (GIRepository *repository,
 
    symbol = g_object_info_get_type_name(info);
 
-   fuzzy_insert(gFuzzy, symbol, NULL);
+   fuzzy_insert(gFuzzy, symbol, TYPE_CLASS);
 
    n_methods = g_object_info_get_n_methods(info);
    for (i = 0; i < n_methods; i++) {
       method = g_object_info_get_method(info, i);
-      load_function_info(repository, namespace, method);
+      load_function_info(repository, namespace, method, TYPE_METHOD);
    }
 }
 
@@ -64,7 +69,7 @@ load_info (GIRepository *repository,
            GIBaseInfo   *info)
 {
    if (GI_IS_FUNCTION_INFO(info)) {
-      load_function_info(repository, namespace, (GIFunctionInfo *)info);
+      load_function_info(repository, namespace, (GIFunctionInfo *)info, TYPE_FUNCTION);
    } else if (GI_IS_OBJECT_INFO(info)) {
       load_object_info(repository, namespace, (GIObjectInfo *)info);
    }
@@ -125,24 +130,25 @@ handle_complete (GbDBusTypelib         *typelib,
    gint i;
 
    if (!word || !*word) {
-      g_variant_builder_init(&builder, G_VARIANT_TYPE("a(sd)"));
-      value = g_variant_new("(a(sd))", &builder);
+      g_variant_builder_init(&builder, G_VARIANT_TYPE("a(sid)"));
+      value = g_variant_new("(a(sid))", &builder);
       g_dbus_method_invocation_return_value(method, value);
       return;
    }
 
    matches = fuzzy_match(gFuzzy, word, 1000);
 
-   g_variant_builder_init(&builder, G_VARIANT_TYPE("a(sd)"));
+   g_variant_builder_init(&builder, G_VARIANT_TYPE("a(sid)"));
 
    for (i = 0; i < matches->len; i++) {
       match = &g_array_index(matches, FuzzyMatch, i);
-      g_variant_builder_add(&builder, "(sd)",
+      g_variant_builder_add(&builder, "(sid)",
                             match->key,
+                            GPOINTER_TO_UINT(match->value),
                             match->score);
    }
 
-   value = g_variant_new("(a(sd))", &builder);
+   value = g_variant_new("(a(sid))", &builder);
    g_dbus_method_invocation_return_value(g_object_ref(method), value);
 
    g_array_unref(matches);
@@ -154,7 +160,6 @@ gb_worker_typelib_init (GDBusConnection *connection)
    GError *error = NULL;
 
    gFuzzy = fuzzy_new(FALSE);
-
    gSkeleton = gb_dbus_typelib_skeleton_new();
 
    g_signal_connect(gSkeleton, "handle-require", G_CALLBACK(handle_require), NULL);
