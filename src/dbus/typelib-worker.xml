@@ -17,14 +17,9 @@
       <arg name="version" direction="in" type="s"/>
     </method>
 
-    <method name="GetMethods">
+    <method name="Complete">
       <arg name="word" direction="in" type="s"/>
       <arg name="matches" direction="out" type="a(sd)"/>
-    </method>
-
-    <method name="GetObjects">
-      <arg name="word" direction="in" type="s"/>
-      <arg name="words" direction="out" type="a(sd)"/>
     </method>
 
   </interface>

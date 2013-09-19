@@ -235,34 +235,31 @@ provider_get_name (GtkSourceCompletionProvider *provider)
    return g_strdup(_("Typelib"));
 }
 
-closure_unref (gpointer *closure)
+static void
+closure_free (gpointer *closure)
 {
-   closure[3] = GSIZE_TO_POINTER(GPOINTER_TO_SIZE(closure[3]) - 1);
-   if (!closure[3]) {
-      g_object_unref(closure[0]);
-      g_object_unref(closure[1]);
-      g_free(closure[2]);
-      g_free(closure);
-   }
+   g_object_unref(closure[0]);
+   g_object_unref(closure[1]);
+   g_free(closure[2]);
+   g_free(closure);
 }
 
 static void
-get_methods_cb (GObject      *object,
-                GAsyncResult *result,
-                gpointer      user_data)
+complete_cb (GObject      *object,
+             GAsyncResult *result,
+             gpointer      user_data)
 {
    GVariant *matches;
    gpointer *closure;
-   gboolean done;
    GError *error = NULL;
    GList *list = NULL;
 
    closure = (gpointer *)user_data;
 
-   if (!gb_dbus_typelib_call_get_methods_finish(GB_DBUS_TYPELIB(object),
-                                                &matches,
-                                                result,
-                                                &error)) {
+   if (!gb_dbus_typelib_call_complete_finish(GB_DBUS_TYPELIB(object),
+                                             &matches,
+                                             result,
+                                             &error)) {
       if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
          g_warning("%s", error->message);
       }
@@ -280,7 +277,7 @@ get_methods_cb (GObject      *object,
          GtkSourceCompletionItem *item;
 
          item = g_object_new(GB_TYPE_SOURCE_TYPELIB_COMPLETION_ITEM,
-                             "icon", gMethodPixbuf,
+                             "icon", NULL, /* Get from type */
                              "search-term", (gchar *)closure[2],
                              "text", text,
                              NULL);
@@ -295,73 +292,12 @@ get_methods_cb (GObject      *object,
       g_variant_unref(matches);
    }
 
-   done = GPOINTER_TO_INT(closure[3]) == 1;
-
-   gtk_source_completion_context_add_proposals(closure[1], closure[0], list, done);
+   gtk_source_completion_context_add_proposals(closure[1], closure[0], list, TRUE);
    g_list_foreach(list, (GFunc)g_object_unref, NULL);
    g_list_free(list);
 
 cleanup:
-   closure_unref(closure);
-}
-
-static void
-get_objects_cb (GObject      *object,
-                GAsyncResult *result,
-                gpointer      user_data)
-{
-   GVariant *matches;
-   gpointer *closure;
-   gboolean done;
-   GError *error = NULL;
-   GList *list = NULL;
-
-   closure = (gpointer *)user_data;
-
-   if (!gb_dbus_typelib_call_get_objects_finish(GB_DBUS_TYPELIB(object),
-                                                &matches,
-                                                result,
-                                                &error)) {
-      if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
-         g_warning("%s", error->message);
-      }
-      goto cleanup;
-   }
-
-   if (matches) {
-      GVariantIter *viter;
-      const gchar *text;
-      const gchar *markup;
-      gdouble score;
-
-      g_variant_get(matches, "a(sd)", &viter);
-      while (g_variant_iter_loop(viter, "(sd)", &text, &score)) {
-         GtkSourceCompletionItem *item;
-
-         item = g_object_new(GB_TYPE_SOURCE_TYPELIB_COMPLETION_ITEM,
-                             "icon", gClassPixbuf,
-                             "search-term", (gchar *)closure[2],
-                             "text", text,
-                             NULL);
-         if (!item) {
-            g_error("Failed to create item.");
-         }
-         list = g_list_prepend(list, item);
-      }
-
-      list = g_list_reverse(list);
-
-      g_variant_unref(matches);
-   }
-
-   done = GPOINTER_TO_INT(closure[3]) == 1;
-
-   gtk_source_completion_context_add_proposals(closure[1], closure[0], list, done);
-   g_list_foreach(list, (GFunc)g_object_unref, NULL);
-   g_list_free(list);
-
-cleanup:
-   closure_unref(closure);
+   closure_free(closure);
 }
 
 static void
@@ -374,7 +310,6 @@ provider_populate (GtkSourceCompletionProvider *provider,
    GError *error = NULL;
    GVariant *matches = NULL;
    gpointer *closure;
-   //gchar **words = NULL;
    gchar *word;
    GList *list = NULL;
    gint len;
@@ -390,11 +325,10 @@ provider_populate (GtkSourceCompletionProvider *provider,
    word = get_word(provider, &iter);
    len = strlen(word);
 
-   closure = g_new0(gpointer, 4);
+   closure = g_new0(gpointer, 3);
    closure[0] = g_object_ref(provider);
    closure[1] = g_object_ref(context);
    closure[2] = g_strdup(word);
-   closure[3] = GINT_TO_POINTER(2);
 
    cancellable = g_cancellable_new();
    g_signal_connect_object(context,
@@ -403,17 +337,11 @@ provider_populate (GtkSourceCompletionProvider *provider,
                            cancellable,
                            G_CONNECT_SWAPPED);
 
-   gb_dbus_typelib_call_get_methods(proxy,
-                                    word,
-                                    cancellable,
-                                    get_methods_cb,
-                                    closure);
-
-   gb_dbus_typelib_call_get_objects(proxy,
-                                    word,
-                                    cancellable,
-                                    get_objects_cb,
-                                    closure);
+   gb_dbus_typelib_call_complete(proxy,
+                                 word,
+                                 cancellable,
+                                 complete_cb,
+                                 closure);
 
    g_object_unref(cancellable);
 }

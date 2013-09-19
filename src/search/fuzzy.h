@@ -33,8 +33,9 @@ struct _FuzzyMatch
    gfloat       score;
 };
 
-Fuzzy     *fuzzy_new                (void);
-Fuzzy     *fuzzy_new_with_free_func (GDestroyNotify  free_func);
+Fuzzy     *fuzzy_new                (gboolean        case_sensitive);
+Fuzzy     *fuzzy_new_with_free_func (gboolean        case_sensitive,
+                                     GDestroyNotify  free_func);
 void       fuzzy_set_free_func      (Fuzzy          *fuzzy,
                                      GDestroyNotify  free_func);
 void       fuzzy_begin_bulk_insert  (Fuzzy          *fuzzy);

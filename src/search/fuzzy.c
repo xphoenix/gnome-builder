@@ -54,6 +54,7 @@ struct _Fuzzy
    GPtrArray      *id_to_value;
    GPtrArray      *char_tables;
    gboolean        in_bulk_insert;
+   gboolean        case_sensitive;
 };
 
 
@@ -115,13 +116,14 @@ fuzzy_match_compare (gconstpointer a,
 
 /**
  * fuzzy_new:
+ * @case_sensitive: %TRUE if case should be preserved.
  *
  * Create a new #Fuzzy for fuzzy matching strings.
  *
  * Returns: A newly allocated #Fuzzy that should be freed with fuzzy_free().
  */
 Fuzzy *
-fuzzy_new (void)
+fuzzy_new (gboolean case_sensitive)
 {
    GArray *table;
    Fuzzy *fuzzy;
@@ -134,6 +136,7 @@ fuzzy_new (void)
    fuzzy->id_to_value = g_ptr_array_new();
    fuzzy->id_to_text_offset = g_array_new(FALSE, FALSE, sizeof(gsize));
    fuzzy->char_tables = g_ptr_array_new();
+   fuzzy->case_sensitive = case_sensitive;
    g_ptr_array_set_free_func(fuzzy->char_tables,
                              (GDestroyNotify)g_array_unref);
 
@@ -147,11 +150,12 @@ fuzzy_new (void)
 
 
 Fuzzy *
-fuzzy_new_with_free_func (GDestroyNotify free_func)
+fuzzy_new_with_free_func (gboolean       case_sensitive,
+                          GDestroyNotify free_func)
 {
    Fuzzy *fuzzy;
 
-   fuzzy = fuzzy_new();
+   fuzzy = fuzzy_new(case_sensitive);
    fuzzy_set_free_func(fuzzy, free_func);
 
    return fuzzy;
@@ -257,6 +261,7 @@ fuzzy_insert (Fuzzy       *fuzzy,
 {
    FuzzyItem item;
    GArray *table;
+   gchar *downcase;
    gsize offset;
    guint idx;
    gint id;
@@ -270,6 +275,10 @@ fuzzy_insert (Fuzzy       *fuzzy,
       return;
    }
 
+   if (!fuzzy->case_sensitive) {
+      downcase = g_ascii_strdown(key, -1);
+   }
+
    /*
     * Insert the string into our heap.
     * Track the offset within the heap since the heap could realloc.
@@ -280,6 +289,10 @@ fuzzy_insert (Fuzzy       *fuzzy,
    g_assert_cmpint(fuzzy->id_to_value->len, ==, fuzzy->id_to_text_offset->len);
 
    id = fuzzy->id_to_text_offset->len - 1;
+
+   if (!fuzzy->case_sensitive) {
+      key = downcase;
+   }
 
    for (i = 0; key[i]; i++) {
       idx = key[i];
@@ -292,6 +305,10 @@ fuzzy_insert (Fuzzy       *fuzzy,
       if (!fuzzy->in_bulk_insert) {
          g_array_sort(table, fuzzy_item_compare);
       }
+   }
+
+   if (!fuzzy->case_sensitive) {
+      g_free(downcase);
    }
 }
 
@@ -421,6 +438,7 @@ fuzzy_match (Fuzzy       *fuzzy,
    FuzzyItem *item;
    GArray *matches = NULL;
    GArray *root;
+   gchar *downcase = NULL;
    gint i;
 
    g_return_val_if_fail(fuzzy, NULL);
@@ -431,6 +449,11 @@ fuzzy_match (Fuzzy       *fuzzy,
 
    if (!*needle) {
       return matches;
+   }
+
+   if (!fuzzy->case_sensitive) {
+      downcase = g_ascii_strdown(needle, -1);
+      needle = downcase;
    }
 
    lookup.fuzzy = fuzzy;
@@ -461,6 +484,7 @@ fuzzy_match (Fuzzy       *fuzzy,
          match.score = 0;
          g_array_append_val(matches, match);
       }
+      g_free(downcase);
       return matches;
    }
 
@@ -490,6 +514,7 @@ fuzzy_match (Fuzzy       *fuzzy,
       }
    }
 
+   g_free(downcase);
    g_free(lookup.state);
    g_free(lookup.tables);
    g_hash_table_unref(lookup.matches);

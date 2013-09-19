@@ -297,5 +297,5 @@ gb_workspace_search_provider_init (GbWorkspaceSearchProvider *provider)
 
    provider->priv->panes = g_ptr_array_new();
 
-   provider->priv->fuzzy = fuzzy_new();
+   provider->priv->fuzzy = fuzzy_new(FALSE);
 }

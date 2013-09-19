@@ -24,8 +24,7 @@
 #include "gb-worker-typelib.h"
 
 static GbDBusTypelib *gSkeleton;
-static Fuzzy         *gFuzzyMethods;
-static Fuzzy         *gFuzzyObjects;
+static Fuzzy         *gFuzzy;
 
 static void
 load_function_info (GIRepository   *repository,
@@ -35,7 +34,7 @@ load_function_info (GIRepository   *repository,
    const gchar *symbol;
 
    symbol = g_function_info_get_symbol(info);
-   fuzzy_insert(gFuzzyMethods, symbol, NULL);
+   fuzzy_insert(gFuzzy, symbol, NULL);
 }
 
 static void
@@ -50,7 +49,7 @@ load_object_info (GIRepository *repository,
 
    symbol = g_object_info_get_type_name(info);
 
-   fuzzy_insert(gFuzzyObjects, symbol, NULL);
+   fuzzy_insert(gFuzzy, symbol, NULL);
 
    n_methods = g_object_info_get_n_methods(info);
    for (i = 0; i < n_methods; i++) {
@@ -106,21 +105,17 @@ handle_require (GbDBusTypelib         *typelib,
       return;
    }
 
-   fuzzy_begin_bulk_insert(gFuzzyMethods);
-   fuzzy_begin_bulk_insert(gFuzzyObjects);
-
+   fuzzy_begin_bulk_insert(gFuzzy);
    load_namespace(repository, name);
-
-   fuzzy_end_bulk_insert(gFuzzyMethods);
-   fuzzy_end_bulk_insert(gFuzzyObjects);
+   fuzzy_end_bulk_insert(gFuzzy);
 
    g_dbus_method_invocation_return_value(method, NULL);
 }
 
 static void
-handle_get_methods (GbDBusTypelib         *typelib,
-                    GDBusMethodInvocation *method,
-                    const gchar           *word)
+handle_complete (GbDBusTypelib         *typelib,
+                 GDBusMethodInvocation *method,
+                 const gchar           *word)
 {
    GVariantBuilder builder;
    FuzzyMatch *match;
@@ -136,43 +131,7 @@ handle_get_methods (GbDBusTypelib         *typelib,
       return;
    }
 
-   matches = fuzzy_match(gFuzzyMethods, word, 1000);
-
-   g_variant_builder_init(&builder, G_VARIANT_TYPE("a(sd)"));
-
-   for (i = 0; i < matches->len; i++) {
-      match = &g_array_index(matches, FuzzyMatch, i);
-      g_variant_builder_add(&builder, "(sd)",
-                            match->key,
-                            match->score);
-   }
-
-   value = g_variant_new("(a(sd))", &builder);
-   g_dbus_method_invocation_return_value(g_object_ref(method), value);
-
-   g_array_unref(matches);
-}
-
-static void
-handle_get_objects (GbDBusTypelib         *typelib,
-                    GDBusMethodInvocation *method,
-                    const gchar           *word)
-{
-   GVariantBuilder builder;
-   FuzzyMatch *match;
-   GVariant *value;
-   gdouble score;
-   GArray *matches;
-   gint i;
-
-   if (!word || !*word) {
-      g_variant_builder_init(&builder, G_VARIANT_TYPE("a(sd)"));
-      value = g_variant_new("(a(sd))", &builder);
-      g_dbus_method_invocation_return_value(method, value);
-      return;
-   }
-
-   matches = fuzzy_match(gFuzzyObjects, word, 100);
+   matches = fuzzy_match(gFuzzy, word, 1000);
 
    g_variant_builder_init(&builder, G_VARIANT_TYPE("a(sd)"));
 
@@ -194,14 +153,12 @@ gb_worker_typelib_init (GDBusConnection *connection)
 {
    GError *error = NULL;
 
-   gFuzzyMethods = fuzzy_new();
-   gFuzzyObjects = fuzzy_new();
+   gFuzzy = fuzzy_new(FALSE);
 
    gSkeleton = gb_dbus_typelib_skeleton_new();
 
    g_signal_connect(gSkeleton, "handle-require", G_CALLBACK(handle_require), NULL);
-   g_signal_connect(gSkeleton, "handle-get-methods", G_CALLBACK(handle_get_methods), NULL);
-   g_signal_connect(gSkeleton, "handle-get-objects", G_CALLBACK(handle_get_objects), NULL);
+   g_signal_connect(gSkeleton, "handle-complete", G_CALLBACK(handle_complete), NULL);
 
    if (!g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(gSkeleton),
                                          connection,
