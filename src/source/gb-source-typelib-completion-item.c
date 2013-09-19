@@ -97,8 +97,15 @@ gb_source_typelib_completion_item_get_markup (GtkSourceCompletionProposal *propo
 
    ret = highlight_substrings(item->priv->text,
                               item->priv->search_term,
-                              "<span underline='single'>",
+                              "<span color='#333333'>",
                               "</span>");
+
+   {
+      gchar *tmp = ret;
+
+      ret = g_strdup_printf("<span color='#777777'>%s</span>", tmp);
+      g_free(tmp);
+   }
 
    return ret;
 }
