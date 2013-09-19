@@ -104,7 +104,7 @@ gb_source_pane_set_style_scheme_name (GbSourcePane *pane,
    g_return_if_fail(GB_IS_SOURCE_PANE(pane));
 
    if (!name) {
-      name = "tango";
+      name = "solarized-light";
    }
 
    m = gtk_source_style_scheme_manager_get_default();
@@ -818,6 +818,7 @@ gb_source_pane_set_property (GObject      *object,
 static void
 gb_source_pane_class_init (GbSourcePaneClass *klass)
 {
+   GtkSourceStyleSchemeManager *sm;
    GbWorkspacePaneClass *workspace_pane_class;
    GtkWidgetClass *widget_class;
    GObjectClass *object_class;
@@ -867,6 +868,9 @@ gb_source_pane_class_init (GbSourcePaneClass *klass)
                            G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_STYLE_SCHEME_NAME,
                                    gParamSpecs[PROP_STYLE_SCHEME_NAME]);
+
+   sm = gtk_source_style_scheme_manager_get_default ();
+   gtk_source_style_scheme_manager_append_search_path (sm, "resource://org/gnome/Builder/data/style-schemes");
 }
 
 static void
