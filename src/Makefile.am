@@ -322,6 +322,7 @@ RESOURCE_FILES = \
 	data/style-schemes/solarized-light.xml \
 	data/icons/class-16x.png \
 	data/icons/method-16x.png \
+	data/icons/static-16x.png \
 	data/icons/template-16x.png
 
 

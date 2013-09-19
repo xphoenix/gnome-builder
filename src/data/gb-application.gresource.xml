@@ -6,6 +6,7 @@
     <file compressed="true">data/style-schemes/solarized-light.xml</file>
     <file compressed="false">data/icons/class-16x.png</file>
     <file compressed="false">data/icons/method-16x.png</file>
+    <file compressed="false">data/icons/static-16x.png</file>
     <file compressed="false">data/icons/template-16x.png</file>
   </gresource>
 </gresources>
