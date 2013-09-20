@@ -22,6 +22,11 @@
       <arg name="matches" direction="out" type="a(sid)"/>
     </method>
 
+    <method name="GetParams">
+      <arg name="symbol" direction="in" type="s"/>
+      <arg name="params" direction="out" type="as"/>
+    </method>
+
   </interface>
 
 </node>

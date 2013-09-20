@@ -52,6 +52,9 @@ struct _GbSourceTypelibCompletionItemClass
 
 GType            gb_source_typelib_completion_item_get_type    (void) G_GNUC_CONST;
 GbSourceSnippet *gb_source_typelib_completion_item_get_snippet (GbSourceTypelibCompletionItem *item);
+void             gb_source_typelib_completion_item_set_params  (GbSourceTypelibCompletionItem *item,
+                                                                const gchar * const           *params);
+gboolean         gb_source_typelib_completion_item_get_is_function (GbSourceTypelibCompletionItem *item);
 
 G_END_DECLS
 

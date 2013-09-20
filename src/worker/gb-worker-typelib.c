@@ -25,6 +25,8 @@
 
 static GbDBusTypelib *gSkeleton;
 static Fuzzy         *gFuzzy;
+static GHashTable    *gParams;
+static GStringChunk  *gChunks;
 
 #define TYPE_CLASS    GINT_TO_POINTER(1)
 #define TYPE_METHOD   GINT_TO_POINTER(2)
@@ -34,12 +36,40 @@ static void
 load_function_info (GIRepository   *repository,
                     const gchar    *namespace,
                     GIFunctionInfo *info,
-                    gpointer        flags)
+                    const gchar    *self_name,
+                    gpointer        user_data)
 {
+   GIFunctionInfoFlags flags;
    const gchar *symbol;
+   const gchar *name;
+   GIArgInfo *arg;
+   gchar **args;
+   gint n_args;
+   gint i;
+   gint j = 0;
 
    symbol = g_function_info_get_symbol(info);
-   fuzzy_insert(gFuzzy, symbol, flags);
+   fuzzy_insert(gFuzzy, symbol, user_data);
+
+   n_args = g_callable_info_get_n_args((GICallableInfo *)info);
+   args = g_new0(gchar*, n_args + 2);
+
+   flags = g_function_info_get_flags(info);
+   if ((flags & GI_FUNCTION_IS_METHOD)) {
+      if (self_name) {
+         args[j++] = (gchar *)self_name;
+      }
+   }
+
+   for (i = 0; i < n_args; i++) {
+      arg = g_callable_info_get_arg((GICallableInfo *)info, i);
+      if (!g_arg_info_is_return_value(arg)) {
+         name = g_base_info_get_name(arg);
+         args[j++] = g_string_chunk_insert(gChunks, name);
+      }
+   }
+
+   g_hash_table_insert(gParams, g_strdup(symbol), args);
 }
 
 static void
@@ -49,17 +79,26 @@ load_object_info (GIRepository *repository,
 {
    GIFunctionInfo *method;
    const gchar *symbol;
+   const gchar *name;
+   gchar *name_lower;
+   gchar *tmp;
    guint n_methods;
    guint i;
 
    symbol = g_object_info_get_type_name(info);
+   name = g_base_info_get_name((GIBaseInfo *)info);
+
+   name_lower = g_ascii_strdown(name, -1);
+   tmp = name_lower;
+   name_lower = g_string_chunk_insert(gChunks, name_lower);
+   g_free(tmp);
 
    fuzzy_insert(gFuzzy, symbol, TYPE_CLASS);
 
    n_methods = g_object_info_get_n_methods(info);
    for (i = 0; i < n_methods; i++) {
       method = g_object_info_get_method(info, i);
-      load_function_info(repository, namespace, method, TYPE_METHOD);
+      load_function_info(repository, namespace, method, name_lower, TYPE_METHOD);
    }
 }
 
@@ -69,7 +108,7 @@ load_info (GIRepository *repository,
            GIBaseInfo   *info)
 {
    if (GI_IS_FUNCTION_INFO(info)) {
-      load_function_info(repository, namespace, (GIFunctionInfo *)info, TYPE_FUNCTION);
+      load_function_info(repository, namespace, (GIFunctionInfo *)info, NULL, TYPE_FUNCTION);
    } else if (GI_IS_OBJECT_INFO(info)) {
       load_object_info(repository, namespace, (GIObjectInfo *)info);
    }
@@ -154,16 +193,44 @@ handle_complete (GbDBusTypelib         *typelib,
    g_array_unref(matches);
 }
 
+static void
+handle_get_params (GbDBusTypelib         *typelib,
+                   GDBusMethodInvocation *method,
+                   const gchar           *symbol)
+{
+   GVariantBuilder builder;
+   GVariant *value;
+   gchar **params;
+   gint i;
+
+   g_variant_builder_init(&builder, G_VARIANT_TYPE("as"));
+
+   if ((params = g_hash_table_lookup(gParams, symbol))) {
+      for (i = 0; params[i]; i++) {
+         g_variant_builder_add(&builder, "s", params[i]);
+      }
+   }
+
+   value = g_variant_new("(as)", &builder);
+   g_dbus_method_invocation_return_value(g_object_ref(method), value);
+}
+
 void
 gb_worker_typelib_init (GDBusConnection *connection)
 {
    GError *error = NULL;
 
    gFuzzy = fuzzy_new(FALSE);
+   gChunks = g_string_chunk_new(4096);
    gSkeleton = gb_dbus_typelib_skeleton_new();
+   gParams = g_hash_table_new_full(g_str_hash,
+                                   g_str_equal,
+                                   g_free,
+                                   g_free);
 
    g_signal_connect(gSkeleton, "handle-require", G_CALLBACK(handle_require), NULL);
    g_signal_connect(gSkeleton, "handle-complete", G_CALLBACK(handle_complete), NULL);
+   g_signal_connect(gSkeleton, "handle-get-params", G_CALLBACK(handle_get_params), NULL);
 
    if (!g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(gSkeleton),
                                          connection,

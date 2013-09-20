@@ -415,13 +415,18 @@ provider_activate_proposal (GtkSourceCompletionProvider *provider,
                             GtkTextIter                 *iter)
 {
    GbSourceTypelibCompletionProviderPrivate *priv;
+   GbSourceTypelibCompletionProvider *self;
+   GbSourceTypelibCompletionItem *item;
    GbSourceViewState *state;
    GbSourceSnippet *snippet;
+   GbDBusTypelib *proxy;
    GtkTextBuffer *buffer;
    GtkTextIter begin;
    GtkTextIter end;
 
-   priv = GB_SOURCE_TYPELIB_COMPLETION_PROVIDER(provider)->priv;
+   self = GB_SOURCE_TYPELIB_COMPLETION_PROVIDER(provider);
+   priv = self->priv;
+   item = GB_SOURCE_TYPELIB_COMPLETION_ITEM(proposal);
 
    buffer = gtk_text_iter_get_buffer(iter);
 
@@ -431,11 +436,32 @@ provider_activate_proposal (GtkSourceCompletionProvider *provider,
    get_word_bounds(provider, iter, &begin, &end);
    gtk_text_buffer_delete(buffer, &begin, &end);
 
+   if (gb_source_typelib_completion_item_get_is_function(item)) {
+      gchar **params;
+      gchar *symbol;
+
+      /*
+       * Get the parameter list via DBus.
+       */
+      g_object_get(proposal, "text", &symbol, NULL);
+      proxy = get_proxy(self);
+      if (gb_dbus_typelib_call_get_params_sync(proxy,
+                                               symbol,
+                                               &params,
+                                               NULL,
+                                               NULL)) {
+         gb_source_typelib_completion_item_set_params(
+            item,
+            (const gchar * const *)params);
+         g_strfreev(params);
+      }
+      g_free(symbol);
+   }
+
    /*
     * Insert a snippet for this completion item.
     */
-   snippet = gb_source_typelib_completion_item_get_snippet(
-      GB_SOURCE_TYPELIB_COMPLETION_ITEM(proposal));
+   snippet = gb_source_typelib_completion_item_get_snippet(item);
    state = g_object_new(GB_TYPE_SOURCE_VIEW_STATE_SNIPPET,
                         "snippet", snippet,
                         NULL);

@@ -33,9 +33,10 @@ G_DEFINE_TYPE_EXTENDED(GbSourceTypelibCompletionItem,
 
 struct _GbSourceTypelibCompletionItemPrivate
 {
-   GdkPixbuf *icon;
-   gchar     *search_term;
-   gchar     *text;
+   GdkPixbuf  *icon;
+   gchar      *search_term;
+   gchar      *text;
+   gchar     **params;
    gboolean   is_function;
 };
 
@@ -51,6 +52,16 @@ enum
 };
 
 static GParamSpec *gParamSpecs[LAST_PROP];
+
+void
+gb_source_typelib_completion_item_set_params (GbSourceTypelibCompletionItem *item,
+                                              const gchar * const           *params)
+{
+   g_return_if_fail(GB_IS_SOURCE_TYPELIB_COMPLETION_ITEM(item));
+
+   g_strfreev(item->priv->params);
+   item->priv->params = g_strdupv((gchar **)params);
+}
 
 GbSourceSnippet *
 gb_source_typelib_completion_item_get_snippet (GbSourceTypelibCompletionItem *item)
@@ -76,19 +87,33 @@ gb_source_typelib_completion_item_get_snippet (GbSourceTypelibCompletionItem *it
    g_object_unref(chunk);
 
    if (priv->is_function) {
+      guint i = 1;
+
       chunk = gb_source_snippet_chunk_new();
       gb_source_snippet_chunk_set_text(chunk, " (");
       gb_source_snippet_add_chunk(snippet, chunk);
       g_object_unref(chunk);
 
-      /*
-       * TODO: Lookup parameter names and positions and defaults so we can tab
-       *      through them.
-       */
-      chunk = gb_source_snippet_chunk_new();
-      gb_source_snippet_chunk_set_tab_stop(chunk, 1);
-      gb_source_snippet_add_chunk(snippet, chunk);
-      g_object_unref(chunk);
+      if (priv->params && priv->params[0]) {
+         for (i = 0; priv->params[i]; i++) {
+            if (i != 0) {
+               chunk = gb_source_snippet_chunk_new();
+               gb_source_snippet_chunk_set_text(chunk, ", ");
+               gb_source_snippet_add_chunk(snippet, chunk);
+               g_object_unref(chunk);
+            }
+            chunk = gb_source_snippet_chunk_new();
+            gb_source_snippet_chunk_set_text(chunk, priv->params[i]);
+            gb_source_snippet_chunk_set_tab_stop(chunk, i + 1);
+            gb_source_snippet_add_chunk(snippet, chunk);
+            g_object_unref(chunk);
+         }
+      } else {
+         chunk = gb_source_snippet_chunk_new();
+         gb_source_snippet_chunk_set_tab_stop(chunk, 1);
+         gb_source_snippet_add_chunk(snippet, chunk);
+         g_object_unref(chunk);
+      }
 
       chunk = gb_source_snippet_chunk_new();
       gb_source_snippet_chunk_set_text(chunk, ")");
@@ -212,6 +237,7 @@ gb_source_typelib_completion_item_finalize (GObject *object)
    g_clear_object(&priv->icon);
    g_free(priv->search_term);
    g_free(priv->text);
+   g_strfreev(priv->params);
 
    G_OBJECT_CLASS(gb_source_typelib_completion_item_parent_class)->finalize(object);
 }
