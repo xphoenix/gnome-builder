@@ -7,7 +7,7 @@ test_search_fuzzy (void)
    GArray *matches;
    Fuzzy *fuzzy;
 
-   fuzzy = fuzzy_new();
+   fuzzy = fuzzy_new(FALSE);
 
    fuzzy_insert(fuzzy, "gtk_widget_show", NULL);
    fuzzy_insert(fuzzy, "gtk_widget_hide", NULL);
