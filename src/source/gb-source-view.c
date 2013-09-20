@@ -57,6 +57,12 @@ gb_source_view_set_state (GbSourceView      *view,
 
    priv = view->priv;
 
+#if 0
+   g_print("Changing state from \"%s\" to \"%s\".\n",
+           priv->state ? g_type_name(G_TYPE_FROM_INSTANCE(priv->state)) : "",
+           state ? g_type_name(G_TYPE_FROM_INSTANCE(state)) : "");
+#endif
+
    if (priv->state) {
       gb_source_view_state_unload(priv->state, view);
       g_clear_object(&priv->state);
