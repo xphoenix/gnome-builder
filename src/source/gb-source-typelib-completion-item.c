@@ -36,12 +36,14 @@ struct _GbSourceTypelibCompletionItemPrivate
    GdkPixbuf *icon;
    gchar     *search_term;
    gchar     *text;
+   gboolean   is_function;
 };
 
 enum
 {
    PROP_0,
    PROP_ICON,
+   PROP_IS_FUNCTION,
    PROP_MARKUP,
    PROP_SEARCH_TERM,
    PROP_TEXT,
@@ -49,6 +51,75 @@ enum
 };
 
 static GParamSpec *gParamSpecs[LAST_PROP];
+
+GbSourceSnippet *
+gb_source_typelib_completion_item_get_snippet (GbSourceTypelibCompletionItem *item)
+{
+   GbSourceTypelibCompletionItemPrivate *priv;
+   GbSourceSnippetChunk *chunk;
+   GbSourceSnippet *snippet;
+
+   g_return_val_if_fail(GB_IS_SOURCE_TYPELIB_COMPLETION_ITEM(item), NULL);
+
+   priv = item->priv;
+
+   /*
+    * TODO: This will get more complicated as we start tracking parameters
+    *       and such. We will need to insert a chunk for each parameter.
+    */
+
+   snippet = gb_source_snippet_new(NULL);
+
+   chunk = gb_source_snippet_chunk_new();
+   gb_source_snippet_chunk_set_text(chunk, priv->text);
+   gb_source_snippet_add_chunk(snippet, chunk);
+   g_object_unref(chunk);
+
+   if (priv->is_function) {
+      chunk = gb_source_snippet_chunk_new();
+      gb_source_snippet_chunk_set_text(chunk, " (");
+      gb_source_snippet_add_chunk(snippet, chunk);
+      g_object_unref(chunk);
+
+      /*
+       * TODO: Lookup parameter names and positions and defaults so we can tab
+       *      through them.
+       */
+      chunk = gb_source_snippet_chunk_new();
+      gb_source_snippet_chunk_set_tab_stop(chunk, 1);
+      gb_source_snippet_add_chunk(snippet, chunk);
+      g_object_unref(chunk);
+
+      chunk = gb_source_snippet_chunk_new();
+      gb_source_snippet_chunk_set_text(chunk, ")");
+      gb_source_snippet_add_chunk(snippet, chunk);
+      g_object_unref(chunk);
+
+      chunk = gb_source_snippet_chunk_new();
+      gb_source_snippet_chunk_set_tab_stop(chunk, 0);
+      gb_source_snippet_add_chunk(snippet, chunk);
+      g_object_unref(chunk);
+   }
+
+   return snippet;
+}
+
+gboolean
+gb_source_typelib_completion_item_get_is_function (GbSourceTypelibCompletionItem *item)
+{
+   g_return_val_if_fail(GB_IS_SOURCE_TYPELIB_COMPLETION_ITEM(item), FALSE);
+
+   return item->priv->is_function;
+}
+
+void
+gb_source_typelib_completion_item_set_is_function (GbSourceTypelibCompletionItem *item,
+                                                   gboolean                       is_function)
+{
+   g_return_if_fail(GB_IS_SOURCE_TYPELIB_COMPLETION_ITEM(item));
+
+   item->priv->is_function = is_function;
+}
 
 static const gchar *
 gb_source_typelib_completion_item_get_search_term (GbSourceTypelibCompletionItem *item)
@@ -160,6 +231,9 @@ gb_source_typelib_completion_item_get_property (GObject    *object,
    case PROP_ICON:
       g_value_set_object(value, gb_source_typelib_completion_item_get_icon(GTK_SOURCE_COMPLETION_PROPOSAL(item)));
       break;
+   case PROP_IS_FUNCTION:
+      g_value_set_boolean(value, gb_source_typelib_completion_item_get_is_function(item));
+      break;
    case PROP_SEARCH_TERM:
       g_value_set_string(value, gb_source_typelib_completion_item_get_search_term(item));
       break;
@@ -182,6 +256,9 @@ gb_source_typelib_completion_item_set_property (GObject      *object,
    switch (prop_id) {
    case PROP_ICON:
       gb_source_typelib_completion_item_set_icon(item, g_value_get_object(value));
+      break;
+   case PROP_IS_FUNCTION:
+      gb_source_typelib_completion_item_set_is_function(item, g_value_get_boolean(value));
       break;
    case PROP_SEARCH_TERM:
       gb_source_typelib_completion_item_set_search_term(item, g_value_get_string(value));
@@ -222,6 +299,15 @@ gb_source_typelib_completion_item_class_init (GbSourceTypelibCompletionItemClass
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_ICON,
                                    gParamSpecs[PROP_ICON]);
+
+   gParamSpecs[PROP_IS_FUNCTION] =
+      g_param_spec_boolean("is-function",
+                          _("Is Function"),
+                          _("Is this symbol a function."),
+                          FALSE,
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_IS_FUNCTION,
+                                   gParamSpecs[PROP_IS_FUNCTION]);
 
    gParamSpecs[PROP_MARKUP] =
       g_param_spec_string("markup",

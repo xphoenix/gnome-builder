@@ -1003,7 +1003,9 @@ gb_source_pane_init (GbSourcePane *pane)
                                       priv->snippets_provider,
                                       NULL);
 
-   pane->priv->typelib_provider = gb_source_typelib_completion_provider_new();
+   pane->priv->typelib_provider =
+      gb_source_typelib_completion_provider_new(
+         GB_SOURCE_VIEW(priv->view));
    gtk_source_completion_add_provider(completion,
                                       priv->typelib_provider,
                                       NULL);

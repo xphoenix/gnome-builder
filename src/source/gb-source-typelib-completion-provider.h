@@ -21,6 +21,8 @@
 
 #include <gtksourceview/gtksourcecompletionprovider.h>
 
+#include "gb-source-view.h"
+
 G_BEGIN_DECLS
 
 #define GB_TYPE_SOURCE_TYPELIB_COMPLETION_PROVIDER            (gb_source_typelib_completion_provider_get_type())
@@ -49,7 +51,7 @@ struct _GbSourceTypelibCompletionProviderClass
 };
 
 GType                        gb_source_typelib_completion_provider_get_type (void) G_GNUC_CONST;
-GtkSourceCompletionProvider *gb_source_typelib_completion_provider_new      (void);
+GtkSourceCompletionProvider *gb_source_typelib_completion_provider_new      (GbSourceView *view);
 
 G_END_DECLS
 

@@ -23,8 +23,14 @@
 #include "gb-application-resource.h"
 #include "gb-dbus-typelib.h"
 #include "gb-multiprocess-manager.h"
+#include "gb-source-snippet.h"
+#include "gb-source-snippet-chunk.h"
 #include "gb-source-typelib-completion-item.h"
 #include "gb-source-typelib-completion-provider.h"
+#include "gb-source-view.h"
+#include "gb-source-view-state.h"
+#include "gb-source-view-state-insert.h"
+#include "gb-source-view-state-snippet.h"
 
 #define TYPELIB_WORKER_NAME "typelib-completion-provider"
 
@@ -41,6 +47,7 @@ struct _GbSourceTypelibCompletionProviderPrivate
 {
    GDBusConnection *peer;
    GbDBusTypelib *proxy;
+   GbSourceView *view;
 };
 
 static GdkPixbuf *gClassPixbuf;
@@ -48,9 +55,21 @@ static GdkPixbuf *gMethodPixbuf;
 static GdkPixbuf *gStaticPixbuf;
 
 GtkSourceCompletionProvider *
-gb_source_typelib_completion_provider_new (void)
+gb_source_typelib_completion_provider_new (GbSourceView *view)
 {
-   return g_object_new(GB_TYPE_SOURCE_TYPELIB_COMPLETION_PROVIDER, NULL);
+   GbSourceTypelibCompletionProvider *provider;
+
+   provider = g_object_new(GB_TYPE_SOURCE_TYPELIB_COMPLETION_PROVIDER,
+                           NULL);
+
+   /*
+    * TODO: Use property.
+    */
+   provider->priv->view = view;
+   g_object_add_weak_pointer(G_OBJECT(view),
+                             (gpointer *)&provider->priv->view);
+
+   return GTK_SOURCE_COMPLETION_PROVIDER(provider);
 }
 
 static GDBusConnection *
@@ -116,6 +135,14 @@ get_proxy (GbSourceTypelibCompletionProvider *provider)
 static void
 gb_source_typelib_completion_provider_finalize (GObject *object)
 {
+   GbSourceTypelibCompletionProviderPrivate *priv = GB_SOURCE_TYPELIB_COMPLETION_PROVIDER(object)->priv;
+
+   if (priv->view) {
+      g_object_remove_weak_pointer(G_OBJECT(priv->view),
+                                   (gpointer *)&priv->view);
+      priv->view = NULL;
+   }
+
    G_OBJECT_CLASS(gb_source_typelib_completion_provider_parent_class)->finalize(object);
 }
 
@@ -188,33 +215,42 @@ is_stop_char (gunichar c)
 }
 
 static gchar *
-get_word (GtkSourceCompletionProvider *provider,
-          GtkTextIter                 *iter)
+get_word_bounds (GtkSourceCompletionProvider *provider,
+                 const GtkTextIter           *iter,
+                 GtkTextIter                 *begin,
+                 GtkTextIter                 *end)
 {
-   GtkTextIter *end;
    gboolean moved = FALSE;
    gunichar c;
    gchar *word;
 
-   end = gtk_text_iter_copy(iter);
+   gtk_text_iter_assign(end, iter);
+   gtk_text_iter_assign(begin, iter);
 
    do {
-      if (!gtk_text_iter_backward_char(iter)) {
+      if (!gtk_text_iter_backward_char(begin)) {
          break;
       }
-      c = gtk_text_iter_get_char(iter);
+      c = gtk_text_iter_get_char(begin);
       moved = TRUE;
    } while (!is_stop_char(c));
 
-   if (moved && !gtk_text_iter_is_start(iter)) {
-      gtk_text_iter_forward_char(iter);
+   if (moved && !gtk_text_iter_is_start(begin)) {
+      gtk_text_iter_forward_char(begin);
    }
 
-   word = g_strstrip(gtk_text_iter_get_text(iter, end));
-
-   gtk_text_iter_free(end);
-
    return word;
+}
+
+static gchar *
+get_word (GtkSourceCompletionProvider *provider,
+          GtkTextIter                 *iter)
+{
+   GtkTextIter begin;
+   GtkTextIter end;
+
+   get_word_bounds(provider, iter, &begin, &end);
+   return gtk_text_iter_get_text(&begin, &end);
 }
 
 static GdkPixbuf *
@@ -283,6 +319,7 @@ complete_cb (GObject      *object,
       while (g_variant_iter_loop(viter, "(sid)", &text, &flags, &score)) {
          GtkSourceCompletionItem *item;
          GdkPixbuf *pixbuf;
+         gboolean is_function = FALSE;
 
          switch ((flags & 0xFF)) {
          case 1:
@@ -290,9 +327,11 @@ complete_cb (GObject      *object,
             break;
          case 2:
             pixbuf = gMethodPixbuf;
+            is_function = TRUE;
             break;
          case 3:
             pixbuf = gStaticPixbuf;
+            is_function = TRUE;
             break;
          default:
             pixbuf = NULL;
@@ -301,6 +340,7 @@ complete_cb (GObject      *object,
 
          item = g_object_new(GB_TYPE_SOURCE_TYPELIB_COMPLETION_ITEM,
                              "icon", pixbuf,
+                             "is-function", is_function,
                              "search-term", (gchar *)closure[2],
                              "text", text,
                              NULL);
@@ -369,6 +409,47 @@ provider_populate (GtkSourceCompletionProvider *provider,
    g_object_unref(cancellable);
 }
 
+static gboolean
+provider_activate_proposal (GtkSourceCompletionProvider *provider,
+                            GtkSourceCompletionProposal *proposal,
+                            GtkTextIter                 *iter)
+{
+   GbSourceTypelibCompletionProviderPrivate *priv;
+   GbSourceViewState *state;
+   GbSourceSnippet *snippet;
+   GtkTextBuffer *buffer;
+   GtkTextIter begin;
+   GtkTextIter end;
+
+   priv = GB_SOURCE_TYPELIB_COMPLETION_PROVIDER(provider)->priv;
+
+   buffer = gtk_text_iter_get_buffer(iter);
+
+   /*
+    * Remove existing word.
+    */
+   get_word_bounds(provider, iter, &begin, &end);
+   gtk_text_buffer_delete(buffer, &begin, &end);
+
+   /*
+    * Insert a snippet for this completion item.
+    */
+   snippet = gb_source_typelib_completion_item_get_snippet(
+      GB_SOURCE_TYPELIB_COMPLETION_ITEM(proposal));
+   state = g_object_new(GB_TYPE_SOURCE_VIEW_STATE_SNIPPET,
+                        "snippet", snippet,
+                        NULL);
+   g_object_set(priv->view, "state", state, NULL);
+   g_object_unref(state);
+   g_object_unref(snippet);
+
+   /*
+    * TODO: Store mapping for match to elevate result later.
+    */
+
+   return TRUE;
+}
+
 static void
 provider_init (GtkSourceCompletionProviderIface *iface)
 {
@@ -377,4 +458,5 @@ provider_init (GtkSourceCompletionProviderIface *iface)
    iface->get_priority = provider_get_priority;
    iface->get_name = provider_get_name;
    iface->populate = provider_populate;
+   iface->activate_proposal = provider_activate_proposal;
 }

@@ -21,6 +21,8 @@
 
 #include <gtksourceview/gtksourcecompletionproposal.h>
 
+#include "gb-source-snippet.h"
+
 G_BEGIN_DECLS
 
 #define GB_TYPE_SOURCE_TYPELIB_COMPLETION_ITEM            (gb_source_typelib_completion_item_get_type())
@@ -48,7 +50,8 @@ struct _GbSourceTypelibCompletionItemClass
    GObjectClass parent_class;
 };
 
-GType gb_source_typelib_completion_item_get_type (void) G_GNUC_CONST;
+GType            gb_source_typelib_completion_item_get_type    (void) G_GNUC_CONST;
+GbSourceSnippet *gb_source_typelib_completion_item_get_snippet (GbSourceTypelibCompletionItem *item);
 
 G_END_DECLS
 
