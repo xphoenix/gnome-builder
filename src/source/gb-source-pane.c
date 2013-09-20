@@ -948,6 +948,9 @@ gb_source_pane_init (GbSourcePane *pane)
    gtk_container_add(GTK_CONTAINER(priv->overlay), priv->scroller);
 
    priv->buffer = gtk_source_buffer_new(NULL);
+   g_object_set(priv->buffer,
+                "highlight-matching-brackets", FALSE,
+                NULL);
 
    priv->buffer_modified_changed_handler =
       g_signal_connect_swapped(priv->buffer,
