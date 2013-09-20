@@ -108,11 +108,6 @@ gb_source_typelib_completion_item_get_snippet (GbSourceTypelibCompletionItem *it
             gb_source_snippet_add_chunk(snippet, chunk);
             g_object_unref(chunk);
          }
-      } else {
-         chunk = gb_source_snippet_chunk_new();
-         gb_source_snippet_chunk_set_tab_stop(chunk, 1);
-         gb_source_snippet_add_chunk(snippet, chunk);
-         g_object_unref(chunk);
       }
 
       chunk = gb_source_snippet_chunk_new();
