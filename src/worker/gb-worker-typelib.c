@@ -32,6 +32,7 @@ static GStringChunk  *gChunks;
 #define TYPE_METHOD   GINT_TO_POINTER(2)
 #define TYPE_FUNCTION GINT_TO_POINTER(3)
 #define TYPE_ENUM     GINT_TO_POINTER(4)
+#define TYPE_VALUE    GINT_TO_POINTER(5)
 
 static void
 load_function_info (GIRepository   *repository,
@@ -108,10 +109,21 @@ load_enum_info (GIRepository *repository,
                 const gchar  *namespace,
                 GIEnumInfo   *info)
 {
+   GIValueInfo *value;
    const gchar *name;
+   gint n_values;
+   gint i;
 
    if ((name = g_registered_type_info_get_type_name(info))) {
       fuzzy_insert(gFuzzy, name, TYPE_ENUM);
+   }
+
+   n_values = g_enum_info_get_n_values(info);
+   for (i = 0; i < n_values; i++) {
+      value = g_enum_info_get_value(info, i);
+      name = g_base_info_get_attribute(value, "c:identifier");
+      fuzzy_insert(gFuzzy, name, TYPE_VALUE);
+      g_base_info_unref(value);
    }
 }
 
