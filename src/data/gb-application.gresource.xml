@@ -5,6 +5,7 @@
     <file compressed="true">data/style-schemes/solarized-dark.xml</file>
     <file compressed="true">data/style-schemes/solarized-light.xml</file>
     <file compressed="false">data/icons/class-16x.png</file>
+    <file compressed="false">data/icons/deprecated-16x.png</file>
     <file compressed="false">data/icons/enum-16x.png</file>
     <file compressed="false">data/icons/enum-value-16x.png</file>
     <file compressed="false">data/icons/keyword-16x.png</file>

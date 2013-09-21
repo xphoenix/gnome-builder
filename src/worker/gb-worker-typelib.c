@@ -28,18 +28,19 @@ static Fuzzy         *gFuzzy;
 static GHashTable    *gParams;
 static GStringChunk  *gChunks;
 
-#define TYPE_CLASS    GINT_TO_POINTER(1)
-#define TYPE_METHOD   GINT_TO_POINTER(2)
-#define TYPE_FUNCTION GINT_TO_POINTER(3)
-#define TYPE_ENUM     GINT_TO_POINTER(4)
-#define TYPE_VALUE    GINT_TO_POINTER(5)
+#define TYPE_CLASS       1
+#define TYPE_METHOD      2
+#define TYPE_FUNCTION    3
+#define TYPE_ENUM        4
+#define TYPE_VALUE       5
+#define TYPE_DEPRECATED  0x8000
 
 static void
 load_function_info (GIRepository   *repository,
                     const gchar    *namespace,
                     GIFunctionInfo *info,
                     const gchar    *self_name,
-                    gpointer        user_data)
+                    gsize           tag)
 {
    GIFunctionInfoFlags flags;
    const gchar *symbol;
@@ -50,8 +51,12 @@ load_function_info (GIRepository   *repository,
    gint i;
    gint j = 0;
 
+   if (g_base_info_is_deprecated(info)) {
+      tag |= TYPE_DEPRECATED;
+   }
+
    symbol = g_function_info_get_symbol(info);
-   fuzzy_insert(gFuzzy, symbol, user_data);
+   fuzzy_insert(gFuzzy, symbol, GSIZE_TO_POINTER(tag));
 
    n_args = g_callable_info_get_n_args((GICallableInfo *)info);
    args = g_new0(gchar*, n_args + 2);
@@ -86,16 +91,21 @@ load_object_info (GIRepository *repository,
    gchar *tmp;
    guint n_methods;
    guint i;
+   gsize tag = TYPE_CLASS;
 
    symbol = g_object_info_get_type_name(info);
    name = g_base_info_get_name((GIBaseInfo *)info);
+
+   if (g_base_info_is_deprecated(info)) {
+      tag |= TYPE_DEPRECATED;
+   }
 
    name_lower = g_ascii_strdown(name, -1);
    tmp = name_lower;
    name_lower = g_string_chunk_insert(gChunks, name_lower);
    g_free(tmp);
 
-   fuzzy_insert(gFuzzy, symbol, TYPE_CLASS);
+   fuzzy_insert(gFuzzy, symbol, GSIZE_TO_POINTER(tag));
 
    n_methods = g_object_info_get_n_methods(info);
    for (i = 0; i < n_methods; i++) {
@@ -115,14 +125,14 @@ load_enum_info (GIRepository *repository,
    gint i;
 
    if ((name = g_registered_type_info_get_type_name(info))) {
-      fuzzy_insert(gFuzzy, name, TYPE_ENUM);
+      fuzzy_insert(gFuzzy, name, GSIZE_TO_POINTER(TYPE_ENUM));
    }
 
    n_values = g_enum_info_get_n_values(info);
    for (i = 0; i < n_values; i++) {
       value = g_enum_info_get_value(info, i);
       name = g_base_info_get_attribute(value, "c:identifier");
-      fuzzy_insert(gFuzzy, name, TYPE_VALUE);
+      fuzzy_insert(gFuzzy, name, GSIZE_TO_POINTER(TYPE_VALUE));
       g_base_info_unref(value);
    }
 }

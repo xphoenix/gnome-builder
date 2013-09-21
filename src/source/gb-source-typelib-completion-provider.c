@@ -50,11 +50,65 @@ struct _GbSourceTypelibCompletionProviderPrivate
    GbSourceView *view;
 };
 
-static GdkPixbuf *gClassPixbuf;
-static GdkPixbuf *gEnumPixbuf;
-static GdkPixbuf *gEnumValuePixbuf;
-static GdkPixbuf *gMethodPixbuf;
-static GdkPixbuf *gStaticPixbuf;
+static GHashTable *gPixbufs;
+
+static void
+apply_overlay (GdkPixbuf *base,
+               const gchar *overlay)
+{
+   GdkPixbuf *tmp;
+   gchar *path;
+
+   path = g_strdup_printf("/org/gnome/Builder/data/icons/%s-16x.png", overlay);
+   tmp = gdk_pixbuf_new_from_resource(path, NULL);
+   g_free(path);
+
+   gdk_pixbuf_composite(tmp, base, 0, 0,
+                        gdk_pixbuf_get_width(tmp),
+                        gdk_pixbuf_get_height(tmp),
+                        0, 0,
+                        1, 1,
+                        GDK_INTERP_BILINEAR,
+                        255);
+
+   g_object_unref(tmp);
+}
+
+static GdkPixbuf *
+get_pixbuf (const gchar *name,
+            const gchar *overlay1,
+            const gchar *overlay2)
+{
+   GdkPixbuf *pixbuf;
+   gchar *path;
+   gchar *key;
+
+   if (!gPixbufs) {
+      gPixbufs = g_hash_table_new(g_str_hash, g_str_equal);
+   }
+
+   key = g_strdup_printf("%s-%s-%s", name, overlay1, overlay2);
+
+   if (!(pixbuf = g_hash_table_lookup(gPixbufs, key))) {
+      path = g_strdup_printf("/org/gnome/Builder/data/icons/%s-16x.png", name);
+      pixbuf = gdk_pixbuf_new_from_resource(path, NULL);
+      g_free(path);
+
+      if (overlay1) {
+         apply_overlay(pixbuf, overlay1);
+      }
+
+      if (overlay2) {
+         apply_overlay(pixbuf, overlay2);
+      }
+
+      g_hash_table_insert(gPixbufs, g_strdup(key), pixbuf);
+   }
+
+   g_free(key);
+
+   return pixbuf;
+}
 
 GtkSourceCompletionProvider *
 gb_source_typelib_completion_provider_new (GbSourceView *view)
@@ -162,26 +216,6 @@ gb_source_typelib_completion_provider_class_init (GbSourceTypelibCompletionProvi
    gb_multiprocess_manager_register(GB_MULTIPROCESS_MANAGER_DEFAULT,
                                     TYPELIB_WORKER_NAME,
                                     (gchar **)argv);
-
-   gClassPixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/class-16x.png", NULL);
-   gEnumPixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/enum-16x.png", NULL);
-   gEnumValuePixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/enum-value-16x.png", NULL);
-   gMethodPixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/method-16x.png", NULL);
-
-   {
-      GdkPixbuf *tmp;
-
-      tmp = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/static-16x.png", &error);
-      gStaticPixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/method-16x.png", &error);
-      gdk_pixbuf_composite(tmp, gStaticPixbuf,
-                           0, 0,
-                           gdk_pixbuf_get_width(tmp),
-                           gdk_pixbuf_get_height(tmp),
-                           0, 0,
-                           1.0, 1.0,
-                           GDK_INTERP_BILINEAR,
-                           255);
-   }
 }
 
 static void
@@ -321,29 +355,40 @@ complete_cb (GObject      *object,
          GtkSourceCompletionItem *item;
          GdkPixbuf *pixbuf;
          gboolean is_function = FALSE;
+         const gchar *icon_name = NULL;
+         const gchar *overlay1 = NULL;
+         const gchar *overlay2 = NULL;
 
          switch ((flags & 0xFF)) {
          case 1:
-            pixbuf = gClassPixbuf;
+            icon_name = "class";
             break;
          case 2:
-            pixbuf = gMethodPixbuf;
+            icon_name = "method";
             is_function = TRUE;
             break;
          case 3:
-            pixbuf = gStaticPixbuf;
             is_function = TRUE;
+            icon_name = "method";
+            overlay1 = "static";
             break;
          case 4:
-            pixbuf = gEnumPixbuf;
+            icon_name = "enum";
             break;
          case 5:
-            pixbuf = gEnumValuePixbuf;
+            icon_name = "enum-value";
             break;
          default:
             pixbuf = NULL;
             break;
          }
+
+         if ((flags & 0x8000)) {
+            overlay2 = "deprecated";
+         }
+
+
+         pixbuf = get_pixbuf(icon_name, overlay1, overlay2);
 
          item = g_object_new(GB_TYPE_SOURCE_TYPELIB_COMPLETION_ITEM,
                              "icon", pixbuf,

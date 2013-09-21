@@ -326,6 +326,7 @@ RESOURCE_FILES = \
 	data/style-schemes/solarized-dark.xml \
 	data/style-schemes/solarized-light.xml \
 	data/icons/class-16x.png \
+	data/icons/deprecated-16x.png \
 	data/icons/enum-16x.png \
 	data/icons/enum-value-16x.png \
 	data/icons/keyword-16x.png \
