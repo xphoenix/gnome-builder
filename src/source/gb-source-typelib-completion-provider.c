@@ -216,7 +216,7 @@ is_stop_char (gunichar c)
    }
 }
 
-static gchar *
+static void
 get_word_bounds (GtkSourceCompletionProvider *provider,
                  const GtkTextIter           *iter,
                  GtkTextIter                 *begin,
@@ -224,7 +224,6 @@ get_word_bounds (GtkSourceCompletionProvider *provider,
 {
    gboolean moved = FALSE;
    gunichar c;
-   gchar *word;
 
    gtk_text_iter_assign(end, iter);
    gtk_text_iter_assign(begin, iter);
@@ -240,8 +239,6 @@ get_word_bounds (GtkSourceCompletionProvider *provider,
    if (moved && !gtk_text_iter_is_start(begin)) {
       gtk_text_iter_forward_char(begin);
    }
-
-   return word;
 }
 
 static gchar *
@@ -252,7 +249,7 @@ get_word (GtkSourceCompletionProvider *provider,
    GtkTextIter end;
 
    get_word_bounds(provider, iter, &begin, &end);
-   return gtk_text_iter_get_text(&begin, &end);
+   return gtk_text_iter_get_text(&begin, iter);
 }
 
 static GdkPixbuf *
