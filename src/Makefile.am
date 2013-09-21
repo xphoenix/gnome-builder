@@ -7,7 +7,7 @@ noinst_LTLIBRARIES =
 AM_CPPFLAGS = \
 	$(DEVHELP_CFLAGS) \
 	$(GIR_CFLAGS) \
-	$(GIO_CFLAGS) \
+	$(GJS_CFLAGS) \
 	$(GOBJECT_CFLAGS) \
 	$(GTK3_CFLAGS) \
 	$(GTKSOURCEVIEW_CFLAGS) \
@@ -42,8 +42,8 @@ AM_LDFLAGS = \
 	-lm \
 	-L/usr/lib64/llvm \
 	$(DEVHELP_LIBS) \
-	$(GIO_LIBS) \
 	$(GIR_LIBS) \
+	$(GJS_LIBS) \
 	$(GOBJECT_LIBS) \
 	$(GTK3_LIBS) \
 	$(GTKSOURCEVIEW_LIBS) \
