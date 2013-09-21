@@ -51,6 +51,7 @@ struct _GbSourceTypelibCompletionProviderPrivate
 };
 
 static GdkPixbuf *gClassPixbuf;
+static GdkPixbuf *gEnumPixbuf;
 static GdkPixbuf *gMethodPixbuf;
 static GdkPixbuf *gStaticPixbuf;
 
@@ -161,8 +162,9 @@ gb_source_typelib_completion_provider_class_init (GbSourceTypelibCompletionProvi
                                     TYPELIB_WORKER_NAME,
                                     (gchar **)argv);
 
-   gClassPixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/class-16x.png", &error);
-   gMethodPixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/method-16x.png", &error);
+   gClassPixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/class-16x.png", NULL);
+   gEnumPixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/enum-16x.png", NULL);
+   gMethodPixbuf = gdk_pixbuf_new_from_resource("/org/gnome/Builder/data/icons/method-16x.png", NULL);
 
    {
       GdkPixbuf *tmp;
@@ -332,6 +334,9 @@ complete_cb (GObject      *object,
          case 3:
             pixbuf = gStaticPixbuf;
             is_function = TRUE;
+            break;
+         case 4:
+            pixbuf = gEnumPixbuf;
             break;
          default:
             pixbuf = NULL;

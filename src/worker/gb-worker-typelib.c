@@ -31,6 +31,7 @@ static GStringChunk  *gChunks;
 #define TYPE_CLASS    GINT_TO_POINTER(1)
 #define TYPE_METHOD   GINT_TO_POINTER(2)
 #define TYPE_FUNCTION GINT_TO_POINTER(3)
+#define TYPE_ENUM     GINT_TO_POINTER(4)
 
 static void
 load_function_info (GIRepository   *repository,
@@ -103,6 +104,18 @@ load_object_info (GIRepository *repository,
 }
 
 static void
+load_enum_info (GIRepository *repository,
+                const gchar  *namespace,
+                GIEnumInfo   *info)
+{
+   const gchar *name;
+
+   if ((name = g_registered_type_info_get_type_name(info))) {
+      fuzzy_insert(gFuzzy, name, TYPE_ENUM);
+   }
+}
+
+static void
 load_info (GIRepository *repository,
            const gchar  *namespace,
            GIBaseInfo   *info)
@@ -111,6 +124,8 @@ load_info (GIRepository *repository,
       load_function_info(repository, namespace, (GIFunctionInfo *)info, NULL, TYPE_FUNCTION);
    } else if (GI_IS_OBJECT_INFO(info)) {
       load_object_info(repository, namespace, (GIObjectInfo *)info);
+   } else if (GI_IS_ENUM_INFO(info)) {
+      load_enum_info(repository, namespace, (GIEnumInfo *)info);
    }
 }
 
