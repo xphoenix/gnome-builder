@@ -954,6 +954,7 @@ gb_workspace_init (GbWorkspace *workspace)
                         NULL);
    priv->search = g_object_new(GTK_TYPE_TOGGLE_BUTTON,
                                "image", image,
+                               "valign", GTK_ALIGN_CENTER,
                                "hexpand", FALSE,
                                "visible", FALSE,
                                NULL);
@@ -1030,6 +1031,7 @@ gb_workspace_init (GbWorkspace *workspace)
    priv->menu = g_object_new(GTK_TYPE_MENU_BUTTON,
                              "direction", GTK_ARROW_DOWN,
                              "image", image,
+                             "valign", GTK_ALIGN_CENTER,
                              "hexpand", FALSE,
                              "menu-model", menu,
                              "visible", FALSE,
