@@ -212,6 +212,8 @@ libsource_la_SOURCES = \
 	source/gb-source-snippet-completion-item.h \
 	source/gb-source-snippet-completion-provider.c \
 	source/gb-source-snippet-completion-provider.h \
+	source/gb-source-snippet-context.c \
+	source/gb-source-snippet-context.h \
 	source/gb-source-snippets.c \
 	source/gb-source-snippets.h \
 	source/gb-source-snippets-manager.c \
