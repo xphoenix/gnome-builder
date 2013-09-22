@@ -22,15 +22,20 @@
 
 G_DEFINE_TYPE(GbSourceSnippetChunk, gb_source_snippet_chunk, G_TYPE_OBJECT)
 
+typedef gchar *(*InputFilter) (const gchar *input);
+
 struct _GbSourceSnippetChunkPrivate
 {
+   GtkTextMark *mark_begin;
+   GtkTextMark *mark_end;
+   gchar       *text;
+   gchar       *filtered_text;
+   GSList      *filters;
+
    guint        linked_chunk;
    guint        offset_begin;
    guint        offset_end;
-   GtkTextMark *mark_begin;
-   GtkTextMark *mark_end;
    gint         tab_stop;
-   gchar       *text;
    gboolean     modified;
 };
 
@@ -47,12 +52,171 @@ enum
 };
 
 static GParamSpec *gParamSpecs[LAST_PROP];
+static GHashTable *gFilters;
+
+static gchar *
+filter_lower (const gchar *input)
+{
+   return g_utf8_strdown(input, -1);
+}
+
+static gchar *
+filter_upper (const gchar *input)
+{
+   return g_utf8_strup(input, -1);
+}
+
+static gchar *
+filter_capitalize (const gchar *input)
+{
+   gunichar c;
+   GString *str;
+
+   c = g_utf8_get_char(input);
+
+   if (g_unichar_isupper(c)) {
+      return g_strdup(input);
+   }
+
+   str = g_string_new(NULL);
+   input = g_utf8_next_char(input);
+   g_string_append_c(str, g_unichar_toupper(c));
+   g_string_append(str, input);
+
+   return g_string_free(str, FALSE);
+}
+
+static gchar *
+filter_html (const gchar *input)
+{
+   gunichar c;
+   GString *str;
+
+   str = g_string_new(NULL);
+
+   for (; *input; input = g_utf8_next_char(input)) {
+      c = g_utf8_get_char(input);
+      switch (c) {
+      case '<':
+         g_string_append_len(str, "&lt;", 4);
+         break;
+      case '>':
+         g_string_append_len(str, "&gt;", 4);
+         break;
+      default:
+         g_string_append_c(str, c);
+         break;
+      }
+   }
+
+   return g_string_free(str, FALSE);
+}
+
+static gchar *
+filter_camelize (const gchar *input)
+{
+   gboolean next_is_upper = TRUE;
+   gboolean skip = FALSE;
+   gunichar c;
+   GString *str;
+   gchar *ret;
+
+   if (!strchr(input, '_') && !strchr(input, ' ')) {
+      return filter_capitalize(input);
+   }
+
+   str = g_string_new(NULL);
+
+   for (; *input; input = g_utf8_next_char(input)) {
+      c = g_utf8_get_char(input);
+
+      switch (c) {
+      case '_':
+      case ' ':
+         next_is_upper = TRUE;
+         skip = TRUE;
+         break;
+      default:
+         break;
+      }
+
+      if (skip) {
+         skip = FALSE;
+         continue;
+      }
+
+      if (next_is_upper) {
+         c = g_unichar_toupper(c);
+         next_is_upper = FALSE;
+      } else {
+         c = g_unichar_tolower(c);
+      }
+
+      g_string_append_c(str, c);
+   }
+
+   return g_string_free(str, FALSE);
+}
+
+static gchar *
+filter_functify (const gchar *input)
+{
+   gunichar last = 0;
+   gunichar c;
+   gunichar n;
+   GString *str;
+
+   str = g_string_new(NULL);
+
+   for (; *input; input = g_utf8_next_char(input)) {
+      c = g_utf8_get_char(input);
+      n = g_utf8_get_char(g_utf8_next_char(input));
+
+      if (last) {
+         if ((g_unichar_islower(last) && g_unichar_isupper(c)) ||
+             (g_unichar_isupper(c) && g_unichar_islower(n))) {
+            g_string_append_c(str, '_');
+         }
+      }
+
+      if (c == ' ') {
+         c = '_';
+      }
+
+      g_string_append_c(str, g_unichar_tolower(c));
+
+      last = c;
+   }
+
+   return g_string_free(str, FALSE);
+}
 
 GbSourceSnippetChunk *
 gb_source_snippet_chunk_new (void)
 {
    return g_object_new(GB_TYPE_SOURCE_SNIPPET_CHUNK,
                        NULL);
+}
+
+void
+gb_source_snippet_chunk_add_filter (GbSourceSnippetChunk *chunk,
+                                    const gchar          *filter)
+{
+   GbSourceSnippetChunkPrivate *priv;
+   InputFilter func = NULL;
+
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
+
+   priv = chunk->priv;
+
+   if (!(func = g_hash_table_lookup(gFilters, filter))) {
+      g_warning("No such snippet filter: \"%s\"", filter);
+      return;
+   }
+
+   priv->filters = g_slist_append(priv->filters, func);
+
+   g_clear_pointer(&priv->filtered_text, g_free);
 }
 
 void
@@ -210,6 +374,8 @@ gb_source_snippet_chunk_copy (GbSourceSnippetChunk *chunk)
                       "text", chunk->priv->text,
                       NULL);
 
+   ret->priv->filters = g_slist_copy(chunk->priv->filters);
+
    return ret;
 }
 
@@ -239,7 +405,26 @@ gb_source_snippet_chunk_set_linked_chunk (GbSourceSnippetChunk *chunk,
 const gchar *
 gb_source_snippet_chunk_get_text (GbSourceSnippetChunk *chunk)
 {
+   GbSourceSnippetChunkPrivate *priv;
+   InputFilter filter;
+   GSList *iter;
+   gchar *tmp;
+
    g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk), NULL);
+
+   priv = chunk->priv;
+
+   if (priv->filters && !priv->filtered_text) {
+      priv->filtered_text = g_strdup(priv->text);
+      for (iter = priv->filters; iter; iter = iter->next) {
+         filter = iter->data;
+         tmp = priv->filtered_text;
+         priv->filtered_text = filter(tmp);
+         g_free(tmp);
+      }
+      return priv->filtered_text;
+   }
+
    return chunk->priv->text;
 }
 
@@ -425,6 +610,7 @@ gb_source_snippet_chunk_finalize (GObject *object)
    g_clear_object(&priv->mark_begin);
    g_clear_object(&priv->mark_end);
    g_clear_pointer(&priv->text, g_free);
+   g_clear_pointer(&priv->filtered_text, g_free);
 
    G_OBJECT_CLASS(gb_source_snippet_chunk_parent_class)->finalize(object);
 }
@@ -561,6 +747,14 @@ gb_source_snippet_chunk_class_init (GbSourceSnippetChunkClass *klass)
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_TEXT,
                                    gParamSpecs[PROP_TEXT]);
+
+   gFilters = g_hash_table_new(g_str_hash, g_str_equal);
+   g_hash_table_insert(gFilters, (gpointer)"lower", filter_lower);
+   g_hash_table_insert(gFilters, (gpointer)"upper", filter_upper);
+   g_hash_table_insert(gFilters, (gpointer)"capitalize", filter_capitalize);
+   g_hash_table_insert(gFilters, (gpointer)"html", filter_html);
+   g_hash_table_insert(gFilters, (gpointer)"camelize", filter_camelize);
+   g_hash_table_insert(gFilters, (gpointer)"functify", filter_functify);
 }
 
 static void

@@ -48,6 +48,8 @@ struct _GbSourceSnippetChunkClass
    GObjectClass parent_class;
 };
 
+void                  gb_source_snippet_chunk_add_filter       (GbSourceSnippetChunk *chunk,
+                                                                const gchar          *filter);
 GbSourceSnippetChunk *gb_source_snippet_chunk_new              (void);
 gboolean              gb_source_snippet_chunk_contains         (GbSourceSnippetChunk *chunk,
                                                                 GtkTextBuffer        *buffer,
