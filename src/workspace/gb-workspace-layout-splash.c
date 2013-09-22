@@ -221,6 +221,6 @@ gb_workspace_layout_splash_init (GbWorkspaceLayoutSplash *splash)
    row = make_row("Gnome Builder", "Yesterday", "gbproject.gbproject");
    gtk_container_add(GTK_CONTAINER(splash->priv->list_box), row);
 
-   row = make_row("New Project", NULL, NULL);
+   row = make_row(_("New Project"), NULL, NULL);
    gtk_container_add(GTK_CONTAINER(splash->priv->list_box), row);
 }
