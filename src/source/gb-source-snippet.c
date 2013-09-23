@@ -117,8 +117,10 @@ gb_source_snippet_expand (GbSourceSnippet *snippet)
 
    for (i = 0; i < priv->chunks->len; i++) {
       chunk = g_ptr_array_index(priv->chunks, i);
+
       g_snprintf(key, sizeof key, "$%d", i);
       key[sizeof key - 1] = '\0';
+
       str = gb_source_snippet_chunk_get_text(chunk);
       gb_source_snippet_context_add_variable(priv->context, key, str);
    }
@@ -135,6 +137,7 @@ gb_source_snippet_add_chunk (GbSourceSnippet      *snippet,
 {
    g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
    g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
+
    g_ptr_array_add(snippet->priv->chunks, g_object_ref(chunk));
 }
 
@@ -192,6 +195,7 @@ move_to_end:
    if (!(chunk = gb_source_snippet_get_chunk_at_tab_stop(snippet, priv->tab_stop))) {
       if ((chunk = gb_source_snippet_get_chunk_at_tab_stop(snippet, 0))) {
          gb_source_snippet_chunk_select(chunk);
+         gb_source_snippet_finish(snippet);
          return FALSE;
       }
       goto move_to_end;
@@ -347,10 +351,15 @@ gb_source_snippet_finish (GbSourceSnippet *snippet)
       gb_source_snippet_chunk_finish(chunk);
    }
 
-   gtk_text_buffer_delete_mark(buffer, priv->mark_begin);
-   gtk_text_buffer_delete_mark(buffer, priv->mark_end);
-   g_clear_object(&priv->mark_begin);
-   g_clear_object(&priv->mark_end);
+   if (priv->mark_begin) {
+      gtk_text_buffer_delete_mark(buffer, priv->mark_begin);
+      g_clear_object(&priv->mark_begin);
+   }
+
+   if (priv->mark_end) {
+      gtk_text_buffer_delete_mark(buffer, priv->mark_end);
+      g_clear_object(&priv->mark_end);
+   }
 
    g_object_notify_by_pspec(G_OBJECT(snippet), gParamSpecs[PROP_MARK_BEGIN]);
    g_object_notify_by_pspec(G_OBJECT(snippet), gParamSpecs[PROP_MARK_END]);
@@ -365,10 +374,10 @@ gb_source_snippet_insert_text (GbSourceSnippet *snippet,
 {
    GbSourceSnippetPrivate *priv;
    GbSourceSnippetChunk *chunk;
-   GbSourceSnippetChunk *linked;
-   GtkTextMark *here;
+   GtkTextIter begin;
+   GtkTextIter end;
    guint i;
-   gint linked_to;
+   gint here;
 
    g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
    g_return_if_fail(GTK_IS_TEXT_BUFFER(buffer));
@@ -381,28 +390,47 @@ gb_source_snippet_insert_text (GbSourceSnippet *snippet,
       return;
    }
 
+   here = gtk_text_iter_get_offset(location);
+
    priv->updating_chunks = TRUE;
-
-   gb_source_snippet_expand(snippet);
-
-   here = gtk_text_buffer_create_mark(buffer, NULL, location, TRUE);
 
    for (i = 0; i < priv->chunks->len; i++) {
       chunk = g_ptr_array_index(priv->chunks, i);
       if (gb_source_snippet_chunk_contains(chunk, location)) {
          gb_source_snippet_chunk_edited(chunk);
+         break;
       }
    }
 
-   gtk_text_buffer_get_iter_at_mark(buffer, location, here);
-   gtk_text_buffer_delete_mark(buffer, here);
+   for (i = 0; i < priv->chunks->len; i++) {
+      chunk = g_ptr_array_index(priv->chunks, i);
+      gb_source_snippet_chunk_snapshot(chunk);
+   }
 
    gb_source_snippet_expand(snippet);
 
+   gtk_text_buffer_get_iter_at_mark(buffer, &begin, priv->mark_begin);
+   gtk_text_buffer_get_iter_at_mark(buffer, &end, priv->mark_end);
+   gtk_text_buffer_delete(buffer, &begin, &end);
+
+   gtk_text_iter_assign(location, &begin);
+
+   gtk_text_buffer_move_mark(buffer, priv->mark_begin, location);
+
    for (i = 0; i < priv->chunks->len; i++) {
       chunk = g_ptr_array_index(priv->chunks, i);
-      gb_source_snippet_chunk_rebuild(chunk);
+      gb_source_snippet_chunk_insert(chunk, buffer, location);
    }
+
+   gtk_text_buffer_move_mark(buffer, priv->mark_end, location);
+
+   for (i = 0; i < priv->chunks->len; i++) {
+      chunk = g_ptr_array_index(priv->chunks, i);
+      gb_source_snippet_chunk_build_marks(chunk, buffer);
+   }
+
+   gtk_text_iter_set_offset(location, here);
+   gtk_text_buffer_place_cursor(buffer, location);
 
    priv->updating_chunks = FALSE;
 }
@@ -413,7 +441,7 @@ gb_source_snippet_delete_range (GbSourceSnippet *snippet,
                                 GtkTextIter     *begin,
                                 GtkTextIter     *end)
 {
-#if 0
+#if 1
    g_print("Text deleted from snippet.\n");
 #endif
 }

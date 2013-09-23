@@ -75,7 +75,7 @@ void                  gb_source_snippet_chunk_select       (GbSourceSnippetChunk
 void                  gb_source_snippet_chunk_insert       (GbSourceSnippetChunk   *chunk,
                                                             GtkTextBuffer          *buffer,
                                                             GtkTextIter            *location);
-void                  gb_source_snippet_chunk_rebuild      (GbSourceSnippetChunk   *chunk);
+void                  gb_source_snippet_chunk_snapshot     (GbSourceSnippetChunk   *chunk);
 
 G_END_DECLS
 

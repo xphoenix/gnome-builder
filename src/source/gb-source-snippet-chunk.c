@@ -274,17 +274,13 @@ gb_source_snippet_chunk_build_marks (GbSourceSnippetChunk *chunk,
 
    priv = chunk->priv;
 
-   if (priv->offset_begin) {
-      gtk_text_buffer_get_iter_at_offset(buffer, &iter, priv->offset_begin);
-      priv->mark_begin = gtk_text_buffer_create_mark(buffer, NULL, &iter, TRUE);
-      g_object_ref(priv->mark_begin);
-   }
+   gtk_text_buffer_get_iter_at_offset(buffer, &iter, priv->offset_begin);
+   priv->mark_begin = gtk_text_buffer_create_mark(buffer, NULL, &iter, TRUE);
+   g_object_ref(priv->mark_begin);
 
-   if (priv->offset_end) {
-      gtk_text_buffer_get_iter_at_offset(buffer, &iter, priv->offset_end);
-      priv->mark_end = gtk_text_buffer_create_mark(buffer, NULL, &iter, FALSE);
-      g_object_ref(priv->mark_end);
-   }
+   gtk_text_buffer_get_iter_at_offset(buffer, &iter, priv->offset_end);
+   priv->mark_end = gtk_text_buffer_create_mark(buffer, NULL, &iter, FALSE);
+   g_object_ref(priv->mark_end);
 }
 
 void
@@ -307,55 +303,30 @@ gb_source_snippet_chunk_finish (GbSourceSnippetChunk *chunk)
 }
 
 void
-gb_source_snippet_chunk_rebuild (GbSourceSnippetChunk *chunk)
+gb_source_snippet_chunk_snapshot (GbSourceSnippetChunk *chunk)
 {
    GbSourceSnippetChunkPrivate *priv;
    GtkTextBuffer *buffer;
    GtkTextIter begin;
    GtkTextIter end;
-   gint offset;
-   gint len;
 
    g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
 
    priv = chunk->priv;
-
-   if (!priv->text) {
-      return;
-   }
 
    buffer = gtk_text_mark_get_buffer(priv->mark_begin);
 
    gtk_text_buffer_get_iter_at_mark(buffer, &begin, priv->mark_begin);
    gtk_text_buffer_get_iter_at_mark(buffer, &end, priv->mark_end);
 
-   offset = gtk_text_iter_get_offset(&begin);
-   len = g_utf8_strlen(priv->text, -1);
-
-   priv->offset_begin = offset;
-   priv->offset_end = offset + len;
+   g_free(priv->text);
+   priv->text = gtk_text_buffer_get_text(buffer, &begin, &end, TRUE);
 
    gtk_text_buffer_delete_mark(buffer, priv->mark_begin);
    g_clear_object(&priv->mark_begin);
 
    gtk_text_buffer_delete_mark(buffer, priv->mark_end);
    g_clear_object(&priv->mark_end);
-
-   gtk_text_buffer_delete(buffer, &begin, &end);
-
-   gtk_text_buffer_get_iter_at_offset(buffer, &begin, offset);
-   gtk_text_buffer_insert(buffer, &begin, priv->text, -1);
-
-   g_print("Inserted %s\n", priv->text);
-
-   gtk_text_buffer_get_iter_at_offset(buffer, &begin, offset);
-   gtk_text_buffer_get_iter_at_offset(buffer, &end, offset + len);
-
-   priv->mark_begin = gtk_text_buffer_create_mark(buffer, NULL, &begin, TRUE);
-   g_object_ref(priv->mark_begin);
-
-   priv->mark_end = gtk_text_buffer_create_mark(buffer, NULL, &end, FALSE);
-   g_object_ref(priv->mark_end);
 }
 
 static void
