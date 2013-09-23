@@ -140,6 +140,18 @@ gb_source_pane_set_font (GbSourcePane *pane,
    g_object_notify_by_pspec(G_OBJECT(pane), gParamSpecs[PROP_FONT]);
 }
 
+static gboolean
+is_c_lang (GtkSourceLanguage *language)
+{
+   const gchar *id;
+
+   id = gtk_source_language_get_id(language);
+
+   return (g_str_equal(id, "c") ||
+           g_str_equal(id, "chdr") ||
+           g_str_equal(id, "cpp"));
+}
+
 static void
 gb_source_pane_guess_language (GbSourcePane *pane,
                                GFile        *file)
@@ -168,18 +180,36 @@ gb_source_pane_guess_language (GbSourcePane *pane,
    l = gtk_source_language_manager_guess_language(lm, base, content_type);
 
    if (l) {
+      GtkSourceCompletion *completion;
+
       buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(priv->view));
       gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(buffer), l);
 
-      if (!g_strcmp0(gtk_source_language_get_id(l), "c")) {
-         GtkSourceCompletionProvider *provider;
-         GtkSourceCompletion *completion;
+      completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(priv->view));
 
-         completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(priv->view));
+      if (is_c_lang(l)) {
+         GtkSourceCompletionProvider *provider;
+
          provider = g_object_new(GB_TYPE_LANGUAGE_C_COMPLETION_PROVIDER,
                                  NULL);
          gtk_source_completion_add_provider(completion, provider, NULL);
          g_object_unref(provider);
+
+         if (!priv->typelib_provider) {
+            priv->typelib_provider =
+               gb_source_typelib_completion_provider_new(
+                  GB_SOURCE_VIEW(priv->view));
+            gtk_source_completion_add_provider(completion,
+                                               priv->typelib_provider,
+                                               NULL);
+         }
+      } else {
+         if (priv->typelib_provider) {
+            gtk_source_completion_remove_provider(completion,
+                                                  priv->typelib_provider,
+                                                  NULL);
+            g_clear_object(&priv->typelib_provider);
+         }
       }
    }
 
@@ -1004,13 +1034,6 @@ gb_source_pane_init (GbSourcePane *pane)
                                                 priv->snippets);
    gtk_source_completion_add_provider(completion,
                                       priv->snippets_provider,
-                                      NULL);
-
-   pane->priv->typelib_provider =
-      gb_source_typelib_completion_provider_new(
-         GB_SOURCE_VIEW(priv->view));
-   gtk_source_completion_add_provider(completion,
-                                      priv->typelib_provider,
                                       NULL);
 
    priv->diff = gb_source_diff_new(NULL, GTK_TEXT_BUFFER(priv->buffer));
