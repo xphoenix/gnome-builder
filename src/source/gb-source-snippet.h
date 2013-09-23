@@ -70,7 +70,6 @@ void             gb_source_snippet_insert         (GbSourceSnippet      *snippet
                                                    gboolean              use_tabs);
 gboolean         gb_source_snippet_move_next      (GbSourceSnippet      *snippet);
 gboolean         gb_source_snippet_move_previous  (GbSourceSnippet      *snippet);
-void             gb_source_snippet_remove         (GbSourceSnippet      *snippet);
 GbSourceSnippet *gb_source_snippet_copy           (GbSourceSnippet      *snippet);
 void             gb_source_snippet_insert_text    (GbSourceSnippet      *snippet, /* Rename "inserted-text" */
                                                    GtkTextBuffer        *buffer,

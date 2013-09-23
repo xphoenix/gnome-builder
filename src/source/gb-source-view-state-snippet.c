@@ -33,7 +33,6 @@ struct _GbSourceViewStateSnippetPrivate
    guint            mark_set_handler;
    guint            insert_text_handler;
    guint            delete_range_handler;
-   guint            draw_handler;
 };
 
 enum
@@ -44,6 +43,38 @@ enum
 };
 
 static GParamSpec *gParamSpecs[LAST_PROP];
+
+static void
+gb_source_view_state_snippet_block_handlers (GbSourceViewStateSnippet *snippet,
+                                             GtkTextBuffer            *buffer)
+{
+   GbSourceViewStateSnippetPrivate *priv;
+
+   g_return_if_fail(GB_IS_SOURCE_VIEW_STATE_SNIPPET(snippet));
+
+   priv = snippet->priv;
+
+   g_signal_handler_block(buffer, priv->key_press_handler);
+   g_signal_handler_block(buffer, priv->mark_set_handler);
+   g_signal_handler_block(buffer, priv->insert_text_handler);
+   g_signal_handler_block(buffer, priv->delete_range_handler);
+}
+
+static void
+gb_source_view_state_snippet_unblock_handlers (GbSourceViewStateSnippet *snippet,
+                                               GtkTextBuffer            *buffer)
+{
+   GbSourceViewStateSnippetPrivate *priv;
+
+   g_return_if_fail(GB_IS_SOURCE_VIEW_STATE_SNIPPET(snippet));
+
+   priv = snippet->priv;
+
+   g_signal_handler_unblock(buffer, priv->key_press_handler);
+   g_signal_handler_unblock(buffer, priv->mark_set_handler);
+   g_signal_handler_unblock(buffer, priv->insert_text_handler);
+   g_signal_handler_unblock(buffer, priv->delete_range_handler);
+}
 
 GbSourceSnippet *
 gb_source_view_state_snippet_get_snippet (GbSourceViewStateSnippet *snippet)
@@ -74,11 +105,13 @@ gb_source_view_state_snippet_on_insert_text (GtkTextBuffer            *buffer,
                                              gint                      length,
                                              GbSourceViewStateSnippet *state)
 {
+   gb_source_view_state_snippet_block_handlers(state, buffer);
    gb_source_snippet_insert_text(state->priv->snippet,
                                  buffer,
                                  location,
                                  text,
                                  length);
+   gb_source_view_state_snippet_unblock_handlers(state, buffer);
 }
 
 static void
@@ -101,6 +134,8 @@ gb_source_view_state_snippet_on_delete_range (GtkTextBuffer            *buffer,
    g_assert(end);
 
    priv = state->priv;
+
+   gb_source_view_state_snippet_block_handlers(state, buffer);
 
    /*
     * If the entire snippet has been deleted, then lets abort and go back to
@@ -129,6 +164,8 @@ gb_source_view_state_snippet_on_delete_range (GtkTextBuffer            *buffer,
 cleanup:
    g_clear_object(&mark_begin);
    g_clear_object(&mark_end);
+
+   gb_source_view_state_snippet_unblock_handlers(state, buffer);
 }
 
 static gboolean
@@ -158,7 +195,6 @@ gb_source_view_state_snippet_on_key_press (GbSourceView             *view,
 insert_state:
    state = g_object_new(GB_TYPE_SOURCE_VIEW_STATE_INSERT,  NULL);
    g_object_set(view, "state", state, NULL);
-   gtk_widget_queue_draw(GTK_WIDGET(view));
    g_object_unref(state);
 
    return TRUE;
@@ -194,15 +230,6 @@ gb_source_view_state_snippet_on_mark_set (GtkTextBuffer            *buffer,
          g_object_unref(state);
       }
    }
-}
-
-static gboolean
-gb_source_view_state_snippet_on_draw (GtkWidget                *widget,
-                                      cairo_t                  *cr,
-                                      GbSourceViewStateSnippet *snippet)
-{
-   gb_source_snippet_draw(snippet->priv->snippet, widget, cr);
-   return FALSE;
 }
 
 static gboolean
@@ -261,12 +288,6 @@ gb_source_view_state_snippet_load (GbSourceViewState *state,
       }
    }
 
-   priv->draw_handler =
-      g_signal_connect(view,
-                       "draw",
-                       G_CALLBACK(gb_source_view_state_snippet_on_draw),
-                       state);
-
    priv->key_press_handler =
       g_signal_connect(view,
                        "key-press-event",
@@ -310,9 +331,6 @@ gb_source_view_state_snippet_unload (GbSourceViewState *state,
    g_signal_handler_disconnect(view, priv->key_press_handler);
    priv->key_press_handler = 0;
 
-   g_signal_handler_disconnect(view, priv->draw_handler);
-   priv->draw_handler = 0;
-
    g_signal_handler_disconnect(buffer, priv->mark_set_handler);
    priv->mark_set_handler = 0;
 
@@ -336,7 +354,6 @@ gb_source_view_state_snippet_finalize (GObject *object)
    g_clear_object(&priv->snippet);
 
    g_assert(!priv->key_press_handler);
-   g_assert(!priv->draw_handler);
    g_assert(!priv->mark_set_handler);
    g_assert(!priv->insert_text_handler);
    g_assert(!priv->delete_range_handler);

@@ -20,17 +20,19 @@
 
 #include "gb-source-snippet.h"
 #include "gb-source-snippet-chunk.h"
+#include "gb-source-snippet-context.h"
 
 G_DEFINE_TYPE(GbSourceSnippet, gb_source_snippet, G_TYPE_OBJECT)
 
 struct _GbSourceSnippetPrivate
 {
-   GPtrArray   *chunks;
-   gchar       *trigger;
-   GtkTextMark *mark_begin;
-   GtkTextMark *mark_end;
-   gint         tab_stop;
-   gboolean     updating_chunks;
+   GbSourceSnippetContext *context;
+   GPtrArray              *chunks;
+   gchar                  *trigger;
+   GtkTextMark            *mark_begin;
+   GtkTextMark            *mark_end;
+   gint                    tab_stop;
+   gboolean                updating_chunks;
 };
 
 enum
@@ -99,29 +101,31 @@ gb_source_snippet_get_chunk_at_tab_stop (GbSourceSnippet *snippet,
 }
 
 static void
-gb_source_snippet_update_defaults (GbSourceSnippet *snippet)
+gb_source_snippet_expand (GbSourceSnippet *snippet)
 {
    GbSourceSnippetPrivate *priv;
    GbSourceSnippetChunk *chunk;
-   GbSourceSnippetChunk *linked;
    const gchar *str;
-   gint linked_to;
+   gchar key[12];
    gint i;
 
    g_assert(GB_IS_SOURCE_SNIPPET(snippet));
 
    priv = snippet->priv;
 
+   gb_source_snippet_context_clear_variables(priv->context);
+
    for (i = 0; i < priv->chunks->len; i++) {
       chunk = g_ptr_array_index(priv->chunks, i);
-      linked_to = gb_source_snippet_chunk_get_linked_chunk(chunk);
-      if (linked_to > 0) {
-         linked = gb_source_snippet_get_chunk_at_tab_stop(snippet, linked_to);
-         if (linked) {
-            str = gb_source_snippet_chunk_get_text(linked);
-            gb_source_snippet_chunk_set_text(chunk, str);
-         }
-      }
+      g_snprintf(key, sizeof key, "$%d", i);
+      key[sizeof key - 1] = '\0';
+      str = gb_source_snippet_chunk_get_text(chunk);
+      gb_source_snippet_context_add_variable(priv->context, key, str);
+   }
+
+   for (i = 0; i < priv->chunks->len; i++) {
+      chunk = g_ptr_array_index(priv->chunks, i);
+      gb_source_snippet_chunk_expand(chunk, priv->context);
    }
 }
 
@@ -131,9 +135,7 @@ gb_source_snippet_add_chunk (GbSourceSnippet      *snippet,
 {
    g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
    g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
-
    g_ptr_array_add(snippet->priv->chunks, g_object_ref(chunk));
-   gb_source_snippet_update_defaults(snippet);
 }
 
 static gint
@@ -289,14 +291,20 @@ gb_source_snippet_insert (GbSourceSnippet *snippet,
       return;
    }
 
+   gb_source_snippet_expand(snippet);
+
    line_prefix = get_line_prefix(buffer, location);
 
    priv->mark_begin = gtk_text_buffer_create_mark(buffer, NULL, location, TRUE);
 
    for (i = 0; i < priv->chunks->len; i++) {
       chunk = g_ptr_array_index(priv->chunks, i);
-      gb_source_snippet_chunk_insert(chunk, buffer, location,
-                                     line_prefix, tab_size, use_spaces);
+      gb_source_snippet_chunk_insert(chunk,
+                                     buffer,
+                                     location,
+                                     line_prefix,
+                                     tab_size,
+                                     use_spaces);
    }
 
    priv->mark_end = gtk_text_buffer_create_mark(buffer, NULL, location, FALSE);
@@ -348,48 +356,6 @@ gb_source_snippet_finish (GbSourceSnippet *snippet)
 }
 
 void
-gb_source_snippet_remove (GbSourceSnippet *snippet)
-{
-   GbSourceSnippetPrivate *priv;
-   GbSourceSnippetChunk *chunk;
-   GtkTextBuffer *buffer;
-   GtkTextIter begin;
-   GtkTextIter end;
-   guint i;
-
-   g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
-
-   priv = snippet->priv;
-
-   if (!priv->mark_begin || !priv->mark_end) {
-      g_warning("Cannot remove snippet as it has not been inserted.");
-      return;
-   }
-
-   buffer = gtk_text_mark_get_buffer(priv->mark_begin);
-
-   /*
-    * TODO: Remove all our GtkTextTag in the range.
-    */
-
-   for (i = 0; i < priv->chunks->len; i++) {
-      chunk = g_ptr_array_index(priv->chunks, i);
-      gb_source_snippet_chunk_remove(chunk);
-   }
-
-   gtk_text_buffer_get_iter_at_mark(buffer, &begin, priv->mark_begin);
-   gtk_text_buffer_get_iter_at_mark(buffer, &end, priv->mark_end);
-   gtk_text_buffer_delete(buffer, &begin, &end);
-   gtk_text_buffer_delete_mark(buffer, priv->mark_begin);
-   gtk_text_buffer_delete_mark(buffer, priv->mark_end);
-   g_clear_object(&priv->mark_begin);
-   g_clear_object(&priv->mark_end);
-
-   g_object_notify_by_pspec(G_OBJECT(snippet), gParamSpecs[PROP_MARK_BEGIN]);
-   g_object_notify_by_pspec(G_OBJECT(snippet), gParamSpecs[PROP_MARK_END]);
-}
-
-void
 gb_source_snippet_insert_text (GbSourceSnippet *snippet,
                                GtkTextBuffer   *buffer,
                                GtkTextIter     *location,
@@ -416,22 +382,12 @@ gb_source_snippet_insert_text (GbSourceSnippet *snippet,
 
    priv->updating_chunks = TRUE;
 
+   gb_source_snippet_expand(snippet);
+
    here = gtk_text_buffer_create_mark(buffer, NULL, location, TRUE);
 
    for (i = 0; i < priv->chunks->len; i++) {
       chunk = g_ptr_array_index(priv->chunks, i);
-      if (gb_source_snippet_chunk_contains(chunk, buffer, location)) {
-         gb_source_snippet_chunk_set_modified(chunk, TRUE);
-      } else {
-         linked_to = gb_source_snippet_chunk_get_linked_chunk(chunk);
-         if (linked_to != -1) {
-            linked = gb_source_snippet_get_chunk_at_tab_stop(snippet, linked_to);
-            if (linked) {
-               gb_source_snippet_chunk_update(chunk, linked, buffer);
-               gtk_text_buffer_get_iter_at_mark(buffer, location, here);
-            }
-         }
-      }
    }
 
    gtk_text_buffer_get_iter_at_mark(buffer, location, here);
@@ -449,25 +405,6 @@ gb_source_snippet_delete_range (GbSourceSnippet *snippet,
 #if 0
    g_print("Text deleted from snippet.\n");
 #endif
-}
-
-void
-gb_source_snippet_draw (GbSourceSnippet *snippet,
-                        GtkWidget       *widget,
-                        cairo_t         *cr)
-{
-   GbSourceSnippetPrivate *priv;
-   GbSourceSnippetChunk *chunk;
-   guint i;
-
-   g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
-
-   priv = snippet->priv;
-
-   for (i = 0; i < priv->chunks->len; i++) {
-      chunk = g_ptr_array_index(priv->chunks, i);
-      gb_source_snippet_chunk_draw(chunk, widget, cr);
-   }
 }
 
 const gchar *
@@ -508,6 +445,7 @@ gb_source_snippet_dispose (GObject *object)
    GbSourceSnippetPrivate *priv = GB_SOURCE_SNIPPET(object)->priv;
 
    g_clear_pointer(&priv->chunks, (GDestroyNotify)g_ptr_array_unref);
+   g_clear_object(&priv->context);
 
    G_OBJECT_CLASS(gb_source_snippet_parent_class)->dispose(object);
 }
@@ -520,7 +458,6 @@ gb_source_snippet_finalize (GObject *object)
    priv = GB_SOURCE_SNIPPET(object)->priv;
 
    g_clear_pointer(&priv->trigger, g_free);
-   g_clear_pointer(&priv->chunks, (GDestroyNotify)g_ptr_array_unref);
 
    G_OBJECT_CLASS(gb_source_snippet_parent_class)->finalize(object);
 }
@@ -614,4 +551,5 @@ gb_source_snippet_init (GbSourceSnippet *snippet)
    snippet->priv->tab_stop = 0;
    snippet->priv->chunks = g_ptr_array_new();
    g_ptr_array_set_free_func(snippet->priv->chunks, g_object_unref);
+   snippet->priv->context = gb_source_snippet_context_new();
 }

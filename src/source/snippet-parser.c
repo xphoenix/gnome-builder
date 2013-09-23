@@ -72,7 +72,7 @@ snippet_parser_flush_chunk (SnippetParser *parser)
 
    if (parser->cur_text->len) {
       chunk = gb_source_snippet_chunk_new();
-      gb_source_snippet_chunk_set_text(chunk, parser->cur_text->str);
+      gb_source_snippet_chunk_set_spec(chunk, parser->cur_text->str);
       parser->chunks = g_list_append(parser->chunks, chunk);
       g_string_truncate(parser->cur_text, 0);
    }
@@ -125,7 +125,7 @@ snippet_parser_do_part_n (SnippetParser *parser,
    GbSourceSnippetChunk *chunk;
 
    chunk = gb_source_snippet_chunk_new();
-   gb_source_snippet_chunk_set_text(chunk, inner);
+   gb_source_snippet_chunk_set_spec(chunk, n ? inner : "");
    gb_source_snippet_chunk_set_tab_stop(chunk, n);
    parser->chunks = g_list_append(parser->chunks, chunk);
 }
@@ -135,12 +135,17 @@ snippet_parser_do_part_linked (SnippetParser *parser,
                                gint           n)
 {
    GbSourceSnippetChunk *chunk;
+   gchar text[12];
 
    chunk = gb_source_snippet_chunk_new();
-   gb_source_snippet_chunk_set_text(chunk, NULL);
-   gb_source_snippet_chunk_set_linked_chunk(chunk, n);
-   if (!n) {
+
+   if (n) {
+      g_snprintf(text, sizeof text, "$%d", n);
+      text[sizeof text - 1] = '\0';
+      gb_source_snippet_chunk_set_spec(chunk, text);
+   } else {
       gb_source_snippet_chunk_set_tab_stop(chunk, 0);
+      gb_source_snippet_chunk_set_spec(chunk, "");
    }
    parser->chunks = g_list_append(parser->chunks, chunk);
 }
@@ -182,7 +187,7 @@ parse_variable (const gchar  *line,
 
    errno = 0;
    *n = strtol(line, &end, 10);
-   if (errno == ERANGE) {
+   if (((*n == LONG_MIN) || (*n == LONG_MAX)) && errno == ERANGE) {
       return FALSE;
    } else if (*n < 0) {
       return FALSE;

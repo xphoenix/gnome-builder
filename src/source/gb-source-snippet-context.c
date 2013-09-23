@@ -288,17 +288,17 @@ gb_source_snippet_context_expand (GbSourceSnippetContext *context,
          if (g_unichar_isdigit(c)) {
             errno = 0;
             n = strtol(input, (gchar **)&input, 10);
-            if (errno == ERANGE) {
+            if (((n == LONG_MIN) || (n == LONG_MAX)) && errno == ERANGE) {
                break;
             }
+            input--;
             g_snprintf(key, sizeof key, "$%d", n);
             key[sizeof key - 1] = '\0';
             expand = gb_source_snippet_context_get_variable(context, key);
             if (expand) {
                g_string_append(str, expand);
-               input--;
-               continue;
             }
+            continue;
          } else {
             g_string_append_c(str, '$');
          }
