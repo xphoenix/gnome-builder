@@ -70,6 +70,22 @@ gb_source_snippet_chunk_copy (GbSourceSnippetChunk *chunk)
                        NULL);
 }
 
+GtkTextMark *
+gb_source_snippet_chunk_get_mark_begin (GbSourceSnippetChunk *chunk)
+{
+   g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk), NULL);
+
+   return chunk->priv->mark_begin;
+}
+
+GtkTextMark *
+gb_source_snippet_chunk_get_mark_end (GbSourceSnippetChunk *chunk)
+{
+   g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk), NULL);
+
+   return chunk->priv->mark_end;
+}
+
 const gchar *
 gb_source_snippet_chunk_get_spec (GbSourceSnippetChunk *chunk)
 {

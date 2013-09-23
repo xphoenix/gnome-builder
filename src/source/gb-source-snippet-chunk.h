@@ -77,6 +77,9 @@ void                  gb_source_snippet_chunk_insert       (GbSourceSnippetChunk
                                                             GtkTextIter            *location);
 void                  gb_source_snippet_chunk_snapshot     (GbSourceSnippetChunk   *chunk);
 
+GtkTextMark          *gb_source_snippet_chunk_get_mark_begin (GbSourceSnippetChunk *chunk);
+GtkTextMark          *gb_source_snippet_chunk_get_mark_end   (GbSourceSnippetChunk *chunk);
+
 G_END_DECLS
 
 #endif /* GB_SOURCE_SNIPPET_CHUNK_H */

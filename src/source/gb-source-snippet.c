@@ -272,6 +272,57 @@ get_line_prefix (GtkTextBuffer *buffer,
    return g_string_free(str, FALSE);
 }
 
+static void
+gb_source_snippet_fixup_marks (GbSourceSnippet *snippet)
+{
+   GbSourceSnippetPrivate *priv;
+   GbSourceSnippetChunk *chunk;
+   GtkTextBuffer *buffer;
+   GtkTextMark *cur_end;
+   GtkTextMark *next_begin;
+   GtkTextIter begin;
+   GtkTextIter end;
+   gint i;
+
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
+
+   priv = snippet->priv;
+
+   if (!priv->chunks->len) {
+      return;
+   }
+
+   /*
+    * NOTE: The gravity of marks can be pretty annoying. Since you
+    *       cannot enforce gravity between marks, we have to go and
+    *       make sure they do not overlay between our chunks otherwise
+    *       weird things can happen. This just checks the chunks
+    *       sequentially and repositions the end mark of a chunk to
+    *       be before the mark of the previous.
+    *
+    *       This should be called before snapshoting chunks so that
+    *       they do not save state from the neighboring chunk.
+    */
+
+   chunk = g_ptr_array_index(priv->chunks, 0);
+   cur_end = gb_source_snippet_chunk_get_mark_end(chunk);
+   buffer = gtk_text_mark_get_buffer(cur_end);
+
+   for (i = 1; i < priv->chunks->len; i++) {
+      chunk = g_ptr_array_index(priv->chunks, i);
+      next_begin = gb_source_snippet_chunk_get_mark_begin(chunk);
+
+      gtk_text_buffer_get_iter_at_mark(buffer, &end, cur_end);
+      gtk_text_buffer_get_iter_at_mark(buffer, &begin, next_begin);
+
+      if (gtk_text_iter_compare(&end, &begin) > 0) {
+         gtk_text_buffer_move_mark(buffer, cur_end, &begin);
+      }
+
+      cur_end = gb_source_snippet_chunk_get_mark_end(chunk);
+   }
+}
+
 void
 gb_source_snippet_insert (GbSourceSnippet *snippet,
                           GtkTextBuffer   *buffer,
@@ -394,6 +445,8 @@ gb_source_snippet_insert_text (GbSourceSnippet *snippet,
 
    priv->updating_chunks = TRUE;
 
+   gb_source_snippet_fixup_marks(snippet);
+
    for (i = 0; i < priv->chunks->len; i++) {
       chunk = g_ptr_array_index(priv->chunks, i);
       if (gb_source_snippet_chunk_contains(chunk, location)) {
@@ -438,12 +491,24 @@ gb_source_snippet_insert_text (GbSourceSnippet *snippet,
 void
 gb_source_snippet_delete_range (GbSourceSnippet *snippet,
                                 GtkTextBuffer   *buffer,
-                                GtkTextIter     *begin,
-                                GtkTextIter     *end)
+                                GtkTextIter     *loc_begin,
+                                GtkTextIter     *loc_end)
 {
-#if 1
-   g_print("Text deleted from snippet.\n");
-#endif
+   GbSourceSnippetPrivate *priv;
+   GbSourceSnippetChunk *chunk;
+   gint i;
+
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET(snippet));
+   g_return_if_fail(GTK_IS_TEXT_BUFFER(buffer));
+   g_return_if_fail(loc_begin);
+   g_return_if_fail(loc_end);
+
+   priv = snippet->priv;
+
+   chunk = gb_source_snippet_get_chunk_at_tab_stop(snippet, priv->tab_stop);
+   if (chunk) {
+      gb_source_snippet_chunk_edited(chunk);
+   }
 }
 
 const gchar *
