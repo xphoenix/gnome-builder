@@ -41,6 +41,9 @@ G_DEFINE_TYPE(GbSourceSnippetContext, gb_source_snippet_context, G_TYPE_OBJECT)
 struct _GbSourceSnippetContextPrivate
 {
    GHashTable *variables;
+   gchar      *line_prefix;
+   gint        tab_size;
+   gboolean    use_spaces;
 };
 
 typedef gchar *(*InputFilter) (const gchar *input);
@@ -109,7 +112,7 @@ filter_capitalize (const gchar *input)
 
    str = g_string_new(NULL);
    input = g_utf8_next_char(input);
-   g_string_append_c(str, g_unichar_toupper(c));
+   g_string_append_unichar(str, g_unichar_toupper(c));
    g_string_append(str, input);
 
    return g_string_free(str, FALSE);
@@ -133,7 +136,7 @@ filter_html (const gchar *input)
          g_string_append_len(str, "&gt;", 4);
          break;
       default:
-         g_string_append_c(str, c);
+         g_string_append_unichar(str, c);
          break;
       }
    }
@@ -181,7 +184,7 @@ filter_camelize (const gchar *input)
          c = g_unichar_tolower(c);
       }
 
-      g_string_append_c(str, c);
+      g_string_append_unichar(str, c);
    }
 
    return g_string_free(str, FALSE);
@@ -212,7 +215,7 @@ filter_functify (const gchar *input)
          c = '_';
       }
 
-      g_string_append_c(str, g_unichar_tolower(c));
+      g_string_append_unichar(str, g_unichar_tolower(c));
 
       last = c;
    }
@@ -260,14 +263,18 @@ gchar *
 gb_source_snippet_context_expand (GbSourceSnippetContext *context,
                                   const gchar            *input)
 {
+   GbSourceSnippetContextPrivate *priv;
    const gchar *expand;
    gunichar c;
    GString *str;
    gchar key[12];
    gint n;
+   gint i;
 
    g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CONTEXT(context), NULL);
    g_return_val_if_fail(input, NULL);
+
+   priv = context->priv;
 
    str = g_string_new(NULL);
 
@@ -304,11 +311,51 @@ gb_source_snippet_context_expand (GbSourceSnippetContext *context,
          }
       } else if (c == '|') {
          return apply_filters(str, input + 1);
+      } else if (c == '\t') {
+         if (priv->use_spaces) {
+            for (i = 0; i < priv->tab_size; i++) {
+               g_string_append_c(str, ' ');
+            }
+         } else {
+            g_string_append_c(str, '\t');
+         }
+         continue;
+      } else if (c == '\n') {
+         g_string_append_c(str, '\n');
+         if (priv->line_prefix) {
+            g_string_append(str, priv->line_prefix);
+         }
+         continue;
       }
-      g_string_append_c(str, c);
+      g_string_append_unichar(str, c);
    }
 
    return g_string_free(str, FALSE);
+}
+
+void
+gb_source_snippet_context_set_tab_size (GbSourceSnippetContext *context,
+                                        gint                    tab_size)
+{
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CONTEXT(context));
+   context->priv->tab_size = tab_size;
+}
+
+void
+gb_source_snippet_context_set_use_spaces (GbSourceSnippetContext *context,
+                                          gboolean                use_spaces)
+{
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CONTEXT(context));
+   context->priv->use_spaces = use_spaces;
+}
+
+void
+gb_source_snippet_context_set_line_prefix (GbSourceSnippetContext *context,
+                                           const gchar            *line_prefix)
+{
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CONTEXT(context));
+   g_free(context->priv->line_prefix);
+   context->priv->line_prefix = g_strdup(line_prefix);
 }
 
 static void

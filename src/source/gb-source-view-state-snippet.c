@@ -54,7 +54,6 @@ gb_source_view_state_snippet_block_handlers (GbSourceViewStateSnippet *snippet,
 
    priv = snippet->priv;
 
-   g_signal_handler_block(buffer, priv->key_press_handler);
    g_signal_handler_block(buffer, priv->mark_set_handler);
    g_signal_handler_block(buffer, priv->insert_text_handler);
    g_signal_handler_block(buffer, priv->delete_range_handler);
@@ -70,7 +69,6 @@ gb_source_view_state_snippet_unblock_handlers (GbSourceViewStateSnippet *snippet
 
    priv = snippet->priv;
 
-   g_signal_handler_unblock(buffer, priv->key_press_handler);
    g_signal_handler_unblock(buffer, priv->mark_set_handler);
    g_signal_handler_unblock(buffer, priv->insert_text_handler);
    g_signal_handler_unblock(buffer, priv->delete_range_handler);

@@ -295,16 +295,17 @@ gb_source_snippet_insert (GbSourceSnippet *snippet,
 
    line_prefix = get_line_prefix(buffer, location);
 
+   gb_source_snippet_context_set_line_prefix(priv->context, line_prefix);
+   gb_source_snippet_context_set_tab_size(priv->context, tab_size);
+   gb_source_snippet_context_set_use_spaces(priv->context, use_spaces);
+
+   g_free(line_prefix);
+
    priv->mark_begin = gtk_text_buffer_create_mark(buffer, NULL, location, TRUE);
 
    for (i = 0; i < priv->chunks->len; i++) {
       chunk = g_ptr_array_index(priv->chunks, i);
-      gb_source_snippet_chunk_insert(chunk,
-                                     buffer,
-                                     location,
-                                     line_prefix,
-                                     tab_size,
-                                     use_spaces);
+      gb_source_snippet_chunk_insert(chunk, buffer, location);
    }
 
    priv->mark_end = gtk_text_buffer_create_mark(buffer, NULL, location, FALSE);
@@ -388,10 +389,20 @@ gb_source_snippet_insert_text (GbSourceSnippet *snippet,
 
    for (i = 0; i < priv->chunks->len; i++) {
       chunk = g_ptr_array_index(priv->chunks, i);
+      if (gb_source_snippet_chunk_contains(chunk, location)) {
+         gb_source_snippet_chunk_edited(chunk);
+      }
    }
 
    gtk_text_buffer_get_iter_at_mark(buffer, location, here);
    gtk_text_buffer_delete_mark(buffer, here);
+
+   gb_source_snippet_expand(snippet);
+
+   for (i = 0; i < priv->chunks->len; i++) {
+      chunk = g_ptr_array_index(priv->chunks, i);
+      gb_source_snippet_chunk_rebuild(chunk);
+   }
 
    priv->updating_chunks = FALSE;
 }

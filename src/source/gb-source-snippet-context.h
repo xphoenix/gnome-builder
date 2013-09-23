@@ -58,6 +58,12 @@ const gchar            *gb_source_snippet_context_get_variable    (GbSourceSnipp
                                                                    const gchar            *key);
 gchar                  *gb_source_snippet_context_expand          (GbSourceSnippetContext *context,
                                                                    const gchar            *input);
+void                    gb_source_snippet_context_set_tab_size    (GbSourceSnippetContext *context,
+                                                                   gint                    tab_size);
+void                    gb_source_snippet_context_set_use_spaces  (GbSourceSnippetContext *context,
+                                                                   gboolean                use_spaces);
+void                    gb_source_snippet_context_set_line_prefix (GbSourceSnippetContext *context,
+                                                                   const gchar            *line_prefix);
 
 G_END_DECLS
 

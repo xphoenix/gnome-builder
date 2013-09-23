@@ -137,6 +137,32 @@ gb_source_snippet_chunk_get_text_set (GbSourceSnippetChunk *chunk)
 }
 
 void
+gb_source_snippet_chunk_edited (GbSourceSnippetChunk *chunk)
+{
+   GbSourceSnippetChunkPrivate *priv;
+   GtkTextBuffer *buffer;
+   GtkTextIter begin;
+   GtkTextIter end;
+   gchar *text;
+
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
+
+   priv = chunk->priv;
+
+   g_assert(priv->mark_begin);
+   g_assert(priv->mark_end);
+
+   buffer = gtk_text_mark_get_buffer(priv->mark_begin);
+
+   gtk_text_buffer_get_iter_at_mark(buffer, &begin, priv->mark_begin);
+   gtk_text_buffer_get_iter_at_mark(buffer, &end, priv->mark_end);
+
+   g_free(priv->text);
+   priv->text = gtk_text_buffer_get_text(buffer, &begin, &end, FALSE);
+   priv->text_set = TRUE;
+}
+
+void
 gb_source_snippet_chunk_expand (GbSourceSnippetChunk   *chunk,
                                 GbSourceSnippetContext *context)
 {
@@ -180,10 +206,7 @@ gb_source_snippet_chunk_select (GbSourceSnippetChunk *chunk)
 void
 gb_source_snippet_chunk_insert (GbSourceSnippetChunk *chunk,
                                 GtkTextBuffer        *buffer,
-                                GtkTextIter          *location,
-                                const gchar          *line_prefix,
-                                guint                 tab_size,
-                                gboolean              use_spaces)
+                                GtkTextIter          *location)
 {
    GbSourceSnippetChunkPrivate *priv;
    const gchar *text;
@@ -204,36 +227,7 @@ gb_source_snippet_chunk_insert (GbSourceSnippetChunk *chunk,
 
    priv->offset_begin = gtk_text_iter_get_offset(location);
 
-   if ((text = priv->text)) {
-      str = g_string_new(NULL);
-
-      for (text = priv->text;
-           (c = g_utf8_get_char(text));
-           text = g_utf8_next_char(text)) {
-         switch (c) {
-         case '\t':
-            if (use_spaces) {
-               for (i = 0; i < tab_size; i++) {
-                  g_string_append_c(str, ' ');
-               }
-            } else {
-               g_string_append_c(str, '\t');
-            }
-            break;
-         case '\n':
-            g_string_append_c(str, '\n');
-            g_string_append(str, line_prefix);
-            break;
-         default:
-            g_string_append_unichar(str, c);
-            break;
-         }
-      }
-
-      gtk_text_buffer_insert(buffer, location, str->str, str->len);
-
-      g_string_free(str, TRUE);
-   }
+   gtk_text_buffer_insert(buffer, location, priv->text, -1);
 
    priv->offset_end = gtk_text_iter_get_offset(location);
 }
@@ -312,6 +306,58 @@ gb_source_snippet_chunk_finish (GbSourceSnippetChunk *chunk)
    g_clear_object(&priv->mark_end);
 }
 
+void
+gb_source_snippet_chunk_rebuild (GbSourceSnippetChunk *chunk)
+{
+   GbSourceSnippetChunkPrivate *priv;
+   GtkTextBuffer *buffer;
+   GtkTextIter begin;
+   GtkTextIter end;
+   gint offset;
+   gint len;
+
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
+
+   priv = chunk->priv;
+
+   if (!priv->text) {
+      return;
+   }
+
+   buffer = gtk_text_mark_get_buffer(priv->mark_begin);
+
+   gtk_text_buffer_get_iter_at_mark(buffer, &begin, priv->mark_begin);
+   gtk_text_buffer_get_iter_at_mark(buffer, &end, priv->mark_end);
+
+   offset = gtk_text_iter_get_offset(&begin);
+   len = g_utf8_strlen(priv->text, -1);
+
+   priv->offset_begin = offset;
+   priv->offset_end = offset + len;
+
+   gtk_text_buffer_delete_mark(buffer, priv->mark_begin);
+   g_clear_object(&priv->mark_begin);
+
+   gtk_text_buffer_delete_mark(buffer, priv->mark_end);
+   g_clear_object(&priv->mark_end);
+
+   gtk_text_buffer_delete(buffer, &begin, &end);
+
+   gtk_text_buffer_get_iter_at_offset(buffer, &begin, offset);
+   gtk_text_buffer_insert(buffer, &begin, priv->text, -1);
+
+   g_print("Inserted %s\n", priv->text);
+
+   gtk_text_buffer_get_iter_at_offset(buffer, &begin, offset);
+   gtk_text_buffer_get_iter_at_offset(buffer, &end, offset + len);
+
+   priv->mark_begin = gtk_text_buffer_create_mark(buffer, NULL, &begin, TRUE);
+   g_object_ref(priv->mark_begin);
+
+   priv->mark_end = gtk_text_buffer_create_mark(buffer, NULL, &end, FALSE);
+   g_object_ref(priv->mark_end);
+}
+
 static void
 gb_source_snippet_chunk_finalize (GObject *object)
 {
@@ -320,6 +366,10 @@ gb_source_snippet_chunk_finalize (GObject *object)
    priv = GB_SOURCE_SNIPPET_CHUNK(object)->priv;
 
    g_free(priv->spec);
+   g_free(priv->text);
+
+   g_clear_object(&priv->mark_begin);
+   g_clear_object(&priv->mark_end);
 
    G_OBJECT_CLASS(gb_source_snippet_chunk_parent_class)->finalize(object);
 }

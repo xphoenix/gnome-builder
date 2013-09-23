@@ -53,6 +53,7 @@ struct _GbSourceSnippetChunkClass
 void                  gb_source_snippet_chunk_build_marks  (GbSourceSnippetChunk   *chunk,
                                                             GtkTextBuffer          *buffer);
 GbSourceSnippetChunk *gb_source_snippet_chunk_copy         (GbSourceSnippetChunk   *chunk);
+void                  gb_source_snippet_chunk_edited       (GbSourceSnippetChunk   *chunk);
 GType                 gb_source_snippet_chunk_get_type     (void) G_GNUC_CONST;
 GbSourceSnippetChunk *gb_source_snippet_chunk_new          (void);
 const gchar          *gb_source_snippet_chunk_get_spec     (GbSourceSnippetChunk   *chunk);
@@ -73,10 +74,8 @@ void                  gb_source_snippet_chunk_finish       (GbSourceSnippetChunk
 void                  gb_source_snippet_chunk_select       (GbSourceSnippetChunk   *chunk);
 void                  gb_source_snippet_chunk_insert       (GbSourceSnippetChunk   *chunk,
                                                             GtkTextBuffer          *buffer,
-                                                            GtkTextIter            *location,
-                                                            const gchar            *line_prefix,
-                                                            guint                   tab_size,
-                                                            gboolean                use_spaces);
+                                                            GtkTextIter            *location);
+void                  gb_source_snippet_chunk_rebuild      (GbSourceSnippetChunk   *chunk);
 
 G_END_DECLS
 
