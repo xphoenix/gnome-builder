@@ -64,6 +64,7 @@ void                    gb_source_snippet_context_set_use_spaces  (GbSourceSnipp
                                                                    gboolean                use_spaces);
 void                    gb_source_snippet_context_set_line_prefix (GbSourceSnippetContext *context,
                                                                    const gchar            *line_prefix);
+void                    gb_source_snippet_context_dump            (GbSourceSnippetContext *context);
 
 G_END_DECLS
 

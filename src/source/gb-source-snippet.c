@@ -108,6 +108,7 @@ gb_source_snippet_expand (GbSourceSnippet *snippet)
    const gchar *str;
    gchar key[12];
    gint i;
+   gint tab_stop;
 
    g_assert(GB_IS_SOURCE_SNIPPET(snippet));
 
@@ -117,12 +118,13 @@ gb_source_snippet_expand (GbSourceSnippet *snippet)
 
    for (i = 0; i < priv->chunks->len; i++) {
       chunk = g_ptr_array_index(priv->chunks, i);
-
-      g_snprintf(key, sizeof key, "$%d", i);
-      key[sizeof key - 1] = '\0';
-
-      str = gb_source_snippet_chunk_get_text(chunk);
-      gb_source_snippet_context_add_variable(priv->context, key, str);
+      tab_stop = gb_source_snippet_chunk_get_tab_stop(chunk);
+      if (tab_stop > 0) {
+         g_snprintf(key, sizeof key, "$%d", tab_stop);
+         key[sizeof key - 1] = '\0';
+         str = gb_source_snippet_chunk_get_text(chunk);
+         gb_source_snippet_context_add_variable(priv->context, key, str);
+      }
    }
 
    for (i = 0; i < priv->chunks->len; i++) {

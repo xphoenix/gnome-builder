@@ -198,6 +198,8 @@ gb_source_snippet_chunk_expand (GbSourceSnippetChunk   *chunk,
       text = gb_source_snippet_context_expand(context, priv->spec);
       g_free(priv->text);
       priv->text = text;
+      g_print("SPEC=%s TEXT=%s\n", priv->spec, priv->text);
+      gb_source_snippet_context_dump(context);
    }
 }
 
@@ -337,6 +339,8 @@ gb_source_snippet_chunk_snapshot (GbSourceSnippetChunk *chunk)
 
    g_free(priv->text);
    priv->text = gtk_text_buffer_get_text(buffer, &begin, &end, TRUE);
+
+   g_print("SNAPSHOT: text=%s\n", priv->text);
 
    gtk_text_buffer_delete_mark(buffer, priv->mark_begin);
    g_clear_object(&priv->mark_begin);

@@ -57,6 +57,24 @@ gb_source_snippet_context_new (void)
 }
 
 void
+gb_source_snippet_context_dump (GbSourceSnippetContext *context)
+{
+   GbSourceSnippetContextPrivate *priv;
+   GHashTableIter iter;
+   gpointer key;
+   gpointer value;
+
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CONTEXT(context));
+
+   priv = context->priv;
+
+   g_hash_table_iter_init(&iter, priv->variables);
+   while (g_hash_table_iter_next(&iter, &key, &value)) {
+      g_print(" %s=%s\n", (gchar *)key, (gchar *)value);
+   }
+}
+
+void
 gb_source_snippet_context_clear_variables (GbSourceSnippetContext *context)
 {
    g_return_if_fail(GB_IS_SOURCE_SNIPPET_CONTEXT(context));
