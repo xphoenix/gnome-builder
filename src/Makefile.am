@@ -190,8 +190,6 @@ libsource_la_LIBADD = \
 	libdbus.la \
 	liblanguage.la
 libsource_la_SOURCES = \
-	source/snippet-parser.c \
-	source/snippet-parser.h \
 	source/gb-source-diff.c \
 	source/gb-source-diff.h \
 	source/gb-source-fullscreen-container.c \
@@ -206,6 +204,7 @@ libsource_la_SOURCES = \
 	source/gb-source-pane.h \
 	source/gb-source-snippet.c \
 	source/gb-source-snippet.h \
+	source/gb-source-snippet-private.h \
 	source/gb-source-snippet-chunk.c \
 	source/gb-source-snippet-chunk.h \
 	source/gb-source-snippet-completion-item.c \
@@ -214,6 +213,8 @@ libsource_la_SOURCES = \
 	source/gb-source-snippet-completion-provider.h \
 	source/gb-source-snippet-context.c \
 	source/gb-source-snippet-context.h \
+	source/gb-source-snippet-parser.c \
+	source/gb-source-snippet-parser.h \
 	source/gb-source-snippets.c \
 	source/gb-source-snippets.h \
 	source/gb-source-snippets-manager.c \
@@ -223,13 +224,7 @@ libsource_la_SOURCES = \
 	source/gb-source-typelib-completion-provider.c \
 	source/gb-source-typelib-completion-provider.h \
 	source/gb-source-view.c \
-	source/gb-source-view.h \
-	source/gb-source-view-state.c \
-	source/gb-source-view-state.h \
-	source/gb-source-view-state-insert.c \
-	source/gb-source-view-state-insert.h \
-	source/gb-source-view-state-snippet.c \
-	source/gb-source-view-state-snippet.h
+	source/gb-source-view.h
 
 
 noinst_LTLIBRARIES += libsymbol.la

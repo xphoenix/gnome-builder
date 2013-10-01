@@ -28,9 +28,6 @@
 #include "gb-source-typelib-completion-item.h"
 #include "gb-source-typelib-completion-provider.h"
 #include "gb-source-view.h"
-#include "gb-source-view-state.h"
-#include "gb-source-view-state-insert.h"
-#include "gb-source-view-state-snippet.h"
 
 #define TYPELIB_WORKER_NAME "typelib-completion-provider"
 
@@ -469,7 +466,6 @@ provider_activate_proposal (GtkSourceCompletionProvider *provider,
    GbSourceTypelibCompletionProviderPrivate *priv;
    GbSourceTypelibCompletionProvider *self;
    GbSourceTypelibCompletionItem *item;
-   GbSourceViewState *state;
    GbSourceSnippet *snippet;
    GbDBusTypelib *proxy;
    GtkTextBuffer *buffer;
@@ -514,11 +510,7 @@ provider_activate_proposal (GtkSourceCompletionProvider *provider,
     * Insert a snippet for this completion item.
     */
    snippet = gb_source_typelib_completion_item_get_snippet(item);
-   state = g_object_new(GB_TYPE_SOURCE_VIEW_STATE_SNIPPET,
-                        "snippet", snippet,
-                        NULL);
-   g_object_set(priv->view, "state", state, NULL);
-   g_object_unref(state);
+   gb_source_view_push_snippet(GB_SOURCE_VIEW(priv->view), snippet);
    g_object_unref(snippet);
 
    /*

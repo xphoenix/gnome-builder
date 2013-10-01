@@ -1,17 +1,17 @@
 /* gb-source-snippet-context.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -46,9 +46,16 @@ struct _GbSourceSnippetContextPrivate
    gboolean    use_spaces;
 };
 
+enum
+{
+   CHANGED,
+   LAST_SIGNAL
+};
+
 typedef gchar *(*InputFilter) (const gchar *input);
 
 static GHashTable *gFilters;
+static guint       gSignals[LAST_SIGNAL];
 
 GbSourceSnippetContext *
 gb_source_snippet_context_new (void)
@@ -169,7 +176,6 @@ filter_camelize (const gchar *input)
    gboolean skip = FALSE;
    gunichar c;
    GString *str;
-   gchar *ret;
 
    if (!strchr(input, '_') && !strchr(input, ' ')) {
       return filter_capitalize(input);
@@ -376,6 +382,13 @@ gb_source_snippet_context_set_line_prefix (GbSourceSnippetContext *context,
    context->priv->line_prefix = g_strdup(line_prefix);
 }
 
+void
+gb_source_snippet_context_emit_changed (GbSourceSnippetContext *context)
+{
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CONTEXT(context));
+   g_signal_emit(context, gSignals[CHANGED], 0);
+}
+
 static void
 gb_source_snippet_context_finalize (GObject *object)
 {
@@ -396,6 +409,16 @@ gb_source_snippet_context_class_init (GbSourceSnippetContextClass *klass)
    object_class = G_OBJECT_CLASS(klass);
    object_class->finalize = gb_source_snippet_context_finalize;
    g_type_class_add_private(object_class, sizeof(GbSourceSnippetContextPrivate));
+
+   gSignals[CHANGED] = g_signal_new("changed",
+                                    GB_TYPE_SOURCE_SNIPPET_CONTEXT,
+                                    G_SIGNAL_RUN_FIRST,
+                                    0,
+                                    NULL,
+                                    NULL,
+                                    g_cclosure_marshal_VOID__VOID,
+                                    G_TYPE_NONE,
+                                    0);
 
    gFilters = g_hash_table_new(g_str_hash, g_str_equal);
    g_hash_table_insert(gFilters, (gpointer)"lower", filter_lower);

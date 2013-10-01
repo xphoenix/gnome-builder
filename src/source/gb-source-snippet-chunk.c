@@ -1,17 +1,17 @@
 /* gb-source-snippet-chunk.c
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -24,22 +24,18 @@ G_DEFINE_TYPE(GbSourceSnippetChunk, gb_source_snippet_chunk, G_TYPE_OBJECT)
 
 struct _GbSourceSnippetChunkPrivate
 {
-   GtkTextMark *mark_begin;
-   GtkTextMark *mark_end;
-
-   gint         tab_stop;
-
-   gchar       *spec;
-   gchar       *text;
-   gboolean     text_set;
-
-   guint        offset_begin;
-   guint        offset_end;
+   GbSourceSnippetContext *context;
+   guint                   context_changed_handler;
+   gint                    tab_stop;
+   gchar                  *spec;
+   gchar                  *text;
+   gboolean                text_set;
 };
 
 enum
 {
    PROP_0,
+   PROP_CONTEXT,
    PROP_SPEC,
    PROP_TAB_STOP,
    PROP_TEXT,
@@ -52,38 +48,80 @@ static GParamSpec *gParamSpecs[LAST_PROP];
 GbSourceSnippetChunk *
 gb_source_snippet_chunk_new (void)
 {
-   g_object_new(GB_TYPE_SOURCE_SNIPPET_CHUNK, NULL);
+   return g_object_new(GB_TYPE_SOURCE_SNIPPET_CHUNK, NULL);
 }
 
 GbSourceSnippetChunk *
 gb_source_snippet_chunk_copy (GbSourceSnippetChunk *chunk)
 {
-   GbSourceSnippetChunkPrivate *priv;
+   GbSourceSnippetChunk *ret;
 
    g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk), NULL);
+
+   ret = g_object_new(GB_TYPE_SOURCE_SNIPPET_CHUNK,
+                      "spec", chunk->priv->spec,
+                      "tab-stop", chunk->priv->tab_stop,
+                      NULL);
+
+   return ret;
+}
+
+static void
+on_context_changed (GbSourceSnippetContext *context,
+                    GbSourceSnippetChunk   *chunk)
+{
+   GbSourceSnippetChunkPrivate *priv;
+   gchar *text;
+
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CONTEXT(context));
 
    priv = chunk->priv;
 
-   return g_object_new(GB_TYPE_SOURCE_SNIPPET_CHUNK,
-                       "tab-stop", priv->tab_stop,
-                       "spec", priv->spec,
-                       NULL);
+   if (!priv->text_set) {
+      text = gb_source_snippet_context_expand(context, priv->spec);
+      gb_source_snippet_chunk_set_text(chunk, text);
+      g_free(text);
+   }
 }
 
-GtkTextMark *
-gb_source_snippet_chunk_get_mark_begin (GbSourceSnippetChunk *chunk)
+GbSourceSnippetContext *
+gb_source_snippet_chunk_get_context (GbSourceSnippetChunk *chunk)
 {
    g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk), NULL);
-
-   return chunk->priv->mark_begin;
+   return chunk->priv->context;
 }
 
-GtkTextMark *
-gb_source_snippet_chunk_get_mark_end (GbSourceSnippetChunk *chunk)
+void
+gb_source_snippet_chunk_set_context (GbSourceSnippetChunk   *chunk,
+                                     GbSourceSnippetContext *context)
 {
-   g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk), NULL);
+   GbSourceSnippetChunkPrivate *priv;
 
-   return chunk->priv->mark_end;
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CONTEXT(context));
+
+   priv = chunk->priv;
+
+   if (priv->context_changed_handler) {
+      g_signal_handler_disconnect(priv->context,
+                                  priv->context_changed_handler);
+      priv->context_changed_handler = 0;
+   }
+
+   g_clear_object(&chunk->priv->context);
+
+   if (context) {
+      priv->context = context ? g_object_ref(context) : NULL;
+      priv->context_changed_handler =
+         g_signal_connect_object(priv->context,
+                                 "changed",
+                                 G_CALLBACK(on_context_changed),
+                                 chunk,
+                                 0);
+   }
+
+   g_object_notify_by_pspec(G_OBJECT(chunk), gParamSpecs[PROP_CONTEXT]);
 }
 
 const gchar *
@@ -97,24 +135,17 @@ void
 gb_source_snippet_chunk_set_spec (GbSourceSnippetChunk *chunk,
                                   const gchar          *spec)
 {
-   GbSourceSnippetChunkPrivate *priv;
-
    g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
 
-   priv = chunk->priv;
-
-   g_free(priv->spec);
-   priv->spec = g_strdup(spec);
-
-   if (!priv->text) {
-      priv->text = g_strdup(spec);
-   }
+   g_free(chunk->priv->spec);
+   chunk->priv->spec = g_strdup(spec);
+   g_object_notify_by_pspec(G_OBJECT(chunk), gParamSpecs[PROP_SPEC]);
 }
 
 gint
 gb_source_snippet_chunk_get_tab_stop (GbSourceSnippetChunk *chunk)
 {
-   g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk), -1);
+   g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk), 0);
    return chunk->priv->tab_stop;
 }
 
@@ -124,13 +155,14 @@ gb_source_snippet_chunk_set_tab_stop (GbSourceSnippetChunk *chunk,
 {
    g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
    chunk->priv->tab_stop = tab_stop;
+   g_object_notify_by_pspec(G_OBJECT(chunk), gParamSpecs[PROP_TAB_STOP]);
 }
 
 const gchar *
 gb_source_snippet_chunk_get_text (GbSourceSnippetChunk *chunk)
 {
    g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk), NULL);
-   return chunk->priv->text;
+   return chunk->priv->text ? chunk->priv->text : "";
 }
 
 void
@@ -138,11 +170,10 @@ gb_source_snippet_chunk_set_text (GbSourceSnippetChunk *chunk,
                                   const gchar          *text)
 {
    g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
-   g_return_if_fail(text);
 
    g_free(chunk->priv->text);
    chunk->priv->text = g_strdup(text);
-   chunk->priv->text_set = TRUE;
+   g_object_notify_by_pspec(G_OBJECT(chunk), gParamSpecs[PROP_TEXT]);
 }
 
 gboolean
@@ -153,200 +184,12 @@ gb_source_snippet_chunk_get_text_set (GbSourceSnippetChunk *chunk)
 }
 
 void
-gb_source_snippet_chunk_edited (GbSourceSnippetChunk *chunk)
+gb_source_snippet_chunk_set_text_set (GbSourceSnippetChunk *chunk,
+                                      gboolean              text_set)
 {
-   GbSourceSnippetChunkPrivate *priv;
-   GtkTextBuffer *buffer;
-   GtkTextIter begin;
-   GtkTextIter end;
-   gchar *text;
-
    g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
-
-   priv = chunk->priv;
-
-   g_assert(priv->mark_begin);
-   g_assert(priv->mark_end);
-
-   buffer = gtk_text_mark_get_buffer(priv->mark_begin);
-
-   gtk_text_buffer_get_iter_at_mark(buffer, &begin, priv->mark_begin);
-   gtk_text_buffer_get_iter_at_mark(buffer, &end, priv->mark_end);
-
-   g_free(priv->text);
-   priv->text = gtk_text_buffer_get_text(buffer, &begin, &end, FALSE);
-   priv->text_set = TRUE;
-}
-
-void
-gb_source_snippet_chunk_expand (GbSourceSnippetChunk   *chunk,
-                                GbSourceSnippetContext *context)
-{
-   GbSourceSnippetChunkPrivate *priv;
-   gchar *text;
-
-   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
-   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CONTEXT(context));
-
-   priv = chunk->priv;
-
-   if (priv->text_set) {
-      return;
-   }
-
-   if (priv->spec) {
-      text = gb_source_snippet_context_expand(context, priv->spec);
-      g_free(priv->text);
-      priv->text = text;
-      g_print("SPEC=%s TEXT=%s\n", priv->spec, priv->text);
-      gb_source_snippet_context_dump(context);
-   }
-}
-
-void
-gb_source_snippet_chunk_select (GbSourceSnippetChunk *chunk)
-{
-   GbSourceSnippetChunkPrivate *priv;
-   GtkTextBuffer *buffer;
-   GtkTextIter begin;
-   GtkTextIter end;
-
-   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
-
-   priv = chunk->priv;
-
-   buffer = gtk_text_mark_get_buffer(priv->mark_begin);
-   gtk_text_buffer_get_iter_at_mark(buffer, &begin, priv->mark_begin);
-   gtk_text_buffer_get_iter_at_mark(buffer, &end, priv->mark_end);
-   gtk_text_buffer_select_range(buffer, &begin, &end);
-}
-
-void
-gb_source_snippet_chunk_insert (GbSourceSnippetChunk *chunk,
-                                GtkTextBuffer        *buffer,
-                                GtkTextIter          *location)
-{
-   GbSourceSnippetChunkPrivate *priv;
-   const gchar *text;
-   gunichar c;
-   GString *str;
-   guint i;
-
-   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
-   g_return_if_fail(GTK_IS_TEXT_BUFFER(buffer));
-   g_return_if_fail(location);
-
-   priv = chunk->priv;
-
-   if (priv->mark_begin || priv->mark_end) {
-      g_warning("Chunk has already been inserted, ignoring.");
-      return;
-   }
-
-   priv->offset_begin = gtk_text_iter_get_offset(location);
-
-   gtk_text_buffer_insert(buffer, location, priv->text, -1);
-
-   priv->offset_end = gtk_text_iter_get_offset(location);
-}
-
-gboolean
-gb_source_snippet_chunk_contains (GbSourceSnippetChunk *chunk,
-                                  const GtkTextIter    *location)
-{
-   GbSourceSnippetChunkPrivate *priv;
-   GtkTextBuffer *buffer;
-   GtkTextIter begin;
-   GtkTextIter end;
-
-   g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk), FALSE);
-   g_return_val_if_fail(location, FALSE);
-
-   priv = chunk->priv;
-
-   buffer = gtk_text_iter_get_buffer(location);
-
-   if (!priv->mark_begin || !priv->mark_end) {
-      return FALSE;
-   }
-
-   gtk_text_buffer_get_iter_at_mark(buffer, &begin, priv->mark_begin);
-   gtk_text_buffer_get_iter_at_mark(buffer, &end, priv->mark_end);
-
-   if ((gtk_text_iter_compare(location, &begin) >= 0) &&
-       (gtk_text_iter_compare(location, &end) <= 0)) {
-      return TRUE;
-   }
-
-   return FALSE;
-}
-
-void
-gb_source_snippet_chunk_build_marks (GbSourceSnippetChunk *chunk,
-                                     GtkTextBuffer        *buffer)
-{
-   GbSourceSnippetChunkPrivate *priv;
-   GtkTextIter iter;
-
-   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
-
-   priv = chunk->priv;
-
-   gtk_text_buffer_get_iter_at_offset(buffer, &iter, priv->offset_begin);
-   priv->mark_begin = gtk_text_buffer_create_mark(buffer, NULL, &iter, TRUE);
-   g_object_ref(priv->mark_begin);
-
-   gtk_text_buffer_get_iter_at_offset(buffer, &iter, priv->offset_end);
-   priv->mark_end = gtk_text_buffer_create_mark(buffer, NULL, &iter, FALSE);
-   g_object_ref(priv->mark_end);
-}
-
-void
-gb_source_snippet_chunk_finish (GbSourceSnippetChunk *chunk)
-{
-   GbSourceSnippetChunkPrivate *priv;
-   GtkTextBuffer *buffer;
-
-   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
-
-   priv = chunk->priv;
-
-   buffer = gtk_text_mark_get_buffer(priv->mark_begin);
-
-   gtk_text_buffer_delete_mark(buffer, priv->mark_begin);
-   gtk_text_buffer_delete_mark(buffer, priv->mark_end);
-
-   g_clear_object(&priv->mark_begin);
-   g_clear_object(&priv->mark_end);
-}
-
-void
-gb_source_snippet_chunk_snapshot (GbSourceSnippetChunk *chunk)
-{
-   GbSourceSnippetChunkPrivate *priv;
-   GtkTextBuffer *buffer;
-   GtkTextIter begin;
-   GtkTextIter end;
-
-   g_return_if_fail(GB_IS_SOURCE_SNIPPET_CHUNK(chunk));
-
-   priv = chunk->priv;
-
-   buffer = gtk_text_mark_get_buffer(priv->mark_begin);
-
-   gtk_text_buffer_get_iter_at_mark(buffer, &begin, priv->mark_begin);
-   gtk_text_buffer_get_iter_at_mark(buffer, &end, priv->mark_end);
-
-   g_free(priv->text);
-   priv->text = gtk_text_buffer_get_text(buffer, &begin, &end, TRUE);
-
-   g_print("SNAPSHOT: text=%s\n", priv->text);
-
-   gtk_text_buffer_delete_mark(buffer, priv->mark_begin);
-   g_clear_object(&priv->mark_begin);
-
-   gtk_text_buffer_delete_mark(buffer, priv->mark_end);
-   g_clear_object(&priv->mark_end);
+   chunk->priv->text_set = text_set;
+   g_object_notify_by_pspec(G_OBJECT(chunk), gParamSpecs[PROP_TEXT_SET]);
 }
 
 static void
@@ -356,11 +199,9 @@ gb_source_snippet_chunk_finalize (GObject *object)
 
    priv = GB_SOURCE_SNIPPET_CHUNK(object)->priv;
 
-   g_free(priv->spec);
-   g_free(priv->text);
-
-   g_clear_object(&priv->mark_begin);
-   g_clear_object(&priv->mark_end);
+   g_clear_pointer(&priv->spec, g_free);
+   g_clear_pointer(&priv->text, g_free);
+   g_clear_object(&priv->context);
 
    G_OBJECT_CLASS(gb_source_snippet_chunk_parent_class)->finalize(object);
 }
@@ -374,6 +215,9 @@ gb_source_snippet_chunk_get_property (GObject    *object,
    GbSourceSnippetChunk *chunk = GB_SOURCE_SNIPPET_CHUNK(object);
 
    switch (prop_id) {
+   case PROP_CONTEXT:
+      g_value_set_object(value, gb_source_snippet_chunk_get_context(chunk));
+      break;
    case PROP_SPEC:
       g_value_set_string(value, gb_source_snippet_chunk_get_spec(chunk));
       break;
@@ -400,14 +244,20 @@ gb_source_snippet_chunk_set_property (GObject      *object,
    GbSourceSnippetChunk *chunk = GB_SOURCE_SNIPPET_CHUNK(object);
 
    switch (prop_id) {
-   case PROP_SPEC:
-      gb_source_snippet_chunk_set_spec(chunk, g_value_get_string(value));
+   case PROP_CONTEXT:
+      gb_source_snippet_chunk_set_context(chunk, g_value_get_object(value));
       break;
    case PROP_TAB_STOP:
       gb_source_snippet_chunk_set_tab_stop(chunk, g_value_get_int(value));
       break;
+   case PROP_SPEC:
+      gb_source_snippet_chunk_set_spec(chunk, g_value_get_string(value));
+      break;
    case PROP_TEXT:
       gb_source_snippet_chunk_set_text(chunk, g_value_get_string(value));
+      break;
+   case PROP_TEXT_SET:
+      gb_source_snippet_chunk_set_text_set(chunk, g_value_get_boolean(value));
       break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -425,10 +275,19 @@ gb_source_snippet_chunk_class_init (GbSourceSnippetChunkClass *klass)
    object_class->set_property = gb_source_snippet_chunk_set_property;
    g_type_class_add_private(object_class, sizeof(GbSourceSnippetChunkPrivate));
 
+   gParamSpecs[PROP_CONTEXT] =
+      g_param_spec_object("context",
+                          _("Context"),
+                          _("The snippet context."),
+                          GB_TYPE_SOURCE_SNIPPET_CONTEXT,
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_CONTEXT,
+                                   gParamSpecs[PROP_CONTEXT]);
+
    gParamSpecs[PROP_SPEC] =
       g_param_spec_string("spec",
                           _("Spec"),
-                          _("The input spec for the chunk such as \"$1|upper\"."),
+                          _("The specification to expand using the contxt."),
                           NULL,
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_SPEC,
@@ -436,12 +295,12 @@ gb_source_snippet_chunk_class_init (GbSourceSnippetChunkClass *klass)
 
    gParamSpecs[PROP_TAB_STOP] =
       g_param_spec_int("tab-stop",
-                       _("Tab Stop"),
-                       _("The tab stop for the snippet."),
-                       -1,
-                       G_MAXINT,
-                       -1,
-                       (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                          _("Tab Stop"),
+                          _("The tab stop for the chunk."),
+                          -1,
+                          G_MAXINT,
+                          -1,
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_TAB_STOP,
                                    gParamSpecs[PROP_TAB_STOP]);
 
@@ -456,10 +315,10 @@ gb_source_snippet_chunk_class_init (GbSourceSnippetChunkClass *klass)
 
    gParamSpecs[PROP_TEXT_SET] =
       g_param_spec_boolean("text-set",
-                          _("Text Set"),
-                          _("If the \"text\" property has been set."),
-                          FALSE,
-                          (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                           _("Text Set"),
+                           _("If the text property has been manually set."),
+                           FALSE,
+                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_TEXT_SET,
                                    gParamSpecs[PROP_TEXT_SET]);
 }
@@ -473,4 +332,6 @@ gb_source_snippet_chunk_init (GbSourceSnippetChunk *chunk)
                                   GbSourceSnippetChunkPrivate);
 
    chunk->priv->tab_stop = -1;
+
+   chunk->priv->spec = g_strdup("");
 }

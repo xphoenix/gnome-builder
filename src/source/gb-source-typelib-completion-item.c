@@ -83,6 +83,7 @@ gb_source_typelib_completion_item_get_snippet (GbSourceTypelibCompletionItem *it
 
    chunk = gb_source_snippet_chunk_new();
    gb_source_snippet_chunk_set_text(chunk, priv->text);
+   gb_source_snippet_chunk_set_text_set(chunk, TRUE);
    gb_source_snippet_add_chunk(snippet, chunk);
    g_object_unref(chunk);
 
@@ -91,6 +92,7 @@ gb_source_typelib_completion_item_get_snippet (GbSourceTypelibCompletionItem *it
 
       chunk = gb_source_snippet_chunk_new();
       gb_source_snippet_chunk_set_text(chunk, " (");
+      gb_source_snippet_chunk_set_text_set(chunk, TRUE);
       gb_source_snippet_add_chunk(snippet, chunk);
       g_object_unref(chunk);
 
@@ -99,11 +101,13 @@ gb_source_typelib_completion_item_get_snippet (GbSourceTypelibCompletionItem *it
             if (i != 0) {
                chunk = gb_source_snippet_chunk_new();
                gb_source_snippet_chunk_set_text(chunk, ", ");
+               gb_source_snippet_chunk_set_text_set(chunk, TRUE);
                gb_source_snippet_add_chunk(snippet, chunk);
                g_object_unref(chunk);
             }
             chunk = gb_source_snippet_chunk_new();
             gb_source_snippet_chunk_set_text(chunk, priv->params[i]);
+            gb_source_snippet_chunk_set_text_set(chunk, TRUE);
             gb_source_snippet_chunk_set_tab_stop(chunk, i + 1);
             gb_source_snippet_add_chunk(snippet, chunk);
             g_object_unref(chunk);
@@ -112,6 +116,7 @@ gb_source_typelib_completion_item_get_snippet (GbSourceTypelibCompletionItem *it
 
       chunk = gb_source_snippet_chunk_new();
       gb_source_snippet_chunk_set_text(chunk, ")");
+      gb_source_snippet_chunk_set_text_set(chunk, TRUE);
       gb_source_snippet_add_chunk(snippet, chunk);
       g_object_unref(chunk);
 

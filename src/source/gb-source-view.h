@@ -21,6 +21,8 @@
 
 #include <gtksourceview/gtksourceview.h>
 
+#include "gb-source-snippet.h"
+
 G_BEGIN_DECLS
 
 #define GB_TYPE_SOURCE_VIEW            (gb_source_view_get_type())
@@ -48,8 +50,9 @@ struct _GbSourceViewClass
    GtkSourceViewClass parent_class;
 };
 
-GType      gb_source_view_get_type (void) G_GNUC_CONST;
-GtkWidget *gb_source_view_new      (void);
+GType gb_source_view_get_type     (void) G_GNUC_CONST;
+void  gb_source_view_push_snippet (GbSourceView    *view,
+                                   GbSourceSnippet *snippet);
 
 G_END_DECLS
 

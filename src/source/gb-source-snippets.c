@@ -19,9 +19,11 @@
 #include <glib/gi18n.h>
 #include <string.h>
 
+#include "gb-source-snippet.h"
 #include "gb-source-snippet-chunk.h"
+#include "gb-source-snippet-parser.h"
 #include "gb-source-snippets.h"
-#include "snippet-parser.h"
+
 #include "trie.h"
 
 G_DEFINE_TYPE(GbSourceSnippets, gb_source_snippets, G_TYPE_OBJECT)
@@ -84,93 +86,31 @@ gb_source_snippets_merge (GbSourceSnippets *snippets,
                  snippets->priv->snippets);
 }
 
-static void
-on_snippet_parsed (GbSourceSnippet *snippet,
-                   gpointer         user_data)
-{
-   GbSourceSnippets *snippets = user_data;
-
-   g_assert(GB_IS_SOURCE_SNIPPETS(snippets));
-   g_assert(GB_IS_SOURCE_SNIPPET(snippet));
-
-   gb_source_snippets_add(snippets, snippet);
-}
-
-static gboolean
-load_from_stream (GbSourceSnippets  *snippets,
-                  GDataInputStream  *stream,
-                  GError           **error)
-{
-   SnippetParser *parser;
-   gboolean ret = TRUE;
-   GError *local_error = NULL;
-   gchar *line;
-   gsize length;
-
-   g_assert(GB_IS_SOURCE_SNIPPETS(snippets));
-   g_assert(G_IS_DATA_INPUT_STREAM(stream));
-
-   parser = snippet_parser_new(on_snippet_parsed, snippets);
-
-   while ((line = g_data_input_stream_read_line(stream,
-                                                &length,
-                                                NULL,
-                                                &local_error))) {
-      snippet_parser_feed_line(parser, line);
-      g_free(line);
-   }
-
-   if (local_error) {
-      g_propagate_error(error, local_error);
-      ret = FALSE;
-   }
-
-   if (ret) {
-      snippet_parser_finish(parser);
-   }
-
-   snippet_parser_free(parser);
-
-   return ret;
-}
-
-gboolean
-gb_source_snippets_load_from_stream (GbSourceSnippets  *snippets,
-                                     GInputStream      *stream,
-                                     GError           **error)
-{
-   GDataInputStream *data_stream;
-   gboolean ret;
-
-   g_return_val_if_fail(GB_IS_SOURCE_SNIPPETS(snippets), FALSE);
-   g_return_val_if_fail(G_IS_INPUT_STREAM(stream), FALSE);
-
-   data_stream = g_data_input_stream_new(stream);
-   ret = load_from_stream(snippets, data_stream, error);
-   g_object_unref(data_stream);
-
-   return ret;
-}
-
 gboolean
 gb_source_snippets_load_from_file (GbSourceSnippets  *snippets,
                                    GFile             *file,
                                    GError           **error)
 {
-   GFileInputStream *file_stream;
-   gboolean ret = FALSE;
+   GbSourceSnippetParser *parser;
+   GList *iter;
 
    g_return_val_if_fail(GB_IS_SOURCE_SNIPPETS(snippets), FALSE);
    g_return_val_if_fail(G_IS_FILE(file), FALSE);
 
-   if ((file_stream = g_file_read(file, NULL, error))) {
-      ret = gb_source_snippets_load_from_stream(snippets,
-                                                G_INPUT_STREAM(file_stream),
-                                                error);
-      g_object_unref(file_stream);
+   parser = gb_source_snippet_parser_new();
+   if (!gb_source_snippet_parser_load_from_file(parser, file, error)) {
+      g_object_unref(parser);
+      return FALSE;
    }
 
-   return ret;
+   iter = gb_source_snippet_parser_get_snippets(parser);
+   for (; iter; iter = iter->next) {
+      gb_source_snippets_add(snippets, iter->data);
+   }
+
+   g_object_unref(parser);
+
+   return TRUE;
 }
 
 void
