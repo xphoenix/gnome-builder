@@ -319,6 +319,19 @@ filter_class (const gchar *input)
 }
 
 static gchar *
+filter_space (const gchar *input)
+{
+   GString *str;
+
+   str = g_string_new(NULL);
+   for (; *input; input = g_utf8_next_char(input)) {
+      g_string_append_c(str, ' ');
+   }
+
+   return g_string_free(str, FALSE);
+}
+
+static gchar *
 apply_filter (gchar       *input,
               const gchar *filter)
 {
@@ -500,6 +513,7 @@ gb_source_snippet_context_class_init (GbSourceSnippetContextClass *klass)
    g_hash_table_insert(gFilters, (gpointer)"functify", filter_functify);
    g_hash_table_insert(gFilters, (gpointer)"namespace", filter_namespace);
    g_hash_table_insert(gFilters, (gpointer)"class", filter_class);
+   g_hash_table_insert(gFilters, (gpointer)"space", filter_space);
 }
 
 static void
