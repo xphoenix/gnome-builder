@@ -7,9 +7,9 @@ test1 (void)
    gchar *expanded;
 
    context = gb_source_snippet_context_new();
-   gb_source_snippet_context_add_variable(context, "$1", "abcd");
-   gb_source_snippet_context_add_variable(context, "$2", "defg");
-   gb_source_snippet_context_add_variable(context, "$123123", "asdf");
+   gb_source_snippet_context_add_variable(context, "1", "abcd");
+   gb_source_snippet_context_add_variable(context, "2", "defg");
+   gb_source_snippet_context_add_variable(context, "123123", "asdf");
 
    expanded = gb_source_snippet_context_expand(context, "$123123 $1\\|$1_$2");
    g_assert_cmpstr(expanded, ==, "asdf abcd|abcd_defg");
@@ -43,9 +43,9 @@ test2 (void)
    gchar *expanded;
 
    context = gb_source_snippet_context_new();
-   gb_source_snippet_context_add_variable(context, "$1", "abcd");
-   gb_source_snippet_context_add_variable(context, "$2", "defg");
-   gb_source_snippet_context_add_variable(context, "$123123", "asdf");
+   gb_source_snippet_context_add_variable(context, "1", "abcd");
+   gb_source_snippet_context_add_variable(context, "2", "defg");
+   gb_source_snippet_context_add_variable(context, "123123", "asdf");
 
    expanded = gb_source_snippet_context_expand(context, "$123123 $1\\|$1_$2|upper");
    g_assert_cmpstr(expanded, ==, "ASDF ABCD|ABCD_DEFG");
