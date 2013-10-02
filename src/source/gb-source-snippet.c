@@ -406,7 +406,7 @@ gb_source_snippet_update_context (GbSourceSnippet *snippet)
       tab_stop = gb_source_snippet_chunk_get_tab_stop(chunk);
       if (tab_stop > 0) {
          if ((text = gb_source_snippet_chunk_get_text(chunk))) {
-            g_snprintf(key, sizeof key, "$%d", tab_stop);
+            g_snprintf(key, sizeof key, "%d", tab_stop);
             key[sizeof key - 1] = '\0';
             gb_source_snippet_context_add_variable(priv->context, key, text);
          }

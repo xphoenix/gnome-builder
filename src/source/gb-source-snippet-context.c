@@ -40,6 +40,7 @@ G_DEFINE_TYPE(GbSourceSnippetContext, gb_source_snippet_context, G_TYPE_OBJECT)
 
 struct _GbSourceSnippetContextPrivate
 {
+   GHashTable *shared;
    GHashTable *variables;
    gchar      *line_prefix;
    gint        tab_size;
@@ -106,9 +107,15 @@ const gchar *
 gb_source_snippet_context_get_variable (GbSourceSnippetContext *context,
                                         const gchar            *key)
 {
+   const gchar *ret;
+
    g_return_val_if_fail(GB_IS_SOURCE_SNIPPET_CONTEXT(context), NULL);
 
-   return g_hash_table_lookup(context->priv->variables, key);
+   if (!(ret = g_hash_table_lookup(context->priv->variables, key))) {
+      ret = g_hash_table_lookup(context->priv->shared, key);
+   }
+
+   return ret;
 }
 
 static gchar *
@@ -407,7 +414,7 @@ gb_source_snippet_context_expand (GbSourceSnippetContext *context,
                break;
             }
             input--;
-            g_snprintf(key, sizeof key, "$%d", n);
+            g_snprintf(key, sizeof key, "%d", n);
             key[sizeof key - 1] = '\0';
             expand = gb_source_snippet_context_get_variable(context, key);
             if (expand) {
@@ -415,7 +422,25 @@ gb_source_snippet_context_expand (GbSourceSnippetContext *context,
             }
             continue;
          } else {
-            g_string_append_c(str, '$');
+            if (strchr(input, '|')) {
+               gchar *lkey;
+
+               lkey = g_strndup(input, strchr(input, '|') - input);
+               expand = gb_source_snippet_context_get_variable(context, lkey);
+               if (expand) {
+                  g_string_append(str, expand);
+               }
+               input = strchr(input, '|');
+            } else {
+               expand = gb_source_snippet_context_get_variable(context, input);
+               if (expand) {
+                  g_string_append(str, expand);
+               } else {
+                  g_string_append_c(str, '$');
+               }
+               input += strlen(input);
+            }
+            continue;
          }
       } else if (c == '|') {
          return apply_filters(str, input + 1);
@@ -473,6 +498,32 @@ gb_source_snippet_context_emit_changed (GbSourceSnippetContext *context)
    g_signal_emit(context, gSignals[CHANGED], 0);
 }
 
+static gchar *
+run_command (const gchar *command)
+{
+   GError *error = NULL;
+   gchar *output = NULL;
+   gchar **argv = NULL;
+   gint argc = 0;
+
+   if (!g_shell_parse_argv(command, &argc, &argv, NULL)) {
+      return NULL;
+   }
+
+   /*
+    * TODO: Run in project directory.
+    */
+
+   if (!g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &output, NULL, NULL, &error)) {
+      g_printerr("%s\n", error->message);
+      g_error_free(error);
+   }
+
+   g_strfreev(argv);
+
+   return g_strstrip(output);
+}
+
 static void
 gb_source_snippet_context_finalize (GObject *object)
 {
@@ -480,6 +531,7 @@ gb_source_snippet_context_finalize (GObject *object)
 
    priv = GB_SOURCE_SNIPPET_CONTEXT(object)->priv;
 
+   g_clear_pointer(&priv->shared, (GDestroyNotify)g_hash_table_unref);
    g_clear_pointer(&priv->variables, (GDestroyNotify)g_hash_table_unref);
 
    G_OBJECT_CLASS(gb_source_snippet_context_parent_class)->finalize(object);
@@ -519,6 +571,9 @@ gb_source_snippet_context_class_init (GbSourceSnippetContextClass *klass)
 static void
 gb_source_snippet_context_init (GbSourceSnippetContext *context)
 {
+   GDateTime *dt;
+   gchar *str;
+
    context->priv =
       G_TYPE_INSTANCE_GET_PRIVATE(context,
                                   GB_TYPE_SOURCE_SNIPPET_CONTEXT,
@@ -528,4 +583,27 @@ gb_source_snippet_context_init (GbSourceSnippetContext *context)
                                                     g_str_equal,
                                                     g_free,
                                                     g_free);
+
+   context->priv->shared = g_hash_table_new_full(g_str_hash,
+                                                 g_str_equal,
+                                                 g_free,
+                                                 g_free);
+
+#define ADD_VARIABLE(k,v) \
+   g_hash_table_insert(context->priv->shared, g_strdup(k), g_strdup(v))
+
+   ADD_VARIABLE("username", g_get_user_name());
+   ADD_VARIABLE("name", g_get_real_name());
+
+   dt = g_date_time_new_now_utc();
+   str = g_date_time_format(dt, "%Y");
+   ADD_VARIABLE("year", str);
+   g_free(str);
+   g_date_time_unref(dt);
+
+   str = run_command("git config user.email");
+   ADD_VARIABLE("email", str);
+   g_free(str);
+
+#undef ADD_VARIABLE
 }
