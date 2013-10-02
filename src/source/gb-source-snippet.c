@@ -105,6 +105,26 @@ gb_source_snippet_copy (GbSourceSnippet *snippet)
    RETURN(ret);
 }
 
+guint
+gb_source_snippet_get_n_chunks (GbSourceSnippet *snippet)
+{
+   g_return_val_if_fail(GB_IS_SOURCE_SNIPPET(snippet), 0);
+   return snippet->priv->chunks->len;
+}
+
+GbSourceSnippetChunk *
+gb_source_snippet_get_nth_chunk (GbSourceSnippet *snippet,
+                                 guint            n)
+{
+   g_return_val_if_fail(GB_IS_SOURCE_SNIPPET(snippet), 0);
+
+   if (n < snippet->priv->chunks->len) {
+      return g_ptr_array_index(snippet->priv->chunks, n);
+   }
+
+   return NULL;
+}
+
 const gchar *
 gb_source_snippet_get_trigger (GbSourceSnippet *snippet)
 {

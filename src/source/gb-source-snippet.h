@@ -50,14 +50,17 @@ struct _GbSourceSnippetClass
    GObjectClass parent_class;
 };
 
-GbSourceSnippet *gb_source_snippet_new         (const gchar          *trigger);
-GbSourceSnippet *gb_source_snippet_copy        (GbSourceSnippet      *snippet);
-GType            gb_source_snippet_get_type    (void) G_GNUC_CONST;
-const gchar     *gb_source_snippet_get_trigger (GbSourceSnippet      *snippet);
-void             gb_source_snippet_set_trigger (GbSourceSnippet      *snippet,
-                                                const gchar          *trigger);
-void             gb_source_snippet_add_chunk   (GbSourceSnippet      *snippet,
-                                                GbSourceSnippetChunk *chunk);
+GbSourceSnippet      *gb_source_snippet_new           (const gchar          *trigger);
+GbSourceSnippet      *gb_source_snippet_copy          (GbSourceSnippet      *snippet);
+GType                 gb_source_snippet_get_type      (void) G_GNUC_CONST;
+const gchar          *gb_source_snippet_get_trigger   (GbSourceSnippet      *snippet);
+void                  gb_source_snippet_set_trigger   (GbSourceSnippet      *snippet,
+                                                       const gchar          *trigger);
+void                  gb_source_snippet_add_chunk     (GbSourceSnippet      *snippet,
+                                                       GbSourceSnippetChunk *chunk);
+guint                 gb_source_snippet_get_n_chunks  (GbSourceSnippet      *snippet);
+GbSourceSnippetChunk *gb_source_snippet_get_nth_chunk (GbSourceSnippet      *snippet,
+                                                       guint                 n);
 
 G_END_DECLS
 
