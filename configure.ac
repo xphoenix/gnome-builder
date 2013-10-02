@@ -108,6 +108,10 @@ AC_ARG_ENABLE([debug],
 	      		      [enable_debug=debug_default])
 AS_CASE([$enable_debug],
 	[yes], [
+		CFLAGS="$CFLAGS -Wall"
+		CFLAGS="$CFLAGS -Werror"
+	],
+	[minimum], [
 		CFLAGS="$CFLAGS -Wold-style-definition"
 		CFLAGS="$CFLAGS -Wdeclaration-after-statement"
 		CFLAGS="$CFLAGS -Wredundant-decls"
@@ -128,8 +132,6 @@ AS_CASE([$enable_debug],
 		CFLAGS="$CFLAGS -Wnested-externs"
 		CFLAGS="$CFLAGS -Wshadow"
 		CFLAGS="$CFLAGS -DGB_ENABLE_TRACE"
-	],
-	[minimum], [
 		CFLAGS="$CFLAGS -DG_DISABLE_CAST_CHECKS"
 	],
 	[no], [
