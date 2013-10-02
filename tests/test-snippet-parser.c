@@ -1,29 +1,25 @@
-#include "../src/source/snippet-parser.h"
-
-static const gchar *test1_data[] = {
-   "snippet a\n",
-   "\t$0 ${1} ${2:data} three ${4}.\n",
-   NULL
-};
-
-static void
-test1_cb (GbSourceSnippet *snippet,
-          gpointer         user_data)
-{
-}
+#include "../src/source/gb-source-snippet-parser.h"
 
 static void
 test1 (void)
 {
-   SnippetParser *parser;
-   gint i;
+   GbSourceSnippetParser *parser;
+   gboolean r;
+   GError *error = NULL;
+   GFile *file;
 
-   parser = snippet_parser_new(test1_cb, NULL);
-   for (i = 0; test1_data[i]; i++) {
-      snippet_parser_feed_line(parser, test1_data[i]);
-   }
-   snippet_parser_finish(parser);
-   snippet_parser_free(parser);
+   file = g_file_new_for_path("test.snippet");
+
+   parser = gb_source_snippet_parser_new();
+   r = gb_source_snippet_parser_load_from_file(parser, file, &error);
+   g_assert_no_error(error);
+   g_assert(r);
+
+   g_object_add_weak_pointer(G_OBJECT(parser), (gpointer *)&parser);
+   g_object_unref(parser);
+   g_assert(!parser);
+
+   g_object_unref(file);
 }
 
 gint

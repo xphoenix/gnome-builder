@@ -4,12 +4,14 @@ include $(top_srcdir)/Makefile.tests
 noinst_PROGRAMS = \
 	test-editor \
 	test-search-fuzzy \
-	test-snippet-context
+	test-snippet-context \
+	test-snippet-parser
 
 
 TEST_PROGS += \
 	test-search-fuzzy \
-	test-snippet-context
+	test-snippet-context \
+	test-snippet-parser
 
 
 AM_CPPFLAGS = \
@@ -49,6 +51,10 @@ test_editor_LDADD = $(top_builddir)/src/libsource.la
 
 test_snippet_context_SOURCES = test-snippet-context.c
 test_snippet_context_LDADD = $(top_builddir)/src/libsource.la
+
+
+test_snippet_parser_SOURCES = test-snippet-parser.c
+test_snippet_parser_LDADD = $(top_builddir)/src/libsource.la
 
 
 test_search_fuzzy_SOURCES = test-search-fuzzy.c
