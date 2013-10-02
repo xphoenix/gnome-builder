@@ -29,7 +29,9 @@ main (gint   argc,
 {
    GtkSourceCompletionProvider *provider;
    GbSourceSnippetParser *parser;
+   GtkSourceStyleScheme *s;
    GtkSourceCompletion *completion;
+   GtkSourceLanguage *l;
    GbSourceSnippets *snippets;
    GtkSourceBuffer *buffer;
    GFile *file;
@@ -61,7 +63,17 @@ main (gint   argc,
                            NULL);
    gtk_container_add(GTK_CONTAINER(window), scroller);
 
+   l = gtk_source_language_manager_get_language(
+      gtk_source_language_manager_get_default(),
+      "c");
+
+   s = gtk_source_style_scheme_manager_get_scheme(
+      gtk_source_style_scheme_manager_get_default(),
+      "tango");
+
    buffer = g_object_new(GTK_SOURCE_TYPE_BUFFER,
+                         "language", l,
+                         "style-scheme", s,
                          NULL);
    view = g_object_new(GB_TYPE_SOURCE_VIEW,
                        "buffer", buffer,
