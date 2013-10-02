@@ -104,6 +104,10 @@ gb_source_snippet_parser_do_part_n (GbSourceSnippetParser *parser,
    GbSourceSnippetParserPrivate *priv = parser->priv;
    GbSourceSnippetChunk *chunk;
 
+   g_return_if_fail(GB_IS_SOURCE_SNIPPET_PARSER(parser));
+   g_return_if_fail(n >= -1);
+   g_return_if_fail(inner);
+
    chunk = gb_source_snippet_chunk_new();
    gb_source_snippet_chunk_set_spec(chunk, n ? inner : "");
    gb_source_snippet_chunk_set_tab_stop(chunk, n);
@@ -137,7 +141,7 @@ parse_variable (const gchar  *line,
                 const gchar **endptr)
 {
    gboolean has_inner = FALSE;
-   char *end;
+   char *end = NULL;
    gint brackets;
    gint i;
 
@@ -161,19 +165,17 @@ parse_variable (const gchar  *line,
       line++;
    }
 
-   if (!g_ascii_isdigit(*line)) {
-      return FALSE;
+   if (g_ascii_isdigit(*line)) {
+      errno = 0;
+      *n = strtol(line, &end, 10);
+      if (((*n == LONG_MIN) || (*n == LONG_MAX)) && errno == ERANGE) {
+         return FALSE;
+      } else if (*n < 0) {
+         return FALSE;
+      }
+      line = end;
    }
 
-   errno = 0;
-   *n = strtol(line, &end, 10);
-   if (((*n == LONG_MIN) || (*n == LONG_MAX)) && errno == ERANGE) {
-      return FALSE;
-   } else if (*n < 0) {
-      return FALSE;
-   }
-
-   line = end;
 
    if (has_inner) {
       if (*line == ':') {
@@ -237,11 +239,9 @@ again:
     * Parse up to the next $ as a simple.
     * If it is $N or ${N} then it is a linked chunk w/o tabstop.
     * If it is ${N:""} then it is a chunk w/ tabstop.
+    * If it is ${blah|upper} then it is a non-tab stop chunk performing
+    * some sort of of expansion.
     */
-
-   if (!*line) {
-      return;
-   }
 
    g_assert(dollar >= line);
 
@@ -249,17 +249,20 @@ again:
       str = g_strndup(line, (dollar - line));
       gb_source_snippet_parser_do_part_simple(parser, str);
       g_free(str);
+      line = dollar;
    }
 
 parse_dollar:
-   if (!parse_variable(dollar, &n, &inner, &line)) {
-      gb_source_snippet_parser_do_part_simple(parser, dollar);
+   inner = NULL;
+
+   if (!parse_variable(line, &n, &inner, &line)) {
+      gb_source_snippet_parser_do_part_simple(parser, line);
       return;
    }
 
 #if 0
    g_printerr("Parse Variable: N=%d  inner=\"%s\"\n", n, inner);
-   g_printerr("  Left over: %s\n", line);
+   g_printerr("  Left over: \"%s\"\n", line);
 #endif
 
    gb_source_snippet_parser_flush_chunk(parser);
@@ -267,6 +270,7 @@ parse_dollar:
    if (inner) {
       gb_source_snippet_parser_do_part_n(parser, n, inner);
       g_free(inner);
+      inner = NULL;
    } else {
       gb_source_snippet_parser_do_part_linked(parser, n);
    }
