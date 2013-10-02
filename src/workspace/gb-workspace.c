@@ -607,7 +607,7 @@ get_child_position (GtkOverlay   *overlay,
    alloc->y = -alloc->height;
    alloc->y += gtk_adjustment_get_value(priv->search_adj) * alloc->height;
 
-   return FALSE;
+   return TRUE;
 }
 
 static void
