@@ -296,6 +296,29 @@ filter_namespace (const gchar *input)
 }
 
 static gchar *
+filter_class (const gchar *input)
+{
+   gchar *camel;
+   gchar *ns;
+   gchar *ret = NULL;
+
+   camel = filter_camelize(input);
+   ns = filter_namespace(input);
+
+   if (g_str_has_prefix(camel, ns)) {
+      ret = g_strdup(camel + strlen(ns));
+   } else {
+      ret = camel;
+      camel = NULL;
+   }
+
+   g_free(camel);
+   g_free(ns);
+
+   return ret;
+}
+
+static gchar *
 apply_filter (gchar       *input,
               const gchar *filter)
 {
@@ -476,6 +499,7 @@ gb_source_snippet_context_class_init (GbSourceSnippetContextClass *klass)
    g_hash_table_insert(gFilters, (gpointer)"camelize", filter_camelize);
    g_hash_table_insert(gFilters, (gpointer)"functify", filter_functify);
    g_hash_table_insert(gFilters, (gpointer)"namespace", filter_namespace);
+   g_hash_table_insert(gFilters, (gpointer)"class", filter_class);
 }
 
 static void

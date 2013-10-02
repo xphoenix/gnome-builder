@@ -79,6 +79,22 @@ test2 (void)
    g_assert_cmpstr(expanded, ==, "Gtk");
    g_free(expanded);
 
+   expanded = gb_source_snippet_context_expand(context, "GtkWidget|class");
+   g_assert_cmpstr(expanded, ==, "Widget");
+   g_free(expanded);
+
+   expanded = gb_source_snippet_context_expand(context, "gtk_widget|class");
+   g_assert_cmpstr(expanded, ==, "Widget");
+   g_free(expanded);
+
+   expanded = gb_source_snippet_context_expand(context, "GtkCellRendererPixbuf|class");
+   g_assert_cmpstr(expanded, ==, "CellRendererPixbuf");
+   g_free(expanded);
+
+   expanded = gb_source_snippet_context_expand(context, "gtk_cell_renderer_pixbuf|class");
+   g_assert_cmpstr(expanded, ==, "CellRendererPixbuf");
+   g_free(expanded);
+
    g_object_add_weak_pointer(G_OBJECT(context), (gpointer *)&context);
    g_object_unref(context);
    g_assert(!context);
