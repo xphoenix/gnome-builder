@@ -2,22 +2,15 @@
 #include <gtk/gtk.h>
 #include <gtksourceview/gtksource.h>
 
-#include "gb-source-view.h"
 #include "gb-source-snippet.h"
+#include "gb-source-snippet-completion-provider.h"
 #include "gb-source-snippet-parser.h"
+#include "gb-source-snippets.h"
+#include "gb-source-view.h"
 
 static GtkWidget *window;
 static GtkWidget *scroller;
 static GtkWidget *view;
-static GbSourceSnippet *snippet;
-
-static gboolean
-push_snippet (gpointer data)
-{
-   gb_source_view_push_snippet(GB_SOURCE_VIEW(view), snippet);
-
-   return FALSE;
-}
 
 static void
 monospace (GtkWidget *widget)
@@ -29,22 +22,32 @@ monospace (GtkWidget *widget)
    pango_font_description_free(font_desc);
 }
 
+
 gint
 main (gint   argc,
       gchar *argv[])
 {
+   GtkSourceCompletionProvider *provider;
    GbSourceSnippetParser *parser;
+   GtkSourceCompletion *completion;
+   GbSourceSnippets *snippets;
+   GtkSourceBuffer *buffer;
    GFile *file;
    GList *list;
 
    gtk_init(&argc, &argv);
 
+   snippets = gb_source_snippets_new();
+
    file = g_file_new_for_path("test.snippet");
    parser = g_object_new(GB_TYPE_SOURCE_SNIPPET_PARSER, NULL);
    gb_source_snippet_parser_load_from_file(parser, file, NULL);
    list = gb_source_snippet_parser_get_snippets(parser);
-   g_assert(list);
-   snippet = list->data;
+   for (; list; list = list->next) {
+      gb_source_snippets_add(snippets, list->data);
+   }
+   g_object_unref(parser);
+   g_object_unref(file);
 
    window = g_object_new(GTK_TYPE_WINDOW,
                          "title", "Editor",
@@ -58,16 +61,24 @@ main (gint   argc,
                            NULL);
    gtk_container_add(GTK_CONTAINER(window), scroller);
 
+   buffer = g_object_new(GTK_SOURCE_TYPE_BUFFER,
+                         NULL);
    view = g_object_new(GB_TYPE_SOURCE_VIEW,
+                       "buffer", buffer,
                        "visible", TRUE,
+                       "show-line-numbers", TRUE,
+                       "show-right-margin", TRUE,
+                       "right-margin-position", 80,
                        NULL);
-   gtk_container_add(GTK_CONTAINER(scroller), view);
    monospace(view);
+   gtk_container_add(GTK_CONTAINER(scroller), view);
+
+   completion = gtk_source_view_get_completion((GtkSourceView *)view);
+   provider = gb_source_snippet_completion_provider_new(GB_SOURCE_VIEW(view), snippets);
+   gtk_source_completion_add_provider(completion, provider, NULL);
 
    g_signal_connect(window, "delete-event", gtk_main_quit, NULL);
    gtk_window_present(GTK_WINDOW(window));
-
-   g_timeout_add(1000, push_snippet, NULL);
 
    gtk_main();
 

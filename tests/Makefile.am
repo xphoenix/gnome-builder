@@ -46,7 +46,11 @@ AM_CPPFLAGS = \
 
 
 test_editor_SOURCES = test-editor.c
-test_editor_LDADD = $(top_builddir)/src/libsource.la
+test_editor_LDADD = \
+	$(top_builddir)/src/libsource.la \
+	$(top_builddir)/src/libworkspace.la \
+	$(top_builddir)/src/libtrie.la \
+	$(top_builddir)/src/libapp.la
 
 
 test_snippet_context_SOURCES = test-snippet-context.c
