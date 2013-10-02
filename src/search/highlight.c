@@ -25,7 +25,6 @@ highlight_substrings (const gchar *haystack,
                       const gchar *suffix)
 {
    GString *str;
-   gint len;
 
    g_return_val_if_fail(haystack, NULL);
    g_return_val_if_fail(needle, NULL);

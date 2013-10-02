@@ -58,10 +58,10 @@ GtkSourceCompletionProvider *
 gb_source_snippet_completion_provider_new (GbSourceView     *source_view,
                                            GbSourceSnippets *snippets)
 {
-   g_object_new(GB_TYPE_SOURCE_SNIPPET_COMPLETION_PROVIDER,
-                "source-view", source_view,
-                "snippets", snippets,
-                NULL);
+   return g_object_new(GB_TYPE_SOURCE_SNIPPET_COMPLETION_PROVIDER,
+                       "source-view", source_view,
+                       "snippets", snippets,
+                       NULL);
 }
 
 GbSourceSnippets *

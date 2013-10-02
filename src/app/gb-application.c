@@ -219,12 +219,9 @@ gb_application_command_line (GApplication *application,
                              GApplicationCommandLine *command_line)
 {
    GOptionContext *context;
-   GInputStream *stream;
    GError *error = NULL;
    gchar **args;
    gchar **argv;
-   gchar *path;
-   GFile *file;
    gint argc;
    gint i;
    int ret = EXIT_SUCCESS;

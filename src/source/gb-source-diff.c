@@ -174,7 +174,6 @@ gb_source_diff_parse_line (GbSourceDiff *diff,
                            GString      *str,
                            GHashTable   *hashtable)
 {
-   GbSourceDiffState state;
    gchar mode = 0;
    guint i;
    gint src_begin = 0;
@@ -215,7 +214,6 @@ gb_source_diff_worker (gpointer data)
    GError *error = NULL;
    gssize r;
    gsize to_write;
-   gsize length = 0;
    gchar *working_dir;
    gchar *path;
    gchar *text;
@@ -328,6 +326,8 @@ cleanup:
    g_free(closure);
    g_string_free(str, TRUE);
    g_clear_pointer(&hashtable, g_hash_table_unref);
+
+   return NULL;
 }
 
 static gboolean

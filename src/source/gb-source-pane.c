@@ -722,6 +722,7 @@ gb_source_pane_save_finish (GbWorkspacePane  *pane,
                             GAsyncResult     *result,
                             GError          **error)
 {
+   return TRUE;
 }
 
 static void
@@ -906,7 +907,6 @@ gb_source_pane_class_init (GbSourcePaneClass *klass)
 static void
 gb_source_pane_init (GbSourcePane *pane)
 {
-   GtkSourceGutterRenderer *renderer;
    GtkSourceCompletion *completion;
    GbSourcePanePrivate *priv;
    GtkSourceGutter *gutter;

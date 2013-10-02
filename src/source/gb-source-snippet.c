@@ -736,7 +736,6 @@ gb_source_snippet_after_delete_range (GbSourceSnippet *snippet,
                                       GtkTextIter     *begin,
                                       GtkTextIter     *end)
 {
-   GbSourceSnippetPrivate *priv;
    GtkTextMark *here;
 
    ENTRY;
@@ -745,8 +744,6 @@ gb_source_snippet_after_delete_range (GbSourceSnippet *snippet,
    g_return_if_fail(GTK_IS_TEXT_BUFFER(buffer));
    g_return_if_fail(begin);
    g_return_if_fail(end);
-
-   priv = snippet->priv;
 
    here = gtk_text_buffer_create_mark(buffer, NULL, begin, TRUE);
 

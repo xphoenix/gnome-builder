@@ -204,7 +204,6 @@ gb_source_typelib_completion_provider_class_init (GbSourceTypelibCompletionProvi
 {
    static const gchar *argv[] = { "--typelib", NULL };
    GObjectClass *object_class;
-   GError *error = NULL;
 
    object_class = G_OBJECT_CLASS(klass);
    object_class->finalize = gb_source_typelib_completion_provider_finalize;
@@ -344,7 +343,6 @@ complete_cb (GObject      *object,
    if (matches) {
       GVariantIter *viter;
       const gchar *text;
-      const gchar *markup;
       gdouble score;
 
       g_variant_get(matches, "a(sid)", &viter);
@@ -419,13 +417,8 @@ provider_populate (GtkSourceCompletionProvider *provider,
    GbDBusTypelib *proxy;
    GCancellable *cancellable;
    GtkTextIter iter;
-   GError *error = NULL;
-   GVariant *matches = NULL;
    gpointer *closure;
    gchar *word;
-   GList *list = NULL;
-   gint len;
-   gint i;
 
    proxy = get_proxy(GB_SOURCE_TYPELIB_COMPLETION_PROVIDER(provider));
    if (!proxy) {
@@ -435,7 +428,6 @@ provider_populate (GtkSourceCompletionProvider *provider,
 
    gtk_source_completion_context_get_iter(context, &iter);
    word = get_word(provider, &iter);
-   len = strlen(word);
 
    closure = g_new0(gpointer, 3);
    closure[0] = g_object_ref(provider);

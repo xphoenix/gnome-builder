@@ -235,7 +235,7 @@ gb_workspace_search_provider_get_property (GObject    *object,
                                            GValue     *value,
                                            GParamSpec *pspec)
 {
-   GbWorkspaceSearchProvider *provider = GB_WORKSPACE_SEARCH_PROVIDER(object);
+   //GbWorkspaceSearchProvider *provider = GB_WORKSPACE_SEARCH_PROVIDER(object);
 
    switch (prop_id) {
    default:

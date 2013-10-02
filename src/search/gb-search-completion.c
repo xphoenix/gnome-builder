@@ -95,14 +95,11 @@ gb_search_completion_match_selected (GtkEntryCompletion *completion,
                                      GtkTreeModel       *model,
                                      GtkTreeIter        *iter)
 {
-   GbSearchCompletionPrivate *priv;
    GbSearchProvider *provider;
 
    g_return_val_if_fail(GB_IS_SEARCH_COMPLETION(completion), FALSE);
    g_return_val_if_fail(GTK_IS_LIST_STORE(model), FALSE);
    g_return_val_if_fail(iter, FALSE);
-
-   priv = GB_SEARCH_COMPLETION(completion)->priv;
 
    gtk_tree_model_get(model, iter,
                       GB_SEARCH_COMPLETION_COLUMN_PROVIDER, &provider,
@@ -190,8 +187,6 @@ gb_search_completion_class_init (GbSearchCompletionClass *klass)
 static void
 gb_search_completion_init (GbSearchCompletion *completion)
 {
-   GtkCellRenderer *renderer;
-
    completion->priv =
       G_TYPE_INSTANCE_GET_PRIVATE(completion,
                                   GB_TYPE_SEARCH_COMPLETION,

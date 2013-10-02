@@ -261,7 +261,7 @@ fuzzy_insert (Fuzzy       *fuzzy,
 {
    FuzzyItem item;
    GArray *table;
-   gchar *downcase;
+   gchar *downcase = NULL;
    gsize offset;
    guint idx;
    gint id;

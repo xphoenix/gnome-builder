@@ -201,7 +201,6 @@ handle_complete (GbDBusTypelib         *typelib,
    GVariantBuilder builder;
    FuzzyMatch *match;
    GVariant *value;
-   gdouble score;
    GArray *matches;
    gint i;
 

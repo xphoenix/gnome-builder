@@ -105,7 +105,6 @@ gb_workspace_pane_group_notify_can_save (GbWorkspacePane      *pane,
                                          GbWorkspacePaneGroup *group)
 {
    GbWorkspace *workspace;
-   GtkWidget *tab;
 
    g_assert(GB_IS_WORKSPACE_PANE(pane));
    g_assert(GB_IS_WORKSPACE_PANE_GROUP(group));
@@ -182,15 +181,12 @@ icon_drag_data_get (GtkWidget            *event_box,
                     guint                 time_,
                     GbWorkspacePaneGroup *group)
 {
-   GbWorkspacePaneGroupPrivate *priv;
    GbWorkspacePane *pane;
    const gchar *uri;
    gchar **uris;
 
    g_return_if_fail(GTK_IS_EVENT_BOX(event_box));
    g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
-
-   priv = group->priv;
 
    if ((pane = gb_workspace_pane_group_get_current_pane(group))) {
       if ((uri = gb_workspace_pane_get_uri(pane))) {
@@ -214,7 +210,6 @@ gb_workspace_pane_group_add (GtkContainer *container,
    };
    GbWorkspacePaneGroupPrivate *priv;
    GbWorkspacePaneGroup *group = (GbWorkspacePaneGroup *)container;
-   GtkTreeIter iter;
    GtkWidget *event;
    GtkWidget *hbox;
    GtkWidget *close_button;
