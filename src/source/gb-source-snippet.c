@@ -80,20 +80,28 @@ gb_source_snippet_new (const gchar *trigger)
 GbSourceSnippet *
 gb_source_snippet_copy (GbSourceSnippet *snippet)
 {
+   GbSourceSnippetPrivate *priv;
    GbSourceSnippetChunk *chunk;
    GbSourceSnippet *ret;
    gint i;
 
    ENTRY;
+
+   g_return_val_if_fail(GB_IS_SOURCE_SNIPPET(snippet), NULL);
+
+   priv = snippet->priv;
+
    ret = g_object_new(GB_TYPE_SOURCE_SNIPPET,
                       "trigger", snippet->priv->trigger,
                       NULL);
-   for (i = 0; i < snippet->priv->chunks->len; i++) {
-      chunk = g_ptr_array_index(snippet->priv->chunks, i);
+
+   for (i = 0; i < priv->chunks->len; i++) {
+      chunk = g_ptr_array_index(priv->chunks, i);
       chunk = gb_source_snippet_chunk_copy(chunk);
-      gb_source_snippet_add_chunk(snippet, chunk);
+      gb_source_snippet_add_chunk(ret, chunk);
       g_object_unref(chunk);
    }
+
    RETURN(ret);
 }
 
@@ -897,10 +905,8 @@ gb_source_snippet_init (GbSourceSnippet *snippet)
 
    snippet->priv->tab_stop = 0;
    snippet->priv->max_tab_stop = -1;
-
    snippet->priv->chunks = g_ptr_array_new_with_free_func(g_object_unref);
    snippet->priv->runs = g_array_new(FALSE, FALSE, sizeof(gint));
-
    snippet->priv->context = gb_source_snippet_context_new();
 
    EXIT;
