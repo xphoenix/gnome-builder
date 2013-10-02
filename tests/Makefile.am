@@ -2,6 +2,7 @@ include $(top_srcdir)/Makefile.tests
 
 
 noinst_PROGRAMS = \
+	test-editor \
 	test-search-fuzzy \
 	test-snippet-context
 
@@ -40,6 +41,10 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/terminal \
 	-I$(top_srcdir)/src/trie \
 	-I$(top_srcdir)/src/workspace
+
+
+test_editor_SOURCES = test-editor.c
+test_editor_LDADD = $(top_builddir)/src/libsource.la
 
 
 test_snippet_context_SOURCES = test-snippet-context.c
