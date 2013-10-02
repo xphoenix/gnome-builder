@@ -99,17 +99,29 @@ gb_source_pane_set_style_scheme_name (GbSourcePane *pane,
                                       const gchar  *name)
 {
    GtkSourceStyleSchemeManager *m;
-   GtkSourceStyleScheme *s;
+   GtkSourceStyleScheme *s = NULL;
+   gint i = 0;
+   const gchar *fallback[] = {
+      "solarized-light",
+      "tango",
+      NULL,
+   };
 
    g_return_if_fail(GB_IS_SOURCE_PANE(pane));
 
-   if (!name) {
-      name = "solarized-light";
-   }
-
    m = gtk_source_style_scheme_manager_get_default();
-   s = gtk_source_style_scheme_manager_get_scheme(m, name);
-   gtk_source_buffer_set_style_scheme(pane->priv->buffer, s);
+
+   do {
+      if (name) {
+         s = gtk_source_style_scheme_manager_get_scheme(m, name);
+      }
+      if (!s) {
+         name = fallback[i++];
+      } else {
+         gtk_source_buffer_set_style_scheme(pane->priv->buffer, s);
+         break;
+      }
+   } while (!s && name);
 
    g_object_notify_by_pspec(G_OBJECT(pane),
                             gParamSpecs[PROP_STYLE_SCHEME_NAME]);
