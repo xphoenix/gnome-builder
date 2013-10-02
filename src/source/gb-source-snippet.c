@@ -656,7 +656,7 @@ gb_source_snippet_after_insert_text (GbSourceSnippet *snippet,
    gtk_text_buffer_get_iter_at_mark(buffer, iter, here);
    gtk_text_buffer_delete_mark(buffer, here);
 
-#if 1
+#if 0
    gb_source_snippet_context_dump(priv->context);
 #endif
 
@@ -747,14 +747,11 @@ gb_source_snippet_after_delete_range (GbSourceSnippet *snippet,
 
    priv = snippet->priv;
 
-   /*
-    * TODO: Update fields that have changed due to context.
-    */
    gb_source_snippet_update_context(snippet);
    gb_source_snippet_update_context(snippet);
    gb_source_snippet_rewrite_updated_chunks(snippet);
 
-#if 1
+#if 0
    gb_source_snippet_context_dump(priv->context);
 #endif
 
