@@ -1,4 +1,72 @@
 snippet test
 	$0 ${1:test} ${2:this} ${$1 $2|functify|upper}
 snippet G_DEFINE_TYPE
+	#include <glib/gi18n.h>
+
+	#include "${$1|namespace|lower}-${$1|class|lower}.h"
+
 	G_DEFINE_TYPE(${1:TestObject}, ${2:$1|functify}, ${3:G_TYPE_OBJECT})
+
+	struct _$1Private
+	{
+		gpointer dummy;
+	};
+	
+	enum
+	{
+		PROP_0,
+		LAST_PROP
+	};
+	
+	static GParamSpec *gParamSpecs[LAST_PROP];
+	
+	static void
+	$2_finalize (GObject *object)
+	{
+		$1Private *priv;
+	
+		priv = ${$1|functify|upper}(object)->priv;
+	
+		G_OBJECT_CLASS($2_parent_class)->finalize(object);
+	}
+	
+	static void
+	$2_get_property (GObject    *object,
+	${$2_get_property|space}  guint       prop_id,
+	${$2_get_property|space}  GValue     *value,
+	${$2_get_property|space}  GParamSpec *pspec)
+	{
+		$1 *self = ${$1|functify|upper}(object);
+	
+		switch (prop_id) {
+		default:
+			G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+		}
+	}
+	
+	static void
+	$2_set_property (GObject      *object,
+	${$2_set_property|space}  guint         prop_id,
+	${$2_set_property|space}  const GValue *value,
+	${$2_set_property|space}  GParamSpec   *pspec)
+	{
+		$1 *self = ${$1|functify|upper}(object);
+	
+		switch (prop_id) {
+		default:
+			G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+		}
+	}
+	
+	static void
+	$2_init ($1 *self)
+	{
+		self->priv = 
+			G_TYPE_INSTANCE_GET_INTERFACE(self,
+			                              ${$1|namespace|upper}_TYPE_${$1|class|upper},
+			                              $1Private);
+	}
+snippet gdouble
+	gdouble $0
+snippet gboolean
+	gboolean $0
