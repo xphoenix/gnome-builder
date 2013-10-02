@@ -67,6 +67,18 @@ test2 (void)
    g_assert_cmpstr(expanded, ==, "SOME_FUNC");
    g_free(expanded);
 
+   expanded = gb_source_snippet_context_expand(context, "GtkWidget|namespace");
+   g_assert_cmpstr(expanded, ==, "Gtk");
+   g_free(expanded);
+
+   expanded = gb_source_snippet_context_expand(context, "gtk_widget_show|namespace");
+   g_assert_cmpstr(expanded, ==, "Gtk");
+   g_free(expanded);
+
+   expanded = gb_source_snippet_context_expand(context, "gtk_widget_get_window|namespace");
+   g_assert_cmpstr(expanded, ==, "Gtk");
+   g_free(expanded);
+
    g_object_add_weak_pointer(G_OBJECT(context), (gpointer *)&context);
    g_object_unref(context);
    g_assert(!context);

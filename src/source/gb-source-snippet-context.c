@@ -248,6 +248,54 @@ filter_functify (const gchar *input)
 }
 
 static gchar *
+filter_namespace (const gchar *input)
+{
+   gunichar last = 0;
+   gunichar c;
+   gunichar n;
+   GString *str;
+   gboolean first_is_lower = FALSE;
+
+   str = g_string_new(NULL);
+
+   for (; *input; input = g_utf8_next_char(input)) {
+      c = g_utf8_get_char(input);
+      n = g_utf8_get_char(g_utf8_next_char(input));
+
+      if (c == '_') {
+         break;
+      }
+
+      if (last) {
+         if ((g_unichar_islower(last) && g_unichar_isupper(c)) ||
+             (g_unichar_isupper(c) && g_unichar_islower(n))) {
+            break;
+         }
+      } else {
+         first_is_lower = g_unichar_islower(c);
+      }
+
+      if (c == ' ') {
+         break;
+      }
+
+      g_string_append_unichar(str, c);
+
+      last = c;
+   }
+
+   if (first_is_lower) {
+      gchar *ret;
+      
+      ret = filter_capitalize(str->str);
+      g_string_free(str, TRUE);
+      return ret;
+   }
+
+   return g_string_free(str, FALSE);
+}
+
+static gchar *
 apply_filter (gchar       *input,
               const gchar *filter)
 {
@@ -427,6 +475,7 @@ gb_source_snippet_context_class_init (GbSourceSnippetContextClass *klass)
    g_hash_table_insert(gFilters, (gpointer)"html", filter_html);
    g_hash_table_insert(gFilters, (gpointer)"camelize", filter_camelize);
    g_hash_table_insert(gFilters, (gpointer)"functify", filter_functify);
+   g_hash_table_insert(gFilters, (gpointer)"namespace", filter_namespace);
 }
 
 static void
