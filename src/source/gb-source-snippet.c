@@ -443,6 +443,8 @@ gb_source_snippet_begin (GbSourceSnippet *snippet,
    priv->inserted = TRUE;
 
    gb_source_snippet_update_context(snippet);
+   gb_source_snippet_context_emit_changed(priv->context);
+   gb_source_snippet_update_context(snippet);
 
    priv->buffer = g_object_ref(buffer);
    priv->mark_begin = gtk_text_buffer_create_mark(buffer, NULL, iter, TRUE);
