@@ -322,6 +322,19 @@ gb_source_view_notify_buffer (GObject    *object,
    }
 }
 
+static void
+gb_source_view_scroll_to_insert (GbSourceView *view)
+{
+   GtkTextBuffer *buffer;
+   GtkTextMark *mark;
+
+   g_return_if_fail(GB_IS_SOURCE_VIEW(view));
+
+   buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+   mark = gtk_text_buffer_get_insert(buffer);
+   gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(view), mark, 0.0, FALSE, 0, 0);
+}
+
 static gboolean
 gb_source_view_key_press_event (GtkWidget   *widget,
                                 GdkEventKey *event)
@@ -342,11 +355,13 @@ gb_source_view_key_press_event (GtkWidget   *widget,
          if (!gb_source_snippet_move_next(snippet)) {
             gb_source_view_pop_snippet(view);
          }
+         gb_source_view_scroll_to_insert(view);
          gb_source_view_unblock_handlers(view);
          return TRUE;
       case GDK_KEY_ISO_Left_Tab:
          gb_source_view_block_handlers(view);
          gb_source_snippet_move_previous(snippet);
+         gb_source_view_scroll_to_insert(view);
          gb_source_view_unblock_handlers(view);
          return TRUE;
       default:
