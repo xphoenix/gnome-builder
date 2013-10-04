@@ -23,6 +23,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/debugger \
 	-I$(top_srcdir)/src/docs \
 	-I$(top_srcdir)/src/language \
+	-I$(top_srcdir)/src/log \
 	-I$(top_srcdir)/src/multiprocess \
 	-I$(top_srcdir)/src/nautilus \
 	-I$(top_srcdir)/src/profiler \
@@ -133,6 +134,12 @@ liblanguage_la_SOURCES = \
 	language/gb-language-formatter-js.h \
 	language/gb-language-js.c \
 	language/gb-language-js.h
+
+
+noinst_LTLIBRARIES += liblog.la
+liblog_la_SOURCES = \
+	log/gb-log.c \
+	log/gb-log.h
 
 
 noinst_LTLIBRARIES += libmultiprocess.la
@@ -292,6 +299,7 @@ gnome_builder_LDADD = \
 	libdebugger.la \
 	libdocs.la \
 	liblanguage.la \
+	liblog.la \
 	libmultiprocess.la \
 	libprofiler.la \
 	libproject.la \
