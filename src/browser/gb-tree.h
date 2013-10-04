@@ -53,7 +53,7 @@ struct _GbTreeClass
 
 void          gb_tree_add_builder    (GbTree        *tree,
                                       GbTreeBuilder *builder);
-GtkUIManager *gb_tree_get_menu_ui    (GbTree        *tree);
+GMenuModel   *gb_tree_get_menu       (GbTree        *tree);
 GtkTreePath  *gb_tree_get_path       (GbTree        *tree,
                                       GList         *list);
 GbTreeNode   *gb_tree_get_selected   (GbTree        *tree);
