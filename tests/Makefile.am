@@ -2,6 +2,7 @@ include $(top_srcdir)/Makefile.tests
 
 
 noinst_PROGRAMS = \
+	test-browser \
 	test-editor \
 	test-search-fuzzy \
 	test-snippet-context \
@@ -29,6 +30,7 @@ AM_CPPFLAGS = \
 	-I$(top_builddir)/src \
 	-I$(top_srcdir)/src/animation \
 	-I$(top_srcdir)/src/app \
+	-I$(top_srcdir)/src/browser \
 	-I$(top_srcdir)/src/compiler \
 	-I$(top_srcdir)/src/debugger \
 	-I$(top_srcdir)/src/docs \
@@ -43,6 +45,13 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/terminal \
 	-I$(top_srcdir)/src/trie \
 	-I$(top_srcdir)/src/workspace
+
+
+test_browser_SOURCES = test-browser.c
+test_browser_LDADD = \
+	$(top_builddir)/src/libapp.la \
+	$(top_builddir)/src/libbrowser.la \
+	$(top_builddir)/src/libproject.la
 
 
 test_editor_SOURCES = test-editor.c
