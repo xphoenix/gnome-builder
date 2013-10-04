@@ -18,7 +18,6 @@
 
 #include <gdk/gdk.h>
 #include <glib/gi18n.h>
-#include <json-glib/json-glib.h>
 
 #include "gb-log.h"
 #include "gb-project.h"

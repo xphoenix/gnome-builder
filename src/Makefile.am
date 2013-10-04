@@ -184,6 +184,8 @@ libproject_la_SOURCES = \
 	project/gb-project.h \
 	project/gb-project-file.c \
 	project/gb-project-file.h \
+	project/gb-project-format.c \
+	project/gb-project-format.h \
 	project/gb-project-group.c \
 	project/gb-project-group.h \
 	project/gb-project-item.c \
