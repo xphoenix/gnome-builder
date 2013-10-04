@@ -1,5 +1,6 @@
 -include $(top_srcdir)/Makefile.introspection
 
+
 bin_PROGRAMS =
 noinst_LTLIBRARIES =
 
@@ -18,6 +19,7 @@ AM_CPPFLAGS = \
 	-I$(top_builddir)/src \
 	-I$(top_srcdir)/src/animation \
 	-I$(top_srcdir)/src/app \
+	-I$(top_srcdir)/src/browser \
 	-I$(top_srcdir)/src/compiler \
 	-I$(top_srcdir)/src/dbus \
 	-I$(top_srcdir)/src/debugger \
@@ -76,6 +78,16 @@ libapp_la_SOURCES = \
 	app/gb-file-filters.h \
 	app/gb-util.c \
 	app/gb-util.h
+
+
+noinst_LTLIBRARIES += libbrowser.la
+libbrowser_la_SOURCES = \
+	browser/gb-tree.c \
+	browser/gb-tree.h \
+	browser/gb-tree-builder.c \
+	browser/gb-tree-builder.h \
+	browser/gb-tree-node.c \
+	browser/gb-tree-node.h
 
 
 noinst_LTLIBRARIES += libcompiler.la
@@ -295,6 +307,7 @@ bin_PROGRAMS += gnome-builder
 gnome_builder_SOURCES = gnome-builder.c
 gnome_builder_LDADD = \
 	libapp.la \
+	libbrowser.la \
 	libcompiler.la \
 	libdebugger.la \
 	libdocs.la \
@@ -328,6 +341,7 @@ GLIB_COMPILE_RESOURCE = glib-compile-resources
 RESOURCE_FILES = \
 	data/gb-application.gresource.xml \
 	data/ui/gb-application-menu.ui \
+	data/ui/gb-browser-menu.ui \
 	data/style-schemes/solarized-dark.xml \
 	data/style-schemes/solarized-light.xml \
 	data/icons/class-16x.png \

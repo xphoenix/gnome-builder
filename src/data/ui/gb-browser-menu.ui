@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<interface>
+  <!-- interface-requires gtk+ 3.0 -->
+  <menu id="popup">
+  </menu>
+</interface>

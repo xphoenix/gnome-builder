@@ -2,6 +2,7 @@
 <gresources>
   <gresource prefix="/org/gnome/Builder">
     <file compressed="true">data/ui/gb-application-menu.ui</file>
+    <file compressed="true">data/ui/gb-browser-menu.ui</file>
     <file compressed="true">data/style-schemes/solarized-dark.xml</file>
     <file compressed="true">data/style-schemes/solarized-light.xml</file>
     <file compressed="false">data/icons/class-16x.png</file>
