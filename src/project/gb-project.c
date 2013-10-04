@@ -20,7 +20,7 @@
 
 #include "gb-project.h"
 
-G_DEFINE_TYPE(GbProject, gb_project, G_TYPE_OBJECT)
+G_DEFINE_TYPE(GbProject, gb_project, GB_TYPE_PROJECT_ITEM)
 
 struct _GbProjectPrivate
 {

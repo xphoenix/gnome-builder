@@ -19,7 +19,7 @@
 #ifndef GB_PROJECT_H
 #define GB_PROJECT_H
 
-#include <glib-object.h>
+#include "gb-project-item.h"
 
 G_BEGIN_DECLS
 
@@ -37,7 +37,7 @@ typedef struct _GbProjectPrivate GbProjectPrivate;
 
 struct _GbProject
 {
-   GObject parent;
+   GbProjectItem parent;
 
    /*< private >*/
    GbProjectPrivate *priv;
@@ -45,7 +45,7 @@ struct _GbProject
 
 struct _GbProjectClass
 {
-   GObjectClass parent_class;
+   GbProjectItemClass parent_class;
 };
 
 GType gb_project_get_type (void) G_GNUC_CONST;
