@@ -828,7 +828,7 @@ gb_tree_class_init (GbTreeClass *klass)
                           _("Root"),
                           _("The root object of the tree."),
                           GB_TYPE_TREE_NODE,
-                          G_PARAM_READWRITE);
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_ROOT,
                                    gParamSpecs[PROP_ROOT]);
 
@@ -837,7 +837,7 @@ gb_tree_class_init (GbTreeClass *klass)
                           _("Selection"),
                           _("The node selection."),
                           GB_TYPE_TREE_NODE,
-                          G_PARAM_READWRITE);
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_SELECTION,
                                    gParamSpecs[PROP_SELECTION]);
 }
