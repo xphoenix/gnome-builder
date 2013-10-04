@@ -341,7 +341,7 @@ GLIB_COMPILE_RESOURCE = glib-compile-resources
 RESOURCE_FILES = \
 	data/gb-application.gresource.xml \
 	data/ui/gb-application-menu.ui \
-	data/ui/gb-browser-menu.ui \
+	data/ui/gb-tree-menu.ui \
 	data/style-schemes/solarized-dark.xml \
 	data/style-schemes/solarized-light.xml \
 	data/icons/class-16x.png \
