@@ -1,6 +1,6 @@
 /* gb-project-file.h
  *
- * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
+ * Copyright (C) 2011 Christian Hergert <chris@dronelabs.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 G_BEGIN_DECLS
 
 #define GB_TYPE_PROJECT_FILE            (gb_project_file_get_type())
+#define GB_TYPE_PROJECT_FILE_MODE       (gb_project_file_mode_get_type())
 #define GB_PROJECT_FILE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GB_TYPE_PROJECT_FILE, GbProjectFile))
 #define GB_PROJECT_FILE_CONST(obj)      (G_TYPE_CHECK_INSTANCE_CAST ((obj), GB_TYPE_PROJECT_FILE, GbProjectFile const))
 #define GB_PROJECT_FILE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  GB_TYPE_PROJECT_FILE, GbProjectFileClass))
@@ -34,6 +35,13 @@ G_BEGIN_DECLS
 typedef struct _GbProjectFile        GbProjectFile;
 typedef struct _GbProjectFileClass   GbProjectFileClass;
 typedef struct _GbProjectFilePrivate GbProjectFilePrivate;
+typedef enum   _GbProjectFileMode    GbProjectFileMode;
+
+enum _GbProjectFileMode
+{
+   GB_PROJECT_FILE_REGULAR = 0,
+   GB_PROJECT_FILE_SOURCE  = 1,
+};
 
 struct _GbProjectFile
 {
@@ -48,7 +56,13 @@ struct _GbProjectFileClass
    GbProjectItemClass parent_class;
 };
 
-GType gb_project_file_get_type (void) G_GNUC_CONST;
+GFile             *gb_project_file_get_file      (GbProjectFile     *file);
+const gchar       *gb_project_file_get_icon_name (GbProjectFile     *file);
+GbProjectFileMode  gb_project_file_get_mode      (GbProjectFile     *file);
+GType              gb_project_file_get_type      (void) G_GNUC_CONST;
+GType              gb_project_file_mode_get_type (void) G_GNUC_CONST;
+void               gb_project_file_set_mode      (GbProjectFile     *file,
+                                                  GbProjectFileMode  mode);
 
 G_END_DECLS
 

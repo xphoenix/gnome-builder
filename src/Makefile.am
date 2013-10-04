@@ -9,6 +9,7 @@ AM_CPPFLAGS = \
 	$(DEVHELP_CFLAGS) \
 	$(GIR_CFLAGS) \
 	$(GJS_CFLAGS) \
+	$(GMODULE_CFLAGS) \
 	$(GOBJECT_CFLAGS) \
 	$(GTK3_CFLAGS) \
 	$(GTKSOURCEVIEW_CFLAGS) \
@@ -47,6 +48,7 @@ AM_LDFLAGS = \
 	$(DEVHELP_LIBS) \
 	$(GIR_LIBS) \
 	$(GJS_LIBS) \
+	$(GMODULE_LIBS) \
 	$(GOBJECT_LIBS) \
 	$(GTK3_LIBS) \
 	$(GTKSOURCEVIEW_LIBS) \
@@ -86,8 +88,12 @@ libbrowser_la_SOURCES = \
 	browser/gb-tree.h \
 	browser/gb-tree-builder.c \
 	browser/gb-tree-builder.h \
+	browser/gb-tree-builder-project.c \
+	browser/gb-tree-builder-project.h \
 	browser/gb-tree-node.c \
-	browser/gb-tree-node.h
+	browser/gb-tree-node.h \
+	browser/gb-tree-node-project.c \
+	browser/gb-tree-node-project.h
 
 
 noinst_LTLIBRARIES += libcompiler.la
@@ -178,8 +184,14 @@ libproject_la_SOURCES = \
 	project/gb-project.h \
 	project/gb-project-file.c \
 	project/gb-project-file.h \
+	project/gb-project-group.c \
+	project/gb-project-group.h \
 	project/gb-project-item.c \
-	project/gb-project-item.h
+	project/gb-project-item.h \
+	project/gb-project-target.c \
+	project/gb-project-target.h \
+	project/gb-project-target-c.c \
+	project/gb-project-target-c.h
 
 
 noinst_LTLIBRARIES += librunner.la

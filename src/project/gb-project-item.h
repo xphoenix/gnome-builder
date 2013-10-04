@@ -1,6 +1,6 @@
 /* gb-project-item.h
  *
- * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
+ * Copyright (C) 2011 Christian Hergert <chris@dronelabs.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,12 @@
 #define GB_PROJECT_ITEM_H
 
 #include <glib-object.h>
+#include <json-glib/json-glib.h>
 
 G_BEGIN_DECLS
 
 #define GB_TYPE_PROJECT_ITEM            (gb_project_item_get_type())
+#define GB_PROJECT_ITEM_ERROR           (gb_project_item_error_quark())
 #define GB_PROJECT_ITEM(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GB_TYPE_PROJECT_ITEM, GbProjectItem))
 #define GB_PROJECT_ITEM_CONST(obj)      (G_TYPE_CHECK_INSTANCE_CAST ((obj), GB_TYPE_PROJECT_ITEM, GbProjectItem const))
 #define GB_PROJECT_ITEM_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  GB_TYPE_PROJECT_ITEM, GbProjectItemClass))
@@ -34,6 +36,13 @@ G_BEGIN_DECLS
 typedef struct _GbProjectItem        GbProjectItem;
 typedef struct _GbProjectItemClass   GbProjectItemClass;
 typedef struct _GbProjectItemPrivate GbProjectItemPrivate;
+typedef enum   _GbProjectItemError   GbProjectItemError;
+
+enum _GbProjectItemError
+{
+   GB_PROJECT_ITEM_ERROR_NO_PARENT = 1,
+   GB_PROJECT_ITEM_ERROR_NO_DESERIALIZER,
+};
 
 struct _GbProjectItem
 {
@@ -48,7 +57,10 @@ struct _GbProjectItemClass
    GInitiallyUnownedClass parent_class;
 };
 
-GType gb_project_item_get_type (void) G_GNUC_CONST;
+GQuark         gb_project_item_error_quark  (void) G_GNUC_CONST;
+GType          gb_project_item_get_type     (void) G_GNUC_CONST;
+GbProjectItem *gb_project_item_get_parent   (GbProjectItem  *item);
+GbProjectItem *gb_project_item_get_toplevel (GbProjectItem  *item);
 
 G_END_DECLS
 
