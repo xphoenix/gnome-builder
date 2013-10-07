@@ -334,11 +334,12 @@ gb_tree_builder_project_build_files (GbTreeBuilder *builder,
                            "icon-name", icon_name,
                            "item", file,
                            NULL);
-      g_object_bind_property_full(file, "path",
-                                  child, "text",
+      g_object_bind_property_full(file, "path", child, "text",
                                   G_BINDING_SYNC_CREATE,
                                   binding_transform_basename, NULL,
                                   NULL, NULL);
+      g_object_bind_property(file, "path", child, "tooltip-text",
+                             G_BINDING_SYNC_CREATE);
       gb_tree_node_append(node, child);
    }
 

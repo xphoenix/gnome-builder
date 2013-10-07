@@ -30,6 +30,7 @@ struct _GbTreeNodePrivate
 	GQuark icon_name;
 	GbTreeNode *parent;
 	gchar *text;
+   gchar *tooltip_text;
 	GbTree *tree;
 	gboolean use_markup;
 };
@@ -41,6 +42,7 @@ enum
 	PROP_ITEM,
 	PROP_PARENT,
 	PROP_TEXT,
+   PROP_TOOLTIP_TEXT,
 	PROP_TREE,
 	PROP_USE_MARKUP,
 	LAST_PROP
@@ -307,6 +309,21 @@ gb_tree_node_set_text (GbTreeNode  *node,
 	g_object_notify_by_pspec(G_OBJECT(node), gParamSpecs[PROP_TEXT]);
 }
 
+static void
+gb_tree_node_set_tooltip_text (GbTreeNode  *node,
+                               const gchar *tooltip_text)
+{
+   GbTreeNodePrivate *priv;
+
+   g_return_if_fail(GB_IS_TREE_NODE(node));
+
+   priv = node->priv;
+
+   g_free(priv->tooltip_text);
+   priv->tooltip_text = g_strdup(tooltip_text);
+   g_object_notify_by_pspec(G_OBJECT(node), gParamSpecs[PROP_TOOLTIP_TEXT]);
+}
+
 /**
  * gb_tree_node_set_use_markup:
  * @node: (in): A #GbTreeNode.
@@ -357,6 +374,7 @@ gb_tree_node_finalize (GObject *object)
 
 	g_clear_object(&priv->item);
 	g_free(priv->text);
+	g_free(priv->tooltip_text);
 
 	if (priv->parent) {
 		g_object_remove_weak_pointer(G_OBJECT(priv->parent),
@@ -396,6 +414,9 @@ gb_tree_node_get_property (GObject    *object,
 	case PROP_TEXT:
 		g_value_set_string(value, node->priv->text);
 		break;
+   case PROP_TOOLTIP_TEXT:
+      g_value_set_string(value, node->priv->tooltip_text);
+      break;
 	case PROP_TREE:
 		g_value_set_object(value, gb_tree_node_get_tree(node));
 		break;
@@ -437,6 +458,9 @@ gb_tree_node_set_property (GObject      *object,
 	case PROP_TEXT:
 		gb_tree_node_set_text(node, g_value_get_string(value));
 		break;
+   case PROP_TOOLTIP_TEXT:
+      gb_tree_node_set_tooltip_text(node, g_value_get_string(value));
+      break;
 	case PROP_USE_MARKUP:
 		gb_tree_node_set_use_markup(node, g_value_get_boolean(value));
 		break;
@@ -472,7 +496,7 @@ gb_tree_node_class_init (GbTreeNodeClass *klass)
 		                    _("Icon Name"),
 		                    _("The icon name to display."),
 		                    NULL,
-		                    G_PARAM_READWRITE);
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property(object_class, PROP_ICON_NAME,
 	                                gParamSpecs[PROP_ICON_NAME]);
 
@@ -486,7 +510,7 @@ gb_tree_node_class_init (GbTreeNodeClass *klass)
 		                    _("Item"),
 		                    _("Convenience property for a project item."),
 		                    GB_TYPE_PROJECT_ITEM,
-		                    G_PARAM_READWRITE);
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property(object_class, PROP_ITEM,
 	                                gParamSpecs[PROP_ITEM]);
 
@@ -500,7 +524,7 @@ gb_tree_node_class_init (GbTreeNodeClass *klass)
 		                    _("Parent"),
 		                    _("The parent node."),
 		                    GB_TYPE_TREE_NODE,
-		                    G_PARAM_READWRITE);
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property(object_class, PROP_PARENT,
 	                                gParamSpecs[PROP_PARENT]);
 
@@ -528,9 +552,18 @@ gb_tree_node_class_init (GbTreeNodeClass *klass)
 		                    _("Text"),
 		                    _("The text of the node."),
 		                    NULL,
-		                    G_PARAM_READWRITE);
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property(object_class, PROP_TEXT,
 	                                gParamSpecs[PROP_TEXT]);
+
+   gParamSpecs[PROP_TOOLTIP_TEXT] =
+      g_param_spec_string("tooltip-text",
+                          _("Tooltip Text"),
+                          _("The text for a tooltip."),
+                          NULL,
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_TOOLTIP_TEXT,
+                                   gParamSpecs[PROP_TOOLTIP_TEXT]);
 
    /**
     * GbTreeNode:use-markup:
@@ -542,7 +575,7 @@ gb_tree_node_class_init (GbTreeNodeClass *klass)
 		                    _("Use Markup"),
 		                    _("If text should be translated as markup."),
 		                    FALSE,
-		                    G_PARAM_READWRITE);
+                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property(object_class, PROP_USE_MARKUP,
 	                                gParamSpecs[PROP_USE_MARKUP]);
 }

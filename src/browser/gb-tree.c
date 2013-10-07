@@ -731,6 +731,41 @@ gb_tree_button_press_event (GbTree         *tree,
    return FALSE;
 }
 
+static gboolean
+gb_tree_query_tooltip (GtkWidget  *widget,
+                       gint        x,
+                       gint        y,
+                       gboolean    keyboard_mode,
+                       GtkTooltip *tooltip,
+                       gpointer    user_data)
+{
+   GtkTreeModel *model;
+   GtkTreePath *path = NULL;
+   GtkTreeIter iter;
+   GbTreeNode *node = NULL;
+   gboolean ret = FALSE;
+   GbTree *tree = (GbTree *)widget;
+   gchar *tooltip_text = NULL;
+
+   g_return_val_if_fail(GB_IS_TREE(tree), FALSE);
+
+   model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
+   gtk_tree_view_convert_widget_to_tree_coords(GTK_TREE_VIEW(widget), x, y, &x, &y);
+
+   if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), x, y, &path, NULL, NULL, NULL)) {
+      gtk_tree_model_get_iter(model, &iter, path);
+      gtk_tree_model_get(model, &iter, 0, &node, -1);
+      gtk_tree_path_free(path);
+      g_object_get(node, "tooltip-text", &tooltip_text, NULL);
+      gtk_tooltip_set_text(tooltip, tooltip_text);
+      ret = (tooltip_text && *tooltip_text);
+      g_free(tooltip_text);
+      g_object_unref(node);
+   }
+
+   return ret;
+}
+
 /**
  * gb_tree_finalize:
  * @object: (in): A #GbTree.
@@ -900,6 +935,11 @@ gb_tree_init (GbTree *tree)
    g_signal_connect(tree, "button-press-event",
                     G_CALLBACK(gb_tree_button_press_event),
                     NULL);
+   g_signal_connect(tree, "query-tooltip",
+                    G_CALLBACK(gb_tree_query_tooltip),
+                    NULL);
+
+   g_object_set(tree, "has-tooltip", TRUE, NULL);
 
    builder = gtk_builder_new();
    gtk_builder_add_from_resource(builder, GB_BROWSER_MENU_PATH, NULL);
