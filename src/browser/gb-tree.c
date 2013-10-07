@@ -750,7 +750,7 @@ gb_tree_query_tooltip (GtkWidget  *widget,
    g_return_val_if_fail(GB_IS_TREE(tree), FALSE);
 
    model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
-   gtk_tree_view_convert_widget_to_tree_coords(GTK_TREE_VIEW(widget), x, y, &x, &y);
+   gtk_tree_view_convert_widget_to_bin_window_coords(GTK_TREE_VIEW(widget), x, y, &x, &y);
 
    if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), x, y, &path, NULL, NULL, NULL)) {
       gtk_tree_model_get_iter(model, &iter, path);
