@@ -102,7 +102,6 @@
         { "type": "GbProjectFile", "path": "../../src/runner/gb-runner-program.h", "mode": "SOURCE" },
         { "type": "GbProjectFile", "path": "../../src/runner/gb-runner.c", "mode": "SOURCE" },
         { "type": "GbProjectFile", "path": "../../src/runner/gb-runner.h", "mode": "SOURCE" },
-        { "type": "GbProjectFile", "path": "../../src/search", "mode": "SOURCE" },
         { "type": "GbProjectFile", "path": "../../src/search/fuzzy.c", "mode": "SOURCE" },
         { "type": "GbProjectFile", "path": "../../src/search/fuzzy.h", "mode": "SOURCE" },
         { "type": "GbProjectFile", "path": "../../src/search/gb-search-completion.c", "mode": "SOURCE" },
