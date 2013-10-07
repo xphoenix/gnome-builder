@@ -90,12 +90,15 @@ binding_transform_basename (GBinding     *binding,
                             GValue       *target_value,
                             gpointer      user_data)
 {
-   //const gchar *src = g_value_get_string(value);
-   //g_value_take_string(target_value, g_path_get_basename(src));
+#if 1
+   const gchar *src = g_value_get_string(value);
+   g_value_take_string(target_value, g_path_get_basename(src));
+#else
    /*
     * TODO: Possibly some elipsize?
     */
    g_value_set_string(target_value, g_value_get_string(value));
+#endif
    return TRUE;
 }
 
