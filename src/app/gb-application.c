@@ -23,6 +23,7 @@
 #include "gb-application.h"
 #include "gb-application-resource.h"
 #include "gb-file-filters.h"
+#include "gb-icon-theme.h"
 #include "gb-multiprocess-manager.h"
 #include "gb-source-pane.h"
 #include "gb-workspace.h"
@@ -350,4 +351,6 @@ gb_application_init (GbApplication *application)
    application->priv = G_TYPE_INSTANCE_GET_PRIVATE(application,
                                                    GB_TYPE_APPLICATION,
                                                    GbApplicationPrivate);
+
+   gb_icon_theme_init();
 }

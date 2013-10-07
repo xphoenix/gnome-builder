@@ -11,7 +11,10 @@
     <file compressed="false">data/icons/enum-value-16x.png</file>
     <file compressed="false">data/icons/keyword-16x.png</file>
     <file compressed="false">data/icons/method-16x.png</file>
+    <file compressed="false">data/icons/project-16x.png</file>
     <file compressed="false">data/icons/static-16x.png</file>
     <file compressed="false">data/icons/template-16x.png</file>
+    <file compressed="false">data/icons/text-x-chdr-16x.png</file>
+    <file compressed="false">data/icons/text-x-csrc-16x.png</file>
   </gresource>
 </gresources>

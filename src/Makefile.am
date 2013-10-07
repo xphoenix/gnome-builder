@@ -78,11 +78,17 @@ libapp_la_SOURCES = \
 	app/gb-application.h \
 	app/gb-file-filters.c \
 	app/gb-file-filters.h \
+	app/gb-icon-theme.c \
+	app/gb-icon-theme.h \
+	app/gb-path.c \
+	app/gb-path.h \
 	app/gb-util.c \
 	app/gb-util.h
 
 
 noinst_LTLIBRARIES += libbrowser.la
+libbrowser_la_LIBADD = \
+	libapp.la
 libbrowser_la_SOURCES = \
 	browser/gb-tree.c \
 	browser/gb-tree.h \
@@ -364,8 +370,11 @@ RESOURCE_FILES = \
 	data/icons/enum-value-16x.png \
 	data/icons/keyword-16x.png \
 	data/icons/method-16x.png \
+	data/icons/project-16x.png \
 	data/icons/static-16x.png \
-	data/icons/template-16x.png
+	data/icons/template-16x.png \
+	data/icons/text-x-chdr-16x.png \
+	data/icons/text-x-csrc-16x.png
 
 
 GB_APPLICATION_RESOURCE_C = $(builddir)/app/gb-application-resource.c
