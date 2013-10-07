@@ -20,6 +20,7 @@
 #include <glib/gi18n.h>
 
 #include "gb-log.h"
+#include "gb-path.h"
 #include "gb-project.h"
 #include "gb-project-file.h"
 #include "gb-project-group.h"
@@ -127,7 +128,7 @@ gb_tree_builder_project_build_project (GbTreeBuilder *builder,
        */
       targets = gb_project_get_targets(project);
       child = g_object_new(GB_TYPE_TREE_NODE,
-                           "icon-name", "directory",
+                           "icon-name", "folder",
                            "item", targets,
                            "text", _("Targets"),
                            NULL);
@@ -135,7 +136,7 @@ gb_tree_builder_project_build_project (GbTreeBuilder *builder,
 
       files = gb_project_get_files(project);
       child = g_object_new(GB_TYPE_TREE_NODE,
-                           "icon-name", "directory",
+                           "icon-name", "folder",
                            "item", files,
                            "text", _("Files"),
                            NULL);
@@ -146,7 +147,7 @@ gb_tree_builder_project_build_project (GbTreeBuilder *builder,
        */
 #if 0
       child = g_object_new(GB_TYPE_TREE_NODE,
-                           "icon-name", "directory",
+                           "icon-name", "folder",
                            "text", _("Resources"),
                            NULL);
       g_object_bind_property(project, "resources", child, "item",
@@ -224,13 +225,13 @@ gb_tree_builder_project_build_target (GbTreeBuilder *builder,
    g_assert(GB_IS_PROJECT_GROUP(files));
 
    child = g_object_new(GB_TYPE_TREE_NODE,
-                        "icon-name", "directory",
+                        "icon-name", "folder",
                         "text", _("Dependencies"),
                         NULL);
    gb_tree_node_append(node, child);
 
    child = g_object_new(GB_TYPE_TREE_NODE,
-                        "icon-name", "directory",
+                        "icon-name", "folder",
                         "item", files,
                         "text", _("Files"),
                         NULL);
@@ -322,9 +323,9 @@ gb_tree_builder_project_build_files (GbTreeBuilder *builder,
    for (i = 0; i < length; i++) {
       file = gb_project_group_get_item(files, i);
       path = g_file_get_path(gb_project_file_get_file(GB_PROJECT_FILE(file)));
-      //if (!(icon_name = gb_path_get_icon_name(path))) {
-         icon_name = "file";
-      //}
+      if (!(icon_name = gb_path_get_icon_name(path))) {
+         icon_name = "text-x-generic";
+      }
       g_free(path);
       child = g_object_new(GB_TYPE_TREE_NODE,
                            "icon-name", icon_name,
