@@ -401,17 +401,22 @@ static void
 gb_source_pane_update_cursor_position (GbSourcePane  *pane,
                                        GtkTextBuffer *buffer)
 {
+   GbSourcePanePrivate *priv;
+   const gchar *mode;
    GtkTextMark *mark;
    GtkTextIter iter;
    gchar *text;
    guint line;
    guint column;
 
+   priv = pane->priv;
+
+   mode = gtk_text_view_get_overwrite(GTK_TEXT_VIEW(priv->view)) ? "REP" : "INS";
    mark = gtk_text_buffer_get_insert(buffer);
    gtk_text_buffer_get_iter_at_mark(buffer, &iter, mark);
    line = gtk_text_iter_get_line(&iter) + 1;
    column = gtk_text_iter_get_line_offset(&iter) + 1;
-   text = g_strdup_printf(_("Line: %u  Column: %u"), line, column);
+   text = g_strdup_printf(_("Ln %u, Col %u  %s"), line, column, mode);
    g_object_set(pane->priv->floating_bar, "label", text, NULL);
    g_free(text);
 
