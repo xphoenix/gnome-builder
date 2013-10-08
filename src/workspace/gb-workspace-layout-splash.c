@@ -18,6 +18,7 @@
 
 #include <glib/gi18n.h>
 
+#include "gb-create-project-dialog.h"
 #include "gb-project.h"
 #include "gb-project-format.h"
 #include "gb-workspace.h"
@@ -88,6 +89,7 @@ gb_workspace_layout_splash_row_activated (GtkListBox              *list_box,
    GbProjectFormat *format;
    GbWorkspace *workspace;
    const gchar *path;
+   GtkDialog *dialog;
    GbProject *project;
    GtkWidget *child;
    GError *error = NULL;
@@ -100,12 +102,17 @@ gb_workspace_layout_splash_row_activated (GtkListBox              *list_box,
    child = gtk_bin_get_child(GTK_BIN(row));
 
    if (!(path = g_object_get_data(G_OBJECT(child), "path"))) {
-      project = g_object_new(GB_TYPE_PROJECT,
-                             "name", _("Unnamed Project"),
-                             NULL);
-      gb_workspace_set_project(workspace, project);
-      gb_workspace_set_mode(workspace, GB_WORKSPACE_EDIT);
-      g_object_unref(project);
+      dialog = g_object_new(GB_TYPE_CREATE_PROJECT_DIALOG,
+                            "transient-for", workspace,
+                            "visible", TRUE,
+                            NULL);
+      if (gtk_dialog_run(dialog) == GTK_RESPONSE_OK) {
+         g_object_get(dialog, "project", &project, NULL);
+         gb_workspace_set_project(workspace, project);
+         gb_workspace_set_mode(workspace, GB_WORKSPACE_EDIT);
+         g_object_unref(project);
+      }
+      gtk_widget_destroy(GTK_WIDGET(dialog));
    } else {
       GFileInputStream *stream;
       gchar *dir;

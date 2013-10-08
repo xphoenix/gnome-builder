@@ -24,6 +24,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/compiler \
 	-I$(top_srcdir)/src/dbus \
 	-I$(top_srcdir)/src/debugger \
+	-I$(top_srcdir)/src/dialogs \
 	-I$(top_srcdir)/src/docs \
 	-I$(top_srcdir)/src/language \
 	-I$(top_srcdir)/src/log \
@@ -126,6 +127,12 @@ libdebugger_la_SOURCES = \
 	debugger/gb-debugger.h \
 	debugger/gb-debugger-gdb.c \
 	debugger/gb-debugger-gdb.h
+
+
+noinst_LTLIBRARIES += libdialogs.la
+libdialogs_la_SOURCES = \
+	dialogs/gb-create-project-dialog.c \
+	dialogs/gb-create-project-dialog.h
 
 
 noinst_LTLIBRARIES += libdocs.la
@@ -298,6 +305,7 @@ noinst_LTLIBRARIES += libworkspace.la
 libworkspace_la_LIBADD = \
 	libanimation.la \
 	libbrowser.la \
+	libdialogs.la \
 	libproject.la \
 	libsearch.la \
 	libterminal.la
@@ -331,6 +339,7 @@ gnome_builder_LDADD = \
 	libbrowser.la \
 	libcompiler.la \
 	libdebugger.la \
+	libdialogs.la \
 	libdocs.la \
 	liblanguage.la \
 	liblog.la \
