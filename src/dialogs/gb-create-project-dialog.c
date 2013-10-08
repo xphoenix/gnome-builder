@@ -158,6 +158,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
    gtk_header_bar_pack_start(GTK_HEADER_BAR(header_bar), button);
 
    button = g_object_new(GTK_TYPE_BUTTON,
+                         "can-default", TRUE,
                          "label", _("Create"),
                          "margin-top", 3,
                          "margin-right", 3,
@@ -169,6 +170,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
    style_context = gtk_widget_get_style_context(button);
    gtk_style_context_add_class(style_context, "suggested-action");
    gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button);
+   gtk_window_set_default(GTK_WINDOW(dialog), button);
 
    grid = g_object_new(GTK_TYPE_GRID,
                        "border-width", 30,
@@ -192,6 +194,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
                               "visible", TRUE,
                               "width-chars", 30,
                               NULL);
+   gtk_entry_set_activates_default(GTK_ENTRY(priv->entry), TRUE);
    gtk_container_add_with_properties(GTK_CONTAINER(grid), priv->entry,
                                      "left-attach", 1,
                                      NULL);
