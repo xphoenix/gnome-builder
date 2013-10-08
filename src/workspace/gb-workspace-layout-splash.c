@@ -19,6 +19,7 @@
 #include <glib/gi18n.h>
 
 #include "gb-project.h"
+#include "gb-project-format.h"
 #include "gb-workspace.h"
 #include "gb-workspace-layout.h"
 #include "gb-workspace-layout-edit.h"
@@ -51,14 +52,45 @@ gb_workspace_layout_splash_class_init (GbWorkspaceLayoutSplashClass *klass)
 }
 
 static void
+open_cb (GObject      *object,
+         GAsyncResult *result,
+         gpointer      user_data)
+{
+   GbProjectFormat *format = GB_PROJECT_FORMAT(object);
+   GbWorkspaceLayoutSplash *splash = user_data;
+   GtkWidget *workspace;
+   GbProject *project;
+   GError *error = NULL;
+
+   if (!(project = gb_project_format_open_finish(format, result, &error))) {
+      g_warning("%s", error->message);
+      g_error_free(error);
+      goto failure;
+   }
+
+   workspace = gtk_widget_get_toplevel(GTK_WIDGET(splash));
+   g_assert(GB_IS_WORKSPACE(workspace));
+
+   gb_workspace_set_project(GB_WORKSPACE(workspace), project);
+   gb_workspace_set_mode(GB_WORKSPACE(workspace), GB_WORKSPACE_EDIT);
+
+   g_object_unref(project);
+
+failure:
+   g_object_unref(splash);
+}
+
+static void
 gb_workspace_layout_splash_row_activated (GtkListBox              *list_box,
                                           GtkWidget               *row,
                                           GbWorkspaceLayoutSplash *splash)
 {
+   GbProjectFormat *format;
    GbWorkspace *workspace;
    const gchar *path;
    GbProject *project;
    GtkWidget *child;
+   GError *error = NULL;
 
    g_assert(GTK_IS_LIST_BOX(list_box));
    g_assert(GTK_IS_LIST_BOX_ROW(row));
@@ -75,7 +107,37 @@ gb_workspace_layout_splash_row_activated (GtkListBox              *list_box,
       gb_workspace_set_mode(workspace, GB_WORKSPACE_EDIT);
       g_object_unref(project);
    } else {
-      g_print("open %s.\n", path);
+      GFileInputStream *stream;
+      gchar *dir;
+      GFile *file;
+
+      g_print("opening %s.\n", path);
+
+      dir = g_path_get_dirname(path);
+      file = g_file_new_for_path(path);
+      format = gb_project_format_new();
+      stream = g_file_read(file, NULL, &error);
+
+      /*
+       * TODO: Do open for read as async operation.
+       */
+
+      if (stream) {
+         gb_project_format_open_async(format,
+                                      dir,
+                                      G_INPUT_STREAM(stream),
+                                      NULL,
+                                      open_cb,
+                                      g_object_ref(splash));
+         g_object_unref(stream);
+      } else {
+         g_warning("%s", error->message);
+         g_error_free(error);
+      }
+
+      g_object_unref(format);
+      g_object_unref(file);
+      g_free(dir);
    }
 }
 
@@ -218,7 +280,7 @@ gb_workspace_layout_splash_init (GbWorkspaceLayoutSplash *splash)
                     splash);
    gtk_container_add(GTK_CONTAINER(viewport), splash->priv->list_box);
 
-   row = make_row("Gnome Builder", "Yesterday", "gbproject.gbproject");
+   row = make_row("Gnome Builder", "Yesterday", "../tests/.testproject/.gbproject");
    gtk_container_add(GTK_CONTAINER(splash->priv->list_box), row);
 
    row = make_row(_("New Project"), NULL, NULL);

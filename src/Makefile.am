@@ -297,6 +297,7 @@ libtrie_la_SOURCES = \
 noinst_LTLIBRARIES += libworkspace.la
 libworkspace_la_LIBADD = \
 	libanimation.la \
+	libbrowser.la \
 	libproject.la \
 	libsearch.la \
 	libterminal.la

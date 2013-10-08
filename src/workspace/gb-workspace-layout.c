@@ -36,6 +36,30 @@ enum
 //static GParamSpec *gParamSpecs[LAST_PROP];
 
 void
+gb_workspace_layout_load (GbWorkspaceLayout *layout,
+                          GbProject         *project)
+{
+   g_return_if_fail(GB_IS_WORKSPACE_LAYOUT(layout));
+   g_return_if_fail(!project || GB_IS_PROJECT(project));
+
+   if (GB_WORKSPACE_LAYOUT_GET_CLASS(layout)->load) {
+      GB_WORKSPACE_LAYOUT_GET_CLASS(layout)->load(layout, project);
+   }
+}
+
+void
+gb_workspace_layout_unload (GbWorkspaceLayout *layout,
+                            GbProject         *project)
+{
+   g_return_if_fail(GB_IS_WORKSPACE_LAYOUT(layout));
+   g_return_if_fail(!project || GB_IS_PROJECT(project));
+
+   if (GB_WORKSPACE_LAYOUT_GET_CLASS(layout)->unload) {
+      GB_WORKSPACE_LAYOUT_GET_CLASS(layout)->unload(layout, project);
+   }
+}
+
+void
 gb_workspace_layout_fullscreen (GbWorkspaceLayout *layout)
 {
    g_return_if_fail(GB_IS_WORKSPACE_LAYOUT(layout));

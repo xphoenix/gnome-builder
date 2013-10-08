@@ -388,6 +388,21 @@ gb_tree_builder_project_build_node (GbTreeBuilder *builder,
    EXIT;
 }
 
+static void
+load_cb (GObject      *object,
+         GAsyncResult *result,
+         gpointer      user_data)
+{
+   GbSourcePane *pane = (GbSourcePane *)object;
+   GError *error = NULL;
+
+   if (!gb_source_pane_load_finish(pane, result, &error)) {
+      g_warning("%s", error->message);
+      g_error_free(error);
+      return;
+   }
+}
+
 /**
  * gb_tree_builder_project_node_activated:
  * @builder: (in): A #GbTreeBuilderProject.
@@ -402,6 +417,36 @@ static gboolean
 gb_tree_builder_project_node_activated (GbTreeBuilder *builder,
                                         GbTreeNode    *node)
 {
+   GbWorkspacePane *pane;
+   GbProjectItem *item;
+   GtkWidget *tree;
+   GtkWidget *workspace;
+   GFile *file;
+
+   g_return_val_if_fail(GB_IS_TREE_BUILDER_PROJECT(builder), FALSE);
+   g_return_val_if_fail(GB_IS_TREE_NODE(node), FALSE);
+
+   tree = gb_tree_builder_get_tree(builder);
+   workspace = gtk_widget_get_toplevel(tree);
+   if (!GB_IS_WORKSPACE(workspace)) {
+      return FALSE;
+   }
+
+   item = gb_tree_node_get_item(node);
+   if (GB_IS_PROJECT_FILE(item)) {
+      file = gb_project_file_get_file(GB_PROJECT_FILE(item));
+      pane = g_object_new(GB_TYPE_SOURCE_PANE,
+                          "visible", TRUE,
+                          NULL);
+      gb_source_pane_load_async(GB_SOURCE_PANE(pane),
+                                file,
+                                NULL,
+                                load_cb,
+                                NULL);
+      gtk_container_add(GTK_CONTAINER(workspace), GTK_WIDGET(pane));
+      g_object_unref(file);
+   }
+
    return TRUE;
 }
 

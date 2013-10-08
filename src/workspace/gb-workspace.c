@@ -140,9 +140,12 @@ gb_workspace_set_project (GbWorkspace *workspace,
                                _("Select a Project"));
    }
 
-   if (priv->layout && priv->project && klass->load) {
-      klass->load(GB_WORKSPACE_LAYOUT(priv->layout), priv->project);
-   }
+   /*
+    * TODO: Add other layouts here.
+    */
+   gb_workspace_layout_load(GB_WORKSPACE_LAYOUT(priv->edit), priv->project);
+
+   g_object_notify_by_pspec(G_OBJECT(workspace), gParamSpecs[PROP_PROJECT]);
 }
 
 void
@@ -162,7 +165,7 @@ gb_workspace_set_mode (GbWorkspace     *workspace,
 
    if (priv->is_fullscreen) {
       gtk_widget_set_visible(priv->header,
-                             GB_IS_WORKSPACE_LAYOUT_SWITCHER(priv->layout));
+                             GB_IS_WORKSPACE_LAYOUT_SPLASH(priv->layout));
    }
 }
 

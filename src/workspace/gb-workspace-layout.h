@@ -63,6 +63,10 @@ struct _GbWorkspaceLayoutClass
 GType gb_workspace_layout_get_type     (void) G_GNUC_CONST;
 void  gb_workspace_layout_fullscreen   (GbWorkspaceLayout *layout);
 void  gb_workspace_layout_unfullscreen (GbWorkspaceLayout *layout);
+void  gb_workspace_layout_load         (GbWorkspaceLayout *layout,
+                                        GbProject         *project);
+void  gb_workspace_layout_unload       (GbWorkspaceLayout *layout,
+                                        GbProject         *project);
 
 G_END_DECLS
 

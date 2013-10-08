@@ -25,6 +25,12 @@
 #include "gb-file-filters.h"
 #include "gb-icon-theme.h"
 #include "gb-multiprocess-manager.h"
+#include "gb-project.h"
+#include "gb-project-file.h"
+#include "gb-project-item.h"
+#include "gb-project-group.h"
+#include "gb-project-target.h"
+#include "gb-project-target-c.h"
 #include "gb-source-pane.h"
 #include "gb-workspace.h"
 
@@ -343,6 +349,13 @@ gb_application_class_init (GbApplicationClass *klass)
                                    gParamSpecs[PROP_WORKSPACE]);
 
    g_resources_register(gb_application_get_resource());
+
+   g_type_ensure(GB_TYPE_PROJECT);
+   g_type_ensure(GB_TYPE_PROJECT_FILE);
+   g_type_ensure(GB_TYPE_PROJECT_GROUP);
+   g_type_ensure(GB_TYPE_PROJECT_ITEM);
+   g_type_ensure(GB_TYPE_PROJECT_TARGET);
+   g_type_ensure(GB_TYPE_PROJECT_TARGET_C);
 }
 
 static void

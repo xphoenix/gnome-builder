@@ -51,7 +51,10 @@ test_browser_SOURCES = test-browser.c
 test_browser_LDADD = \
 	$(top_builddir)/src/libapp.la \
 	$(top_builddir)/src/libbrowser.la \
-	$(top_builddir)/src/libproject.la
+	$(top_builddir)/src/libproject.la \
+	$(top_builddir)/src/libsource.la \
+	$(top_builddir)/src/libtrie.la \
+	$(top_builddir)/src/libworkspace.la
 
 
 test_editor_SOURCES = test-editor.c

@@ -470,6 +470,10 @@ gb_tree_set_root (GbTree     *tree,
 
    priv = tree->priv;
 
+   if (root == priv->root) {
+      return;
+   }
+
    gtk_tree_store_clear(priv->store);
    g_clear_object(&priv->root);
 

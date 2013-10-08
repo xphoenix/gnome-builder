@@ -20,6 +20,11 @@
 
 #include "gb-source-pane.h"
 #include "gb-terminal-pane.h"
+#include "gb-tree.h"
+#include "gb-tree-builder.h"
+#include "gb-tree-builder-project.h"
+#include "gb-tree-node.h"
+#include "gb-tree-node-project.h"
 #include "gb-workspace-layout-edit.h"
 #include "gb-workspace-layout-switcher.h"
 #include "gb-workspace-pane-group.h"
@@ -32,6 +37,9 @@ struct _GbWorkspaceLayoutEditPrivate
 {
    GList *groups;
 
+   GtkWidget *browser;
+   GtkWidget *browser_scroller;
+
    gboolean is_fullscreen;
 };
 
@@ -39,12 +47,24 @@ static void
 gb_workspace_layout_edit_load (GbWorkspaceLayout *layout,
                                GbProject         *project)
 {
-   //GbWorkspaceLayoutEditPrivate *priv;
+   GbWorkspaceLayoutEditPrivate *priv;
    GbWorkspaceLayoutEdit *edit = (GbWorkspaceLayoutEdit *)layout;
+   GbTreeNode *node;
 
    g_return_if_fail(GB_IS_WORKSPACE_LAYOUT_EDIT(edit));
 
-   //priv = edit->priv;
+   priv = edit->priv;
+
+   if (!project) {
+      g_object_set(priv->browser, "root", NULL, NULL);
+      return;
+   }
+
+   node = g_object_new(GB_TYPE_TREE_NODE_PROJECT,
+                       "project", project,
+                       NULL);
+   g_object_set(priv->browser, "root", node, NULL);
+   g_object_unref(node);
 
 #if 0
    g_object_bind_property(project, "name", priv->toolbar, "title",
@@ -157,18 +177,41 @@ gb_workspace_layout_edit_class_init (GbWorkspaceLayoutEditClass *klass)
 static void
 gb_workspace_layout_edit_init (GbWorkspaceLayoutEdit *edit)
 {
+   GbTreeBuilder *builder;
    GtkWidget *group;
+   GtkWidget *hpaned;
 
    edit->priv = G_TYPE_INSTANCE_GET_PRIVATE(edit,
                                             GB_TYPE_WORKSPACE_LAYOUT_EDIT,
                                             GbWorkspaceLayoutEditPrivate);
+
+   hpaned = g_object_new(GTK_TYPE_PANED,
+                         "orientation", GTK_ORIENTATION_HORIZONTAL,
+                         "position", 275,
+                         "visible", TRUE,
+                         NULL);
+   gtk_container_add(GTK_CONTAINER(edit), hpaned);
+
+   edit->priv->browser_scroller = g_object_new(GTK_TYPE_SCROLLED_WINDOW,
+                                               "visible", TRUE,
+                                               NULL);
+   gtk_container_add(GTK_CONTAINER(hpaned), edit->priv->browser_scroller);
+
+   edit->priv->browser = g_object_new(GB_TYPE_TREE,
+                                      "visible", TRUE,
+                                      NULL);
+   gtk_container_add(GTK_CONTAINER(edit->priv->browser_scroller),
+                     edit->priv->browser);
+
+   builder = gb_tree_builder_project_new();
+   gb_tree_add_builder(GB_TREE(edit->priv->browser), builder);
 
    group = g_object_new(GB_TYPE_WORKSPACE_PANE_GROUP,
                         "hexpand", TRUE,
                         "vexpand", TRUE,
                         "visible", TRUE,
                         NULL);
-   gtk_container_add(GTK_CONTAINER(edit), group);
+   gtk_container_add(GTK_CONTAINER(hpaned), group);
 
    edit->priv->groups = g_list_append(edit->priv->groups, group);
 }
