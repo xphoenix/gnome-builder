@@ -178,19 +178,19 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
                        "row-spacing", 6,
                        "visible", TRUE,
                        "vexpand", TRUE,
-                       "hexpand", TRUE,
                        NULL);
    gtk_container_add(GTK_CONTAINER(box), grid);
 
    l = g_object_new(GTK_TYPE_LABEL,
                     "label", _("Name"),
-                    "hexpand", TRUE,
+                    "halign", GTK_ALIGN_FILL,
                     "visible", TRUE,
                     "xalign", 1.0f,
                     NULL);
    gtk_container_add(GTK_CONTAINER(grid), l);
 
    priv->entry = g_object_new(GTK_TYPE_ENTRY,
+                              "halign", GTK_ALIGN_FILL,
                               "visible", TRUE,
                               "width-chars", 30,
                               NULL);
@@ -202,7 +202,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
 
    l = g_object_new(GTK_TYPE_LABEL,
                     "label", NULL,
-                    "hexpand", TRUE,
+                    "halign", GTK_ALIGN_FILL,
                     "visible", TRUE,
                     NULL);
    gtk_container_add_with_properties(GTK_CONTAINER(grid), l,
@@ -211,7 +211,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
 
    l = g_object_new(GTK_TYPE_LABEL,
                     "label", _("Location"),
-                    "hexpand", TRUE,
+                    "halign", GTK_ALIGN_FILL,
                     "visible", TRUE,
                     "xalign", 1.0f,
                     NULL);
@@ -223,6 +223,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
    button = g_object_new(GTK_TYPE_FILE_CHOOSER_BUTTON,
                          "action", GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
                          "create-folders", TRUE,
+                         "halign", GTK_ALIGN_FILL,
                          "visible", TRUE,
                          "width-chars", 30,
                          NULL);
@@ -236,7 +237,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
 
    l = g_object_new(GTK_TYPE_LABEL,
                     "label", NULL,
-                    "hexpand", TRUE,
+                    "halign", GTK_ALIGN_FILL,
                     "visible", TRUE,
                     NULL);
    gtk_container_add_with_properties(GTK_CONTAINER(grid), l,
@@ -246,7 +247,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
 
    l = g_object_new(GTK_TYPE_LABEL,
                     "label", _("GNOME Version"),
-                    "hexpand", TRUE,
+                    "halign", GTK_ALIGN_FILL,
                     "visible", TRUE,
                     "xalign", 1.0f,
                     NULL);
@@ -256,6 +257,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
                                      NULL);
 
    button = g_object_new(GTK_TYPE_COMBO_BOX_TEXT,
+                         "halign", GTK_ALIGN_FILL,
                          "visible", TRUE,
                          NULL);
    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(button), "3.10");
@@ -267,7 +269,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
 
    l = g_object_new(GTK_TYPE_LABEL,
                     "label", NULL,
-                    "hexpand", TRUE,
+                    "halign", GTK_ALIGN_FILL,
                     "visible", TRUE,
                     NULL);
    gtk_container_add_with_properties(GTK_CONTAINER(grid), l,
