@@ -126,6 +126,8 @@ gb_workspace_layout_edit_fullscreen (GbWorkspaceLayout *layout)
    for (iter = edit->priv->groups; iter; iter = iter->next) {
       gb_workspace_pane_group_fullscreen(iter->data);
    }
+
+   gtk_widget_hide(edit->priv->browser_scroller);
 }
 
 static void
@@ -141,6 +143,8 @@ gb_workspace_layout_edit_unfullscreen (GbWorkspaceLayout *layout)
    for (iter = edit->priv->groups; iter; iter = iter->next) {
       gb_workspace_pane_group_unfullscreen(iter->data);
    }
+
+   gtk_widget_show(edit->priv->browser_scroller);
 }
 
 static void
