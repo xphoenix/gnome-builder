@@ -95,10 +95,14 @@ libbrowser_la_SOURCES = \
 	browser/gb-tree.h \
 	browser/gb-tree-builder.c \
 	browser/gb-tree-builder.h \
+	browser/gb-tree-builder-gir.c \
+	browser/gb-tree-builder-gir.h \
 	browser/gb-tree-builder-project.c \
 	browser/gb-tree-builder-project.h \
 	browser/gb-tree-node.c \
 	browser/gb-tree-node.h \
+	browser/gb-tree-node-gir.c \
+	browser/gb-tree-node-gir.h \
 	browser/gb-tree-node-project.c \
 	browser/gb-tree-node-project.h
 

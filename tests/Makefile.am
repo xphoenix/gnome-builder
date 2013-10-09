@@ -6,7 +6,8 @@ noinst_PROGRAMS = \
 	test-editor \
 	test-search-fuzzy \
 	test-snippet-context \
-	test-snippet-parser
+	test-snippet-parser \
+	test-symbol-browser
 
 
 TEST_PROGS += \
@@ -49,6 +50,16 @@ AM_CPPFLAGS = \
 
 test_browser_SOURCES = test-browser.c
 test_browser_LDADD = \
+	$(top_builddir)/src/libapp.la \
+	$(top_builddir)/src/libbrowser.la \
+	$(top_builddir)/src/libproject.la \
+	$(top_builddir)/src/libsource.la \
+	$(top_builddir)/src/libtrie.la \
+	$(top_builddir)/src/libworkspace.la
+
+
+test_symbol_browser_SOURCES = test-symbol-browser.c
+test_symbol_browser_LDADD = \
 	$(top_builddir)/src/libapp.la \
 	$(top_builddir)/src/libbrowser.la \
 	$(top_builddir)/src/libproject.la \
