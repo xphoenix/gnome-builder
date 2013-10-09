@@ -316,6 +316,8 @@ libworkspace_la_LIBADD = \
 libworkspace_la_SOURCES = \
 	workspace/gb-workspace.c \
 	workspace/gb-workspace.h \
+	workspace/gb-workspace-layout-docs.c \
+	workspace/gb-workspace-layout-docs.h \
 	workspace/gb-workspace-layout-edit.c \
 	workspace/gb-workspace-layout-edit.h \
 	workspace/gb-workspace-layout.c \

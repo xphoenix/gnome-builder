@@ -26,6 +26,7 @@
 #include "gb-workspace.h"
 #include "gb-workspace-layout.h"
 #include "gb-workspace-layout-edit.h"
+#include "gb-workspace-layout-docs.h"
 #include "gb-workspace-layout-splash.h"
 #include "gb-workspace-layout-switcher.h"
 #include "gb-workspace-pane.h"
@@ -43,6 +44,7 @@ struct _GbWorkspacePrivate
 
    GtkWidget *build;
    GtkWidget *current_pane;
+   GtkWidget *docs;
    GtkWidget *edit;
    GtkWidget *header;
    GtkWidget *layout;
@@ -1099,6 +1101,18 @@ gb_workspace_init (GbWorkspace *workspace)
                              "visible", TRUE,
                              NULL);
    gtk_container_add(GTK_CONTAINER(priv->notebook), priv->edit);
+
+   /*
+    * TODO: Replace with other layout implementations.
+    */
+   gtk_container_add(GTK_CONTAINER(priv->notebook), gtk_label_new(NULL));
+   gtk_container_add(GTK_CONTAINER(priv->notebook), gtk_label_new(NULL));
+   gtk_container_add(GTK_CONTAINER(priv->notebook), gtk_label_new(NULL));
+
+   priv->docs = g_object_new(GB_TYPE_WORKSPACE_LAYOUT_DOCS,
+                             "visible", TRUE,
+                             NULL);
+   gtk_container_add(GTK_CONTAINER(priv->notebook), priv->docs);
 
    gb_workspace_set_mode(workspace, GB_WORKSPACE_SPLASH);
 
