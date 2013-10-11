@@ -33,43 +33,41 @@ static void
 gb_tree_builder_gir_build_node (GbTreeBuilder *builder,
                                 GbTreeNode    *node)
 {
+   GbTreeNodeGirMode mode;
    GIRepository *repository;
-   const gchar *ns;
    GbTreeNode *child;
-   GIBaseInfo *info;
    gchar **namespaces;
    gint i;
-   gint n_info;
 
    if (!GB_IS_TREE_NODE_GIR(node)) {
       return;
    }
 
    repository = g_irepository_get_default();
-   info = gb_tree_node_gir_get_info(GB_TREE_NODE_GIR(node));
-   ns = gb_tree_node_gir_get_ns(GB_TREE_NODE_GIR(node));
+   mode = gb_tree_node_gir_get_mode(GB_TREE_NODE_GIR(node));
 
-   if (!info && !ns) {
+   if (mode == GB_TREE_NODE_GIR_MODE_NONE) {
       namespaces = g_irepository_get_loaded_namespaces(repository);
       for (i = 0; namespaces[i]; i++) {
          child = g_object_new(GB_TYPE_TREE_NODE_GIR,
-                              "ns", namespaces[i],
+                              "mode", GB_TREE_NODE_GIR_MODE_NAMESPACE,
                               "text", namespaces[i],
                               NULL);
          gb_tree_node_append(node, child);
       }
       g_strfreev(namespaces);
-   } else if (ns) {
-      n_info = g_irepository_get_n_infos(repository, ns);
-      for (i = 0; i < n_info; i++) {
-         info = g_irepository_get_info(repository, ns, i);
-         child = g_object_new(GB_TYPE_TREE_NODE_GIR,
-                              "info", info,
-                              "text", g_base_info_get_name(info),
-                              NULL);
-         gb_tree_node_append(node, child);
-         g_base_info_unref(info);
-      }
+   } else if (mode == GB_TREE_NODE_GIR_MODE_NAMESPACE) {
+      child = g_object_new(GB_TYPE_TREE_NODE_GIR,
+                           "mode", GB_TREE_NODE_GIR_MODE_STRUCTS,
+                           "text", _("Structs"),
+                           NULL);
+      gb_tree_node_append(node, child);
+
+      child = g_object_new(GB_TYPE_TREE_NODE_GIR,
+                           "mode", GB_TREE_NODE_GIR_MODE_ENUMS,
+                           "text", _("Enums"),
+                           NULL);
+      gb_tree_node_append(node, child);
    }
 }
 

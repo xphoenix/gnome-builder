@@ -25,14 +25,14 @@ G_DEFINE_TYPE(GbTreeNodeGir, gb_tree_node_gir, GB_TYPE_TREE_NODE)
 struct _GbTreeNodeGirPrivate
 {
    GIBaseInfo *info;
-   gchar *ns;
+   GbTreeNodeGirMode mode;
 };
 
 enum
 {
    PROP_0,
    PROP_INFO,
-   PROP_NS,
+   PROP_MODE,
    LAST_PROP
 };
 
@@ -42,6 +42,21 @@ GbTreeNode *
 gb_tree_node_gir_new (GIBaseInfo *info)
 {
    return g_object_new(GB_TYPE_TREE_NODE_GIR, "info", info, NULL);
+}
+
+GbTreeNodeGirMode
+gb_tree_node_gir_get_mode (GbTreeNodeGir *gir)
+{
+   g_return_val_if_fail(GB_IS_TREE_NODE_GIR(gir), 0);
+   return gir->priv->mode;
+}
+
+void
+gb_tree_node_gir_set_mode (GbTreeNodeGir     *gir,
+                           GbTreeNodeGirMode  mode)
+{
+   g_return_if_fail(GB_IS_TREE_NODE_GIR(gir));
+   gir->priv->mode = mode;
 }
 
 GIBaseInfo *
@@ -77,23 +92,6 @@ gb_tree_node_gir_set_info (GbTreeNodeGir *gir,
    g_object_notify_by_pspec(G_OBJECT(gir), gParamSpecs[PROP_INFO]);
 }
 
-const gchar *
-gb_tree_node_gir_get_ns (GbTreeNodeGir *gir)
-{
-   g_return_val_if_fail(GB_IS_TREE_NODE_GIR(gir), NULL);
-   return gir->priv->ns;
-}
-
-static void
-gb_tree_node_gir_set_ns (GbTreeNodeGir *gir,
-                         const gchar   *ns)
-{
-   g_return_if_fail(GB_IS_TREE_NODE_GIR(gir));
-
-   g_free(gir->priv->ns);
-   gir->priv->ns = g_strdup(ns);
-}
-
 static void
 gb_tree_node_gir_finalize (GObject *object)
 {
@@ -105,8 +103,6 @@ gb_tree_node_gir_finalize (GObject *object)
       g_base_info_unref(priv->info);
       priv->info = NULL;
    }
-
-   g_free(priv->ns);
 
    G_OBJECT_CLASS(gb_tree_node_gir_parent_class)->finalize(object);
 }
@@ -123,8 +119,8 @@ gb_tree_node_gir_get_property (GObject    *object,
    case PROP_INFO:
       g_value_set_boxed(value, gb_tree_node_gir_get_info(gir));
       break;
-   case PROP_NS:
-      g_value_set_string(value, gb_tree_node_gir_get_ns(gir));
+   case PROP_MODE:
+      g_value_set_enum(value, gb_tree_node_gir_get_mode(gir));
       break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -143,8 +139,8 @@ gb_tree_node_gir_set_property (GObject      *object,
    case PROP_INFO:
       gb_tree_node_gir_set_info(gir, g_value_get_boxed(value));
       break;
-   case PROP_NS:
-      gb_tree_node_gir_set_ns(gir, g_value_get_string(value));
+   case PROP_MODE:
+      gb_tree_node_gir_set_mode(gir, g_value_get_enum(value));
       break;
    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -171,14 +167,15 @@ gb_tree_node_gir_class_init (GbTreeNodeGirClass *klass)
    g_object_class_install_property(object_class, PROP_INFO,
                                    gParamSpecs[PROP_INFO]);
 
-   gParamSpecs[PROP_NS] =
-      g_param_spec_string("ns",
-                          _("NS"),
-                          _("Namespace"),
-                          NULL,
-                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-   g_object_class_install_property(object_class, PROP_NS,
-                                   gParamSpecs[PROP_NS]);
+   gParamSpecs[PROP_MODE] =
+      g_param_spec_enum("mode",
+                        _("Mode"),
+                        _("The mode for the node."),
+                        GB_TYPE_TREE_NODE_GIR_MODE,
+                        GB_TREE_NODE_GIR_MODE_NONE,
+                        (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property(object_class, PROP_MODE,
+                                   gParamSpecs[PROP_MODE]);
 }
 
 static void
@@ -188,4 +185,25 @@ gb_tree_node_gir_init (GbTreeNodeGir *gir)
       G_TYPE_INSTANCE_GET_PRIVATE(gir,
                                   GB_TYPE_TREE_NODE_GIR,
                                   GbTreeNodeGirPrivate);
+}
+
+GType
+gb_tree_node_gir_mode_get_type (void)
+{
+   static gsize initialized;
+   static GType type;
+   static const GEnumValue values[] = {
+      { GB_TREE_NODE_GIR_MODE_NONE, "GB_TREE_NODE_GIR_MODE_NONE", "NONE" },
+      { GB_TREE_NODE_GIR_MODE_NAMESPACE, "GB_TREE_NODE_GIR_MODE_NAMESPACE", "NAMESPACE" },
+      { GB_TREE_NODE_GIR_MODE_STRUCTS, "GB_TREE_NODE_GIR_MODE_STRUCTS", "STRUCTS" },
+      { GB_TREE_NODE_GIR_MODE_ENUMS, "GB_TREE_NODE_GIR_MODE_ENUMS", "ENUMS" },
+      { 0 }
+   };
+
+   if (g_once_init_enter(&initialized)) {
+      type = g_enum_register_static("GbTreeNodeGirMode", values);
+      g_once_init_leave(&initialized, TRUE);
+   }
+
+   return type;
 }

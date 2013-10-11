@@ -26,6 +26,7 @@
 G_BEGIN_DECLS
 
 #define GB_TYPE_TREE_NODE_GIR            (gb_tree_node_gir_get_type())
+#define GB_TYPE_TREE_NODE_GIR_MODE       (gb_tree_node_gir_mode_get_type())
 #define GB_TREE_NODE_GIR(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GB_TYPE_TREE_NODE_GIR, GbTreeNodeGir))
 #define GB_TREE_NODE_GIR_CONST(obj)      (G_TYPE_CHECK_INSTANCE_CAST ((obj), GB_TYPE_TREE_NODE_GIR, GbTreeNodeGir const))
 #define GB_TREE_NODE_GIR_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  GB_TYPE_TREE_NODE_GIR, GbTreeNodeGirClass))
@@ -36,6 +37,7 @@ G_BEGIN_DECLS
 typedef struct _GbTreeNodeGir        GbTreeNodeGir;
 typedef struct _GbTreeNodeGirClass   GbTreeNodeGirClass;
 typedef struct _GbTreeNodeGirPrivate GbTreeNodeGirPrivate;
+typedef enum   _GbTreeNodeGirMode    GbTreeNodeGirMode;
 
 struct _GbTreeNodeGir
 {
@@ -50,12 +52,23 @@ struct _GbTreeNodeGirClass
    GbTreeNodeClass parent_class;
 };
 
-GbTreeNode  *gb_tree_node_gir_new      (GIBaseInfo    *info);
-GType        gb_tree_node_gir_get_type (void) G_GNUC_CONST;
-GIBaseInfo  *gb_tree_node_gir_get_info (GbTreeNodeGir *gir);
-void         gb_tree_node_gir_set_info (GbTreeNodeGir *gir,
-                                        GIBaseInfo    *info);
-const gchar *gb_tree_node_gir_get_ns   (GbTreeNodeGir *gir);
+enum _GbTreeNodeGirMode
+{
+   GB_TREE_NODE_GIR_MODE_NONE,
+   GB_TREE_NODE_GIR_MODE_NAMESPACE,
+   GB_TREE_NODE_GIR_MODE_STRUCTS,
+   GB_TREE_NODE_GIR_MODE_ENUMS,
+};
+
+GType              gb_tree_node_gir_mode_get_type (void) G_GNUC_CONST;
+GbTreeNode        *gb_tree_node_gir_new           (GIBaseInfo        *info);
+GType              gb_tree_node_gir_get_type      (void) G_GNUC_CONST;
+GIBaseInfo        *gb_tree_node_gir_get_info      (GbTreeNodeGir     *gir);
+void               gb_tree_node_gir_set_info      (GbTreeNodeGir     *gir,
+                                                   GIBaseInfo        *info);
+GbTreeNodeGirMode  gb_tree_node_gir_get_mode      (GbTreeNodeGir     *gir);
+void               gb_tree_node_gir_set_mode      (GbTreeNodeGir     *gir,
+                                                   GbTreeNodeGirMode  mode);
 
 G_END_DECLS
 
