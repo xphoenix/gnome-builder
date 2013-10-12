@@ -84,6 +84,13 @@ _gb_tree_node_set_tree (GbTreeNode *node,
 	node->priv->tree = tree;
 }
 
+const gchar *
+gb_tree_node_get_text (GbTreeNode *node)
+{
+   g_return_val_if_fail(GB_IS_TREE_NODE(node), NULL);
+   return node->priv->text;
+}
+
 /**
  * gb_tree_node_append:
  * @node: (in): A #GbTreeNode.

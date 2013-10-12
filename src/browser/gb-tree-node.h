@@ -56,6 +56,7 @@ const gchar   *gb_tree_node_get_icon_name (GbTreeNode *node);
 GbProjectItem *gb_tree_node_get_item      (GbTreeNode    *node);
 GbTreeNode    *gb_tree_node_get_parent    (GbTreeNode    *node);
 GtkTreePath   *gb_tree_node_get_path      (GbTreeNode    *node);
+const gchar   *gb_tree_node_get_text      (GbTreeNode    *node);
 GType          gb_tree_node_get_type      (void) G_GNUC_CONST;
 void           gb_tree_node_prepend       (GbTreeNode    *node,
                                            GbTreeNode    *child);
