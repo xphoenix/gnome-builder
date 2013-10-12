@@ -304,12 +304,13 @@ provider_populate (GtkSourceCompletionProvider *provider,
    state.provider = provider;
    state.word = get_word(provider, &iter);
 
-   if (!state.word || !*state.word) {
-      g_free(state.word);
-      return;
+   if (state.word && *state.word) {
+      gb_source_snippets_foreach(priv->snippets,
+                                 state.word,
+                                 foreach_snippet,
+                                 &state);
    }
 
-   gb_source_snippets_foreach(priv->snippets, state.word, foreach_snippet, &state);
    gtk_source_completion_context_add_proposals(context, provider, state.list, TRUE);
 
    g_list_foreach(state.list, (GFunc)g_object_unref, NULL);
