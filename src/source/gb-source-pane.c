@@ -791,7 +791,9 @@ view_focus_out_event_cb (GtkSourceView       *source_view,
 {
    g_return_if_fail(GTK_SOURCE_IS_COMPLETION(completion));
 
+#if 0
    gtk_source_completion_block_interactive(completion);
+#endif
 
    return FALSE;
 }
@@ -803,7 +805,9 @@ view_focus_in_event_cb (GtkSourceView       *source_view,
 {
    g_return_if_fail(GTK_SOURCE_IS_COMPLETION(completion));
 
+#if 0
    gtk_source_completion_unblock_interactive(completion);
+#endif
 
    return FALSE;
 }
@@ -1044,7 +1048,9 @@ gb_source_pane_init (GbSourcePane *pane)
                        G_CALLBACK(view_focus_out_event_cb),
                        completion);
 
+#if 0
    gtk_source_completion_block_interactive(completion);
+#endif
 
    priv->snippets_provider =
       gb_source_snippet_completion_provider_new(GB_SOURCE_VIEW(priv->view),
