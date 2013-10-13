@@ -21,6 +21,7 @@
 
 #include "gb-symbol-tree-gir.h"
 #include "gb-symbol-tree-node-gir.h"
+#include "gb-symbol-tree-builder-gir.h"
 
 G_DEFINE_TYPE(GbSymbolTreeGir, gb_symbol_tree_gir, GB_TYPE_TREE)
 
@@ -136,7 +137,13 @@ gb_symbol_tree_gir_class_init (GbSymbolTreeGirClass *klass)
 static void
 gb_symbol_tree_gir_init (GbSymbolTreeGir *gir)
 {
+   GbTreeBuilder *builder;
+
    gir->priv = G_TYPE_INSTANCE_GET_PRIVATE(gir,
                                            GB_TYPE_SYMBOL_TREE_GIR,
                                            GbSymbolTreeGirPrivate);
+
+   builder = g_object_new(GB_TYPE_SYMBOL_TREE_BUILDER_GIR,
+                          NULL);
+   gb_tree_add_builder(GB_TREE(gir), builder);
 }
