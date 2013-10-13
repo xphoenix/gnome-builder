@@ -294,7 +294,11 @@ libsymbol_la_SOURCES = \
 	symbol/gb-symbol-provider-c.c \
 	symbol/gb-symbol-provider-c.h \
 	symbol/gb-symbol-provider-js.c \
-	symbol/gb-symbol-provider-js.h
+	symbol/gb-symbol-provider-js.h \
+	symbol/gb-symbol-tree-gir.c \
+	symbol/gb-symbol-tree-gir.h \
+	symbol/gb-symbol-tree-node-gir.c \
+	symbol/gb-symbol-tree-node-gir.h
 
 
 noinst_LTLIBRARIES += libterminal.la

@@ -67,6 +67,8 @@ void          gb_tree_append         (GbTree        *tree,
 void          gb_tree_prepend        (GbTree        *tree,
                                       GbTreeNode    *node,
                                       GbTreeNode    *child);
+void          gb_tree_set_root       (GbTree        *tree,
+                                      GbTreeNode    *root);
 GbTree       *gb_tree_node_get_tree  (GbTreeNode    *node);
 
 G_END_DECLS

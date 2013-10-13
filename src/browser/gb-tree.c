@@ -456,7 +456,7 @@ gb_tree_remove_builder (GbTree        *tree,
  * the items within the treeview. The item itself will not be added
  * to the tree, but the direct children will be.
  */
-static void
+void
 gb_tree_set_root (GbTree     *tree,
                   GbTreeNode *root)
 {
