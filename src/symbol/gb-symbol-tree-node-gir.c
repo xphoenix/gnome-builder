@@ -26,6 +26,7 @@ G_DEFINE_TYPE(GbSymbolTreeNodeGir, gb_symbol_tree_node_gir, GB_TYPE_TREE_NODE)
 struct _GbSymbolTreeNodeGirPrivate
 {
    GIRepository *repository;
+   GIBaseInfo *info;
 };
 
 enum
@@ -37,6 +38,36 @@ enum
 };
 
 static GParamSpec *gParamSpecs[LAST_PROP];
+
+gboolean
+gb_symbol_tree_node_gir_is_repository (GbSymbolTreeNodeGir *gir)
+{
+   g_return_val_if_fail(GB_IS_SYMBOL_TREE_NODE_GIR(gir), FALSE);
+   return gir->priv->repository && !gir->priv->info;
+}
+
+GIBaseInfo *
+gb_symbol_tree_node_gir_get_info (GbSymbolTreeNodeGir *gir)
+{
+   g_return_val_if_fail(GB_IS_SYMBOL_TREE_NODE_GIR(gir), NULL);
+   return gir->priv->info;
+}
+
+void
+gb_symbol_tree_node_gir_set_info (GbSymbolTreeNodeGir *gir,
+                                  GIBaseInfo          *info)
+{
+   GbSymbolTreeNodeGirPrivate *priv;
+
+   g_return_if_fail(GB_IS_SYMBOL_TREE_NODE_GIR(gir));
+
+   priv = gir->priv;
+
+   g_clear_pointer(&priv->info, g_base_info_unref);
+   if (info) {
+      priv->info = g_base_info_ref(info);
+   }
+}
 
 GIRepository *
 gb_symbol_tree_node_gir_get_repository (GbSymbolTreeNodeGir *gir)
@@ -71,6 +102,7 @@ gb_symbol_tree_node_gir_finalize (GObject *object)
    priv = GB_SYMBOL_TREE_NODE_GIR(object)->priv;
 
    g_clear_object(&priv->repository);
+   g_clear_pointer(&priv->info, g_base_info_unref);
 
    G_OBJECT_CLASS(gb_symbol_tree_node_gir_parent_class)->finalize(object);
 }
@@ -84,6 +116,9 @@ gb_symbol_tree_node_gir_get_property (GObject    *object,
    GbSymbolTreeNodeGir *gir = GB_SYMBOL_TREE_NODE_GIR(object);
 
    switch (prop_id) {
+   case PROP_INFO:
+      g_value_set_object(value, gb_symbol_tree_node_gir_get_info(gir));
+      break;
    case PROP_REPOSITORY:
       g_value_set_object(value, gb_symbol_tree_node_gir_get_repository(gir));
       break;
@@ -101,6 +136,9 @@ gb_symbol_tree_node_gir_set_property (GObject      *object,
    GbSymbolTreeNodeGir *gir = GB_SYMBOL_TREE_NODE_GIR(object);
 
    switch (prop_id) {
+   case PROP_INFO:
+      gb_symbol_tree_node_gir_set_info(gir, g_value_get_boxed(value));
+      break;
    case PROP_REPOSITORY:
       gb_symbol_tree_node_gir_set_repository(gir, g_value_get_object(value));
       break;

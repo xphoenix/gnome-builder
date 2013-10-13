@@ -48,7 +48,8 @@ struct _GbSymbolTreeNodeGirClass
    GbTreeNodeClass parent_class;
 };
 
-GType gb_symbol_tree_node_gir_get_type (void) G_GNUC_CONST;
+GType    gb_symbol_tree_node_gir_get_type      (void) G_GNUC_CONST;
+gboolean gb_symbol_tree_node_gir_is_repository (GbSymbolTreeNodeGir *gir);
 
 G_END_DECLS
 
