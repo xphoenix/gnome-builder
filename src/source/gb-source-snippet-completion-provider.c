@@ -295,6 +295,7 @@ provider_populate (GtkSourceCompletionProvider *provider,
    priv = GB_SOURCE_SNIPPET_COMPLETION_PROVIDER(provider)->priv;
 
    if (!priv->snippets) {
+      gtk_source_completion_context_add_proposals(context, provider, NULL, TRUE);
       return;
    }
 
