@@ -6,7 +6,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -216,13 +216,15 @@ provider_populate (GtkSourceCompletionProvider *provider,
    gtk_source_completion_context_get_iter(context, &iter);
    word = get_word(provider, &iter);
 
-   trie_traverse(priv->trie,
-                 word,
-                 G_PRE_ORDER,
-                 G_TRAVERSE_LEAVES,
-                 -1,
-                 traverse_cb,
-                 &list);
+   if (word && *word) {
+      trie_traverse(priv->trie,
+                    word,
+                    G_PRE_ORDER,
+                    G_TRAVERSE_LEAVES,
+                    -1,
+                    traverse_cb,
+                    &list);
+   }
 
    gtk_source_completion_context_add_proposals(context, provider, list, TRUE);
 
