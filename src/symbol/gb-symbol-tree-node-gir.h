@@ -19,6 +19,8 @@
 #ifndef GB_SYMBOL_TREE_NODE_GIR_H
 #define GB_SYMBOL_TREE_NODE_GIR_H
 
+#include <girepository.h>
+
 #include "gb-tree-node.h"
 
 G_BEGIN_DECLS
@@ -48,8 +50,9 @@ struct _GbSymbolTreeNodeGirClass
    GbTreeNodeClass parent_class;
 };
 
-GType    gb_symbol_tree_node_gir_get_type      (void) G_GNUC_CONST;
-gboolean gb_symbol_tree_node_gir_is_repository (GbSymbolTreeNodeGir *gir);
+GType         gb_symbol_tree_node_gir_get_type       (void) G_GNUC_CONST;
+gboolean      gb_symbol_tree_node_gir_is_repository  (GbSymbolTreeNodeGir *gir);
+GIRepository *gb_symbol_tree_node_gir_get_repository (GbSymbolTreeNodeGir *gir);
 
 G_END_DECLS
 

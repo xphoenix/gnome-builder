@@ -31,13 +31,28 @@ gb_symbol_tree_builder_gir_build_node (GbTreeBuilder *builder,
                                        GbTreeNode    *node)
 {
    GbSymbolTreeBuilderGir *builder_gir = (GbSymbolTreeBuilderGir *)builder;
-   GbSymbolTreeNodeGir *node_gir;
 
    g_return_if_fail(GB_IS_SYMBOL_TREE_BUILDER_GIR(builder_gir));
 
    if (GB_IS_SYMBOL_TREE_NODE_GIR(node)) {
+      GbSymbolTreeNodeGir *node_gir;
+      GIRepository *repository;
+      GbTreeNode *child;
+      gchar **namespaces;
+      gint i;
+
       node_gir = GB_SYMBOL_TREE_NODE_GIR(node);
       if (gb_symbol_tree_node_gir_is_repository(node_gir)) {
+         repository = gb_symbol_tree_node_gir_get_repository(node_gir);
+         namespaces = g_irepository_get_loaded_namespaces(repository);
+         for (i = 0; namespaces[i]; i++) {
+            child = g_object_new(GB_TYPE_TREE_NODE_GROUP,
+                                 "icon-name", "folder",
+                                 "text", g_strdup(namespaces[i]),
+                                 NULL);
+            gb_tree_node_append(node, child);
+         }
+         g_strfreev(namespaces);
       }
    } else if (GB_IS_TREE_NODE_GROUP(node)) {
    }

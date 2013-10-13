@@ -64,6 +64,7 @@ test_symbol_browser_LDADD = \
 	$(top_builddir)/src/libbrowser.la \
 	$(top_builddir)/src/libproject.la \
 	$(top_builddir)/src/libsource.la \
+	$(top_builddir)/src/libsymbol.la \
 	$(top_builddir)/src/libtrie.la \
 	$(top_builddir)/src/libworkspace.la
 
