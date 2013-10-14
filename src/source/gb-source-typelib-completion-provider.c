@@ -6,7 +6,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -22,6 +22,7 @@
 
 #include "gb-application-resource.h"
 #include "gb-dbus-typelib.h"
+#include "gb-icon-theme.h"
 #include "gb-multiprocess-manager.h"
 #include "gb-source-snippet.h"
 #include "gb-source-snippet-chunk.h"
@@ -46,66 +47,6 @@ struct _GbSourceTypelibCompletionProviderPrivate
    GbDBusTypelib *proxy;
    GbSourceView *view;
 };
-
-static GHashTable *gPixbufs;
-
-static void
-apply_overlay (GdkPixbuf *base,
-               const gchar *overlay)
-{
-   GdkPixbuf *tmp;
-   gchar *path;
-
-   path = g_strdup_printf("/org/gnome/Builder/data/icons/%s-16x.png", overlay);
-   tmp = gdk_pixbuf_new_from_resource(path, NULL);
-   g_free(path);
-
-   gdk_pixbuf_composite(tmp, base, 0, 0,
-                        gdk_pixbuf_get_width(tmp),
-                        gdk_pixbuf_get_height(tmp),
-                        0, 0,
-                        1, 1,
-                        GDK_INTERP_BILINEAR,
-                        255);
-
-   g_object_unref(tmp);
-}
-
-static GdkPixbuf *
-get_pixbuf (const gchar *name,
-            const gchar *overlay1,
-            const gchar *overlay2)
-{
-   GdkPixbuf *pixbuf;
-   gchar *path;
-   gchar *key;
-
-   if (!gPixbufs) {
-      gPixbufs = g_hash_table_new(g_str_hash, g_str_equal);
-   }
-
-   key = g_strdup_printf("%s-%s-%s", name, overlay1, overlay2);
-
-   if (!(pixbuf = g_hash_table_lookup(gPixbufs, key))) {
-      path = g_strdup_printf("/org/gnome/Builder/data/icons/%s-16x.png", name);
-      pixbuf = gdk_pixbuf_new_from_resource(path, NULL);
-      g_free(path);
-
-      if (overlay1) {
-         apply_overlay(pixbuf, overlay1);
-      }
-
-      if (overlay2) {
-         apply_overlay(pixbuf, overlay2);
-      }
-
-      g_hash_table_insert(gPixbufs, g_strdup(key), pixbuf);
-   }
-
-   g_free(key);
-
-   return pixbuf;
-}
 
 GtkSourceCompletionProvider *
 gb_source_typelib_completion_provider_new (GbSourceView *view)
@@ -327,6 +268,7 @@ complete_cb (GObject      *object,
    GError *error = NULL;
    GList *list = NULL;
    guint flags;
+   gint scale = 1; /* TODO: Get scale from widget */
 
    closure = (gpointer *)user_data;
 
@@ -382,8 +324,10 @@ complete_cb (GObject      *object,
             overlay2 = "deprecated";
          }
 
-
-         pixbuf = get_pixbuf(icon_name, overlay1, overlay2);
+         pixbuf = gb_icon_theme_load_with_overlay(icon_name,
+                                                  scale,
+                                                  overlay1,
+                                                  overlay2);
 
          item = g_object_new(GB_TYPE_SOURCE_TYPELIB_COMPLETION_ITEM,
                              "icon", pixbuf,
