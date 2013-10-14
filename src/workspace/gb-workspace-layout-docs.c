@@ -36,6 +36,23 @@ struct _GbWorkspaceLayoutDocsPrivate
 };
 
 static void
+on_link_selected (DhSidebar *sidebar,
+                  DhLink    *link_,
+                  gpointer   user_data)
+{
+   GbWorkspaceLayoutDocs *docs = user_data;
+   gchar *uri;
+
+   g_return_if_fail(DH_IS_SIDEBAR(sidebar));
+   g_return_if_fail(link_);
+   g_return_if_fail(GB_IS_WORKSPACE_LAYOUT_DOCS(docs));
+
+   uri = dh_link_get_uri(link_);
+   webkit_web_view_load_uri(WEBKIT_WEB_VIEW(docs->priv->webview), uri);
+   g_free(uri);
+}
+
+static void
 gb_workspace_layout_docs_finalize (GObject *object)
 {
    G_OBJECT_CLASS(gb_workspace_layout_docs_parent_class)->finalize(object);
@@ -73,6 +90,10 @@ gb_workspace_layout_docs_init (GbWorkspaceLayoutDocs *docs)
    gtk_widget_set_margin_top(docs->priv->sidebar, 6);
    gtk_container_add(GTK_CONTAINER(docs->priv->hpaned),
                      docs->priv->sidebar);
+   g_signal_connect(docs->priv->sidebar,
+                    "link-selected",
+                    G_CALLBACK(on_link_selected),
+                    docs);
    gtk_widget_show(docs->priv->sidebar);
 
    docs->priv->scroller = gtk_scrolled_window_new(NULL, NULL);
