@@ -53,6 +53,18 @@ on_link_selected (DhSidebar *sidebar,
 }
 
 static void
+gb_workspace_layout_docs_grab_focus (GtkWidget *widget)
+{
+   GbWorkspaceLayoutDocsPrivate *priv;
+
+   g_return_if_fail(GB_IS_WORKSPACE_LAYOUT_DOCS(widget));
+
+   priv = GB_WORKSPACE_LAYOUT_DOCS(widget)->priv;
+
+   dh_sidebar_set_search_focus(DH_SIDEBAR(priv->sidebar));
+}
+
+static void
 gb_workspace_layout_docs_finalize (GObject *object)
 {
    G_OBJECT_CLASS(gb_workspace_layout_docs_parent_class)->finalize(object);
@@ -62,10 +74,14 @@ static void
 gb_workspace_layout_docs_class_init (GbWorkspaceLayoutDocsClass *klass)
 {
    GObjectClass *object_class;
+   GtkWidgetClass *widget_class;
 
    object_class = G_OBJECT_CLASS(klass);
    object_class->finalize = gb_workspace_layout_docs_finalize;
    g_type_class_add_private(object_class, sizeof(GbWorkspaceLayoutDocsPrivate));
+
+   widget_class = GTK_WIDGET_CLASS(klass);
+   widget_class->grab_focus = gb_workspace_layout_docs_grab_focus;
 }
 
 static void

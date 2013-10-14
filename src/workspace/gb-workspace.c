@@ -1,5 +1,6 @@
 /* gb-workspace.c
  *
+ *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -148,6 +149,20 @@ gb_workspace_set_project (GbWorkspace *workspace,
    gb_workspace_layout_load(GB_WORKSPACE_LAYOUT(priv->edit), priv->project);
 
    g_object_notify_by_pspec(G_OBJECT(workspace), gParamSpecs[PROP_PROJECT]);
+}
+
+GbWorkspaceMode
+gb_workspace_get_mode (GbWorkspace *workspace)
+{
+   GbWorkspacePrivate *priv;
+   gint page;
+
+   g_return_val_if_fail(GB_IS_WORKSPACE(workspace), 0);
+
+   priv = workspace->priv;
+
+   page = gtk_notebook_get_current_page(GTK_NOTEBOOK(priv->notebook));
+   return (GbWorkspaceMode)page;
 }
 
 void
@@ -429,6 +444,24 @@ gb_workspace_set_focus (GtkWindow *window,
    if (widget) {
       gb_workspace_update_actions(workspace);
    }
+}
+
+static void
+gb_workspace_docs_search (GSimpleAction *action,
+                          GVariant      *parameter,
+                          gpointer       user_data)
+{
+   GbWorkspace *workspace = user_data;
+   GbWorkspaceMode mode;
+
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+
+   mode = gb_workspace_get_mode(workspace);
+   if (mode != GB_WORKSPACE_DOCS) {
+      gb_workspace_set_mode(workspace, GB_WORKSPACE_DOCS);
+   }
+
+   gtk_widget_grab_focus(workspace->priv->docs);
 }
 
 static void
@@ -794,6 +827,7 @@ gb_workspace_init_actions (GbWorkspace *workspace)
 {
    static const GActionEntry entries[] = {
       { "close-pane", gb_workspace_close_pane },
+      { "docs-search", gb_workspace_docs_search },
       { "global-search", gb_workspace_global_search },
       { "new-file", gb_workspace_new_file },
       { "new-terminal", gb_workspace_new_terminal },
@@ -833,6 +867,9 @@ gb_workspace_init_actions (GbWorkspace *workspace)
                                    NULL);
    gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
                                    "<Primary>period", "win.global-search",
+                                   NULL);
+   gtk_application_add_accelerator(GTK_APPLICATION(GB_APPLICATION_DEFAULT),
+                                   "<Primary>k", "win.docs-search",
                                    NULL);
 
 #define ADD_PANE_ACCEL(n, k) G_STMT_START { \
