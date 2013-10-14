@@ -114,29 +114,7 @@ gb_workspace_pane_group_notify_can_save (GbWorkspacePane      *pane,
    }
 }
 
-static gboolean
-event_button_press (GtkWidget            *widget,
-                    GdkEventButton       *button,
-                    GbWorkspacePaneGroup *group)
-{
-   GtkWidget *toplevel;
-
-   g_assert(GTK_IS_WIDGET(widget));
-
-   if (button->type == GDK_2BUTTON_PRESS) {
-      toplevel = gtk_widget_get_toplevel(widget);
-      if (GB_IS_WORKSPACE(toplevel)) {
-         if (gb_workspace_is_fullscreen(GB_WORKSPACE(toplevel))) {
-            gtk_window_unfullscreen(GTK_WINDOW(toplevel));
-         } else {
-            gtk_window_fullscreen(GTK_WINDOW(toplevel));
-         }
-      }
-   }
-
-   return FALSE;
-}
-
+#if 0
 static GbWorkspacePane *
 gb_workspace_pane_group_get_current_pane (GbWorkspacePaneGroup *group)
 {
@@ -154,6 +132,7 @@ gb_workspace_pane_group_get_current_pane (GbWorkspacePaneGroup *group)
 
    return pane;
 }
+#endif
 
 void
 gb_workspace_pane_group_set_page (GbWorkspacePaneGroup *group,
@@ -174,43 +153,11 @@ gb_workspace_pane_group_set_page (GbWorkspacePaneGroup *group,
 }
 
 static void
-icon_drag_data_get (GtkWidget            *event_box,
-                    GdkDragContext       *context,
-                    GtkSelectionData     *selection_data,
-                    guint                 info,
-                    guint                 time_,
-                    GbWorkspacePaneGroup *group)
-{
-   GbWorkspacePane *pane;
-   const gchar *uri;
-   gchar **uris;
-
-   g_return_if_fail(GTK_IS_EVENT_BOX(event_box));
-   g_return_if_fail(GB_IS_WORKSPACE_PANE_GROUP(group));
-
-   if ((pane = gb_workspace_pane_group_get_current_pane(group))) {
-      if ((uri = gb_workspace_pane_get_uri(pane))) {
-         gtk_selection_data_set_text(selection_data, uri, -1);
-         uris = g_new0(gchar*, 2);
-         uris[0] = g_strdup(uri);
-         uris[1] = NULL;
-         gtk_selection_data_set_uris(selection_data, uris);
-         g_strfreev(uris);
-      }
-   }
-}
-
-static void
 gb_workspace_pane_group_add (GtkContainer *container,
                              GtkWidget    *child)
 {
-   static const GtkTargetEntry drag_targets[] = {
-      { (char *)"text/plain", 0, TARGET_STRING },
-      { (char *)"text/uri-list", 0, TARGET_URL },
-   };
    GbWorkspacePaneGroupPrivate *priv;
    GbWorkspacePaneGroup *group = (GbWorkspacePaneGroup *)container;
-   GtkWidget *event;
    GtkWidget *hbox;
    GtkWidget *close_button;
    GtkWidget *icon;
@@ -229,7 +176,7 @@ gb_workspace_pane_group_add (GtkContainer *container,
                        group);
 
       hbox = g_object_new(GTK_TYPE_BOX,
-                          "hexpand", FALSE,
+                          "hexpand", TRUE,
                           "orientation", GTK_ORIENTATION_HORIZONTAL,
                           "spacing", 0,
                           "visible", TRUE,
@@ -248,36 +195,6 @@ gb_workspace_pane_group_add (GtkContainer *container,
                                         "padding", 3,
                                         NULL);
 
-      event = g_object_new(GTK_TYPE_EVENT_BOX,
-                           "above-child", FALSE,
-                           "visible", TRUE,
-                           "visible-window", FALSE,
-                           NULL);
-      g_object_set_data(G_OBJECT(event), "pane", child);
-      gtk_drag_source_set(event,
-                          GDK_BUTTON1_MASK,
-                          drag_targets,
-                          G_N_ELEMENTS(drag_targets),
-                          (GDK_ACTION_COPY | GDK_ACTION_LINK));
-      g_object_bind_property(child, "busy", event, "visible",
-                             G_BINDING_SYNC_CREATE | G_BINDING_INVERT_BOOLEAN);
-      g_signal_connect(event, "drag-data-get",
-                       G_CALLBACK(icon_drag_data_get),
-                       group);
-      gtk_container_add_with_properties(GTK_CONTAINER(hbox), event,
-                                        "padding", 3,
-                                        NULL);
-
-      icon = g_object_new(GTK_TYPE_IMAGE,
-                          "hexpand", FALSE,
-                          "icon-name", "text-x-generic",
-                          "icon-size", GTK_ICON_SIZE_MENU,
-                          "visible", TRUE,
-                          NULL);
-      g_object_bind_property(child, "icon-name", icon, "icon-name",
-                             G_BINDING_SYNC_CREATE);
-      gtk_container_add(GTK_CONTAINER(event), icon);
-
       label = g_object_new(GTK_TYPE_LABEL,
                            "hexpand", FALSE,
                            "label", "*",
@@ -289,32 +206,18 @@ gb_workspace_pane_group_add (GtkContainer *container,
                              G_BINDING_SYNC_CREATE);
       gtk_container_add(GTK_CONTAINER(hbox), label);
 
-      event = g_object_new(GTK_TYPE_EVENT_BOX,
-                           "above-child", TRUE,
-                           "hexpand", TRUE,
-                           "visible", TRUE,
-                           "visible-window", FALSE,
-                           NULL);
-      g_object_set_data(G_OBJECT(event), "pane", child);
-      g_signal_connect(event, "button-press-event",
-                       G_CALLBACK(event_button_press),
-                       group);
-      gtk_container_add(GTK_CONTAINER(hbox), event);
-
       label = g_object_new(GTK_TYPE_LABEL,
-                           "ellipsize", PANGO_ELLIPSIZE_START,
                            "hexpand", TRUE,
                            "single-line-mode", TRUE,
-                           "width-chars", 15,
                            "visible", TRUE,
-                           "xalign", 0.0,
+                           "xalign", 0.5,
                            "xpad", 0,
                            "yalign", 0.5,
                            "ypad", 0,
                            NULL);
       g_object_bind_property(child, "title", label, "label",
                              G_BINDING_SYNC_CREATE);
-      gtk_container_add(GTK_CONTAINER(event), label);
+      gtk_container_add(GTK_CONTAINER(hbox), label);
 
       close_button = g_object_new(GTK_TYPE_BUTTON,
                                   "hexpand", FALSE,
