@@ -4,6 +4,7 @@ include $(top_srcdir)/Makefile.tests
 noinst_PROGRAMS = \
 	test-browser \
 	test-editor \
+	test-greeter \
 	test-search-fuzzy \
 	test-snippet-context \
 	test-snippet-parser \
@@ -75,6 +76,12 @@ test_editor_LDADD = \
 	$(top_builddir)/src/libworkspace.la \
 	$(top_builddir)/src/libtrie.la \
 	$(top_builddir)/src/libapp.la
+
+
+test_greeter_SOURCES = test-greeter.c
+test_greeter_LDADD = \
+	$(top_builddir)/src/libapp.la \
+	$(top_builddir)/src/libworkspace.la
 
 
 test_snippet_context_SOURCES = test-snippet-context.c

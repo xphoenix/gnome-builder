@@ -1,6 +1,7 @@
 test-browser
+test-editor
+test-greeter
 test-snippet-context
 test-snippet-parser
 test-search-fuzzy
 test-symbol-browser
-test-editor
