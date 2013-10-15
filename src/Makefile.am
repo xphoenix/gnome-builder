@@ -77,6 +77,8 @@ libapp_la_SOURCES = \
 	$(GB_APPLICATION_RESOURCE_H) \
 	app/gb-application.c \
 	app/gb-application.h \
+	app/gb-back-forward-list.c \
+	app/gb-back-forward-list.h \
 	app/gb-file-filters.c \
 	app/gb-file-filters.h \
 	app/gb-icon-theme.c \

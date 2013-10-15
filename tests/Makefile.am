@@ -2,6 +2,7 @@ include $(top_srcdir)/Makefile.tests
 
 
 noinst_PROGRAMS = \
+	test-back-forward-list \
 	test-browser \
 	test-editor \
 	test-greeter \
@@ -47,6 +48,11 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/terminal \
 	-I$(top_srcdir)/src/trie \
 	-I$(top_srcdir)/src/workspace
+
+
+test_back_forward_list_SOURCES = test-back-forward-list.c
+test_back_forward_list_LDADD = \
+	$(top_builddir)/src/libapp.la
 
 
 test_browser_SOURCES = test-browser.c
