@@ -26,7 +26,6 @@
 #include "gb-tree-node.h"
 #include "gb-tree-node-project.h"
 #include "gb-workspace-layout-edit.h"
-#include "gb-workspace-layout-switcher.h"
 #include "gb-workspace-pane-group.h"
 
 G_DEFINE_TYPE(GbWorkspaceLayoutEdit,
