@@ -190,13 +190,7 @@ libmultiprocess_la_SOURCES = \
 noinst_LTLIBRARIES += libprofiler.la
 libprofiler_la_SOURCES = \
 	profiler/gb-profiler.c \
-	profiler/gb-profiler.h \
-	profiler/gb-profiler-ltrace.c \
-	profiler/gb-profiler-ltrace.h \
-	profiler/gb-profiler-strace.c \
-	profiler/gb-profiler-strace.h \
-	profiler/gb-profiler-valgrind.c \
-	profiler/gb-profiler-valgrind.h
+	profiler/gb-profiler.h
 
 
 noinst_LTLIBRARIES += libproject.la
