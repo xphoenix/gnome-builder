@@ -21,8 +21,6 @@
 
 #include <glib-object.h>
 
-#include "gb-compiler-result.h"
-
 G_BEGIN_DECLS
 
 #define GB_TYPE_COMPILER            (gb_compiler_get_type())

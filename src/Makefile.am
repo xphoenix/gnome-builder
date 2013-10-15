@@ -114,13 +114,7 @@ libbrowser_la_SOURCES = \
 noinst_LTLIBRARIES += libcompiler.la
 libcompiler_la_SOURCES = \
 	compiler/gb-compiler.c \
-	compiler/gb-compiler.h \
-	compiler/gb-compiler-clang.c \
-	compiler/gb-compiler-clang.h \
-	compiler/gb-compiler-js.c \
-	compiler/gb-compiler-js.h \
-	compiler/gb-compiler-result.c \
-	compiler/gb-compiler-result.h
+	compiler/gb-compiler.h
 
 
 noinst_LTLIBRARIES += libdbus.la
@@ -132,9 +126,7 @@ libdbus_la_SOURCES = \
 noinst_LTLIBRARIES += libdebugger.la
 libdebugger_la_SOURCES = \
 	debugger/gb-debugger.c \
-	debugger/gb-debugger.h \
-	debugger/gb-debugger-gdb.c \
-	debugger/gb-debugger-gdb.h
+	debugger/gb-debugger.h
 
 
 noinst_LTLIBRARIES += libdialogs.la
