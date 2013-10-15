@@ -159,20 +159,8 @@ noinst_LTLIBRARIES += liblanguage.la
 liblanguage_LIBADD = \
 	libtrie.la
 liblanguage_la_SOURCES = \
-	language/gb-language.c \
-	language/gb-language.h \
-	language/gb-language-c.c \
-	language/gb-language-c.h \
 	language/gb-language-c-completion-provider.c \
-	language/gb-language-c-completion-provider.h \
-	language/gb-language-formatter.c \
-	language/gb-language-formatter.h \
-	language/gb-language-formatter-c.c \
-	language/gb-language-formatter-c.h \
-	language/gb-language-formatter-js.c \
-	language/gb-language-formatter-js.h \
-	language/gb-language-js.c \
-	language/gb-language-js.h
+	language/gb-language-c-completion-provider.h
 
 
 noinst_LTLIBRARIES += liblog.la
