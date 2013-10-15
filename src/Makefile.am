@@ -283,18 +283,6 @@ libsource_la_SOURCES = \
 
 noinst_LTLIBRARIES += libsymbol.la
 libsymbol_la_SOURCES = \
-	symbol/gb-symbol-combo-box.c \
-	symbol/gb-symbol-combo-box.h \
-	symbol/gb-symbol.c \
-	symbol/gb-symbol.h \
-	symbol/gb-symbol-pane.c \
-	symbol/gb-symbol-pane.h \
-	symbol/gb-symbol-provider.c \
-	symbol/gb-symbol-provider.h \
-	symbol/gb-symbol-provider-c.c \
-	symbol/gb-symbol-provider-c.h \
-	symbol/gb-symbol-provider-js.c \
-	symbol/gb-symbol-provider-js.h \
 	symbol/gb-symbol-tree-builder-gir.c \
 	symbol/gb-symbol-tree-builder-gir.h \
 	symbol/gb-symbol-tree-gir.c \
