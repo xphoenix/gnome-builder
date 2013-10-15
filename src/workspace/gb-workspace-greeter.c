@@ -42,6 +42,7 @@ static guint gSignals[LAST_SIGNAL];
 GList *
 get_recent_projects (void)
 {
+   /* TODO: Fetch from recents. */
    return NULL;
 }
 
