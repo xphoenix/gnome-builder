@@ -6,7 +6,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -24,6 +24,7 @@ G_DEFINE_TYPE(GbCreateProjectDialog, gb_create_project_dialog, GTK_TYPE_DIALOG)
 
 struct _GbCreateProjectDialogPrivate
 {
+   GtkWidget *create;
    GtkWidget *entry;
 };
 
@@ -67,6 +68,17 @@ cancel_clicked (GtkWidget *button,
                 GtkDialog *dialog)
 {
    gtk_dialog_response(dialog, GTK_RESPONSE_CANCEL);
+}
+
+static void
+on_notify_text (GtkWidget  *widget,
+                GParamSpec *pspec,
+                GtkWidget  *button)
+{
+   const gchar *text;
+
+   text = gtk_entry_get_text(GTK_ENTRY(widget));
+   gtk_widget_set_sensitive(button, text && *text);
 }
 
 static void
@@ -163,6 +175,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
                          "margin-top", 3,
                          "margin-right", 3,
                          "margin-bottom", 3,
+                         "sensitive", FALSE,
                          "vexpand", FALSE,
                          "visible", TRUE,
                          NULL);
@@ -171,6 +184,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
    gtk_style_context_add_class(style_context, "suggested-action");
    gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button);
    gtk_window_set_default(GTK_WINDOW(dialog), button);
+   priv->create = button;
 
    grid = g_object_new(GTK_TYPE_GRID,
                        "border-width", 30,
@@ -198,6 +212,10 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
    gtk_container_add_with_properties(GTK_CONTAINER(grid), priv->entry,
                                      "left-attach", 1,
                                      NULL);
+   g_signal_connect(priv->entry,
+                    "notify::text",
+                    G_CALLBACK(on_notify_text),
+                    priv->create);
    gtk_widget_grab_focus(priv->entry);
 
    l = g_object_new(GTK_TYPE_LABEL,
