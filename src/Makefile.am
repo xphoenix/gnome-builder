@@ -21,6 +21,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/animation \
 	-I$(top_srcdir)/src/app \
 	-I$(top_srcdir)/src/browser \
+	-I$(top_srcdir)/src/commands \
 	-I$(top_srcdir)/src/compiler \
 	-I$(top_srcdir)/src/dbus \
 	-I$(top_srcdir)/src/debugger \
@@ -111,6 +112,16 @@ libbrowser_la_SOURCES = \
 	browser/gb-tree-node-group.h \
 	browser/gb-tree-node-project.c \
 	browser/gb-tree-node-project.h
+
+
+noinst_LTLIBRARIES += libcommands.la
+libcommands_la_SOURCES = \
+	commands/gb-command.c \
+	commands/gb-command.h \
+	commands/gb-command-dbus.c \
+	commands/gb-command-dbus.h \
+	commands/gb-command-stack.c \
+	commands/gb-command-stack.h
 
 
 noinst_LTLIBRARIES += libcompiler.la
