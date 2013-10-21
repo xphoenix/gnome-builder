@@ -180,8 +180,9 @@ gb_tab_label_set_title (GbTabLabel  *label,
    gb_tab_label_remove_title(label);
 
    priv->title = g_object_new(GTK_TYPE_LABEL,
-                              "ellipsize", PANGO_ELLIPSIZE_END,
+                              "ellipsize", PANGO_ELLIPSIZE_NONE,
                               "halign", GTK_ALIGN_CENTER,
+                              "hexpand", TRUE,
                               "label", title,
                               "single-line-mode", TRUE,
                               "use-markup", FALSE,
