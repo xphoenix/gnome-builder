@@ -1,4 +1,4 @@
-/* gnome-builder.c
+/* gb-gtk.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *
@@ -16,29 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <glib/gi18n.h>
+#ifndef GB_GTK_H
+#define GB_GTK_H
+
 #include <gtk/gtk.h>
 
-#include "gb-application.h"
-#include "gb-log.h"
-#include "gb-resources.h"
+G_BEGIN_DECLS
 
-gint
-main (gint   argc,
-      gchar *argv[])
-{
-   GApplication *application;
-   gint ret;
+gpointer gb_gtk_builder_load_and_get_object         (const gchar *resource_path,
+                                                     const gchar *name);
+void     gb_gtk_progress_bar_file_progress_callback (goffset      current_num_bytes,
+                                                     goffset      total_num_bytes,
+                                                     gpointer     user_data);
 
-   g_set_prgname("gnome-builder");
-   g_set_application_name(_("Builder"));
-   g_resources_register(gb_get_resource());
 
-   gb_log_init(TRUE, NULL);
+G_END_DECLS
 
-   application = G_APPLICATION(GB_APPLICATION_DEFAULT);
-   ret = g_application_run(application, argc, argv);
-   g_object_unref(application);
-
-   return ret;
-}
+#endif /* GB_GTK_H */

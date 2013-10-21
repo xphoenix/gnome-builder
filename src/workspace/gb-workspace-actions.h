@@ -1,4 +1,4 @@
-/* gnome-builder.c
+/* gb-workspace-actions.h
  *
  * Copyright (C) 2013 Christian Hergert <christian@hergert.me>
  *
@@ -16,29 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <glib/gi18n.h>
-#include <gtk/gtk.h>
+#ifndef GB_WORKSPACE_ACTIONS_H
+#define GB_WORKSPACE_ACTIONS_H
 
-#include "gb-application.h"
-#include "gb-log.h"
-#include "gb-resources.h"
+#include "gb-workspace.h"
 
-gint
-main (gint   argc,
-      gchar *argv[])
-{
-   GApplication *application;
-   gint ret;
+G_BEGIN_DECLS
 
-   g_set_prgname("gnome-builder");
-   g_set_application_name(_("Builder"));
-   g_resources_register(gb_get_resource());
+void _gb_workspace_actions_init (GbWorkspace *workspace) G_GNUC_INTERNAL;
 
-   gb_log_init(TRUE, NULL);
+G_END_DECLS
 
-   application = G_APPLICATION(GB_APPLICATION_DEFAULT);
-   ret = g_application_run(application, argc, argv);
-   g_object_unref(application);
-
-   return ret;
-}
+#endif /* GB_WORKSPACE_ACTIONS_H */

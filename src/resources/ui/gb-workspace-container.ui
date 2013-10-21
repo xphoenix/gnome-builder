@@ -1,0 +1,54 @@
+<interface>
+  <menu id='menu'>
+    <section>
+      <item>
+        <attribute name='label' translatable='yes'>_New</attribute>
+        <attribute name='action'>win.new-document</attribute>
+        <attribute name='accel'>&lt;Primary&gt;n</attribute>
+      </item>
+      <item>
+        <attribute name='label' translatable='yes'>_Open...</attribute>
+        <attribute name='action'>win.open-document</attribute>
+        <attribute name='accel'>&lt;Primary&gt;o</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name='label' translatable='yes'>_Save</attribute>
+        <attribute name='action'>win.save-document</attribute>
+        <attribute name='accel'>&lt;Primary&gt;s</attribute>
+      </item>
+      <item>
+        <attribute name='label' translatable='yes'>_Save As...</attribute>
+        <attribute name='action'>win.save-document-as</attribute>
+        <attribute name='accel'>&lt;Primary&gt;&lt;Shift&gt;s</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name='label' translatable='yes'>_Find</attribute>
+        <attribute name='action'>win.search-pane</attribute>
+        <attribute name='accel'>&lt;Primary&gt;f</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name='label' translatable='yes'>Zoom In</attribute>
+        <attribute name='action'>win.zoom-pane-in</attribute>
+        <attribute name='accel'>&lt;Primary&gt;plus</attribute>
+      </item>
+      <item>
+        <attribute name='label' translatable='yes'>Zoom Out</attribute>
+        <attribute name='action'>win.zoom-pane-out</attribute>
+        <attribute name='accel'>&lt;Primary&gt;minus</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name='label' translatable='yes'>_Close</attribute>
+        <attribute name='action'>win.close-document</attribute>
+        <attribute name='accel'>&lt;Primary&gt;w</attribute>
+      </item>
+    </section>
+  </menu>
+</interface>

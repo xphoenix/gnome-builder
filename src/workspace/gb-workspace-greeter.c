@@ -18,8 +18,13 @@
 
 #include <glib/gi18n.h>
 
+#include "gb-application.h"
 #include "gb-create-project-dialog.h"
 #include "gb-project.h"
+#include "gb-project-info.h"
+#include "gb-project-service.h"
+#include "gb-service.h"
+#include "gb-workspace.h"
 #include "gb-workspace-greeter.h"
 
 G_DEFINE_TYPE(GbWorkspaceGreeter, gb_workspace_greeter, GTK_TYPE_GRID)
@@ -42,8 +47,18 @@ static guint gSignals[LAST_SIGNAL];
 GList *
 get_recent_projects (void)
 {
-   /* TODO: Fetch from recents. */
-   return NULL;
+   GbService *projects;
+   GList *list = NULL;
+
+   projects = gb_application_get_service(GB_APPLICATION_DEFAULT,
+                                         GB_TYPE_PROJECT_SERVICE);
+   if (projects) {
+      list = gb_project_service_get_recent_projects(GB_PROJECT_SERVICE(projects));
+      list = g_list_copy(list);
+      g_list_foreach(list, (GFunc)g_object_ref, NULL);
+   }
+
+   return list;
 }
 
 GtkWidget *
@@ -80,14 +95,25 @@ update_separators (GtkListBoxRow *row,
 }
 
 static GtkWidget *
-make_row (const gchar *name,
-          const gchar *date,
-          const gchar *path)
+make_row (GbProjectInfo *project_info)
 {
+   const gchar *name;
+   GDateTime *dt;
    GtkWidget *box;
    GtkWidget *l;
    GtkWidget *row;
+   gchar *date = NULL;
    gchar *str;
+
+   if (!project_info) {
+      name = N_("New Project");
+   } else {
+      name = gb_project_info_get_name(project_info);
+      dt = gb_project_info_get_last_modified_at(project_info);
+      if (dt) {
+         date = g_date_time_format(dt, "%x");
+      }
+   }
 
    row = g_object_new(GTK_TYPE_LIST_BOX_ROW,
                       "visible", TRUE,
@@ -100,7 +126,7 @@ make_row (const gchar *name,
    gtk_container_add(GTK_CONTAINER(row), box);
 
    str = g_strdup_printf(
-      path ? "<b>%s</b>" : "<span weight='bold' color='#999999'>%s</span>",
+      project_info ? "<b>%s</b>" : "<span weight='bold' color='#999999'>%s</span>",
       name);
    l = g_object_new(GTK_TYPE_LABEL,
                     "hexpand", TRUE,
@@ -117,7 +143,7 @@ make_row (const gchar *name,
    gtk_container_add(GTK_CONTAINER(box), l);
    g_free(str);
 
-   str = g_strdup_printf("<span color='#999999' weight='bold'>%s</span>",
+   str = g_strdup_printf("<span color='#999999' weight='normal'>%s</span>",
                          date ? date : "");
    l = g_object_new(GTK_TYPE_LABEL,
                     "label", str,
@@ -133,28 +159,34 @@ make_row (const gchar *name,
    gtk_container_add(GTK_CONTAINER(box), l);
    g_free(str);
 
-   g_object_set_data_full(G_OBJECT(box), "path", g_strdup(path), g_free);
+   g_object_set_data_full(G_OBJECT(row),
+                          "project-info",
+                          project_info ? g_object_ref(project_info) : NULL,
+                          g_object_unref);
+
+   g_free(date);
 
    return row;
 }
 
 static void
-on_parent_set (GtkWidget *widget,
-               GtkWidget *old_parent,
-               gpointer   user_data)
+gb_workspace_greeter_parent_set (GtkWidget *widget,
+                                 GtkWidget *old_parent)
 {
    GbWorkspaceGreeter *greeter;
-   GtkWidget *parent;
+   GtkWidget *toplevel;
 
    g_return_if_fail(GB_IS_WORKSPACE_GREETER(widget));
 
    greeter = GB_WORKSPACE_GREETER(widget);
-   parent = gtk_widget_get_toplevel(widget);
+   toplevel = gtk_widget_get_toplevel(widget);
 
-   if (GTK_IS_WINDOW(parent)) {
-      gtk_window_set_titlebar(GTK_WINDOW(parent),
+   if (GB_IS_WORKSPACE(toplevel)) {
+      gtk_window_set_titlebar(GTK_WINDOW(toplevel),
                               GTK_WIDGET(greeter->priv->header));
    }
+
+   gtk_widget_grab_focus(GTK_WIDGET(greeter->priv->projects));
 }
 
 static void
@@ -162,6 +194,7 @@ on_row_activated (GtkListBox         *list_box,
                   GtkListBoxRow      *list_box_row,
                   GbWorkspaceGreeter *greeter)
 {
+   GbProjectInfo *project_info;
    GtkWidget *dialog;
    GtkWidget *toplevel;
    GbProject *local_project = NULL;
@@ -172,9 +205,9 @@ on_row_activated (GtkListBox         *list_box,
    g_return_if_fail(GB_IS_WORKSPACE_GREETER(greeter));
 
    toplevel = gtk_widget_get_toplevel(GTK_WIDGET(greeter));
-   project = g_object_get_data(G_OBJECT(list_box_row), "project");
+   project_info = g_object_get_data(G_OBJECT(list_box_row), "project-info");
 
-   if (!project) {
+   if (!project_info) {
       dialog = g_object_new(GB_TYPE_CREATE_PROJECT_DIALOG,
                             "transient-for", toplevel,
                             NULL);
@@ -186,6 +219,11 @@ on_row_activated (GtkListBox         *list_box,
          return;
       }
       gtk_widget_destroy(dialog);
+   } else {
+      /*
+       * TODO: gb_project_info_load().
+       */
+      project = NULL;
    }
 
    g_object_set(toplevel, "project", project, NULL);
@@ -194,8 +232,62 @@ on_row_activated (GtkListBox         *list_box,
 }
 
 static void
+gb_workspace_greeter_style_updated (GtkWidget *widget)
+{
+   GbWorkspaceGreeterPrivate *priv;
+   GtkRequisition min_req;
+   GtkRequisition nat_req;
+   GtkWidget *fake_row;
+   GList *list;
+   gint length;
+   gint min_height;
+
+   priv = GB_WORKSPACE_GREETER(widget)->priv;
+
+   if (GTK_WIDGET_CLASS(gb_workspace_greeter_parent_class)->style_updated) {
+      GTK_WIDGET_CLASS(gb_workspace_greeter_parent_class)->
+         style_updated(widget);
+   }
+
+   list = get_recent_projects();
+   length = g_list_length(list);
+   g_list_foreach(list, (GFunc)g_object_unref, list);
+   g_list_free(list);
+   list = NULL;
+
+   fake_row = make_row(NULL);
+   gtk_widget_get_preferred_size(fake_row, &min_req, &nat_req);
+   gtk_widget_destroy(fake_row);
+
+   length = CLAMP(length + 1, 1, 5);
+   min_height = length * nat_req.height + ((length - 1) * 2);
+
+   gtk_scrolled_window_set_min_content_height(
+      GTK_SCROLLED_WINDOW(priv->scroller),
+      min_height);
+}
+
+static void
+gb_workspace_greeter_grab_focus (GtkWidget *widget)
+{
+   GbWorkspaceGreeterPrivate *priv;
+
+   g_return_if_fail(GB_IS_WORKSPACE_GREETER(widget));
+
+   priv = GB_WORKSPACE_GREETER(widget)->priv;
+
+   gtk_widget_grab_focus(GTK_WIDGET(priv->projects));
+}
+
+static void
 gb_workspace_greeter_finalize (GObject *object)
 {
+   GbWorkspaceGreeterPrivate *priv;
+
+   priv = GB_WORKSPACE_GREETER(object)->priv;
+
+   g_clear_object(&priv->header);
+
    G_OBJECT_CLASS(gb_workspace_greeter_parent_class)->finalize(object);
 }
 
@@ -203,10 +295,16 @@ static void
 gb_workspace_greeter_class_init (GbWorkspaceGreeterClass *klass)
 {
    GObjectClass *object_class;
+   GtkWidgetClass *widget_class;
 
    object_class = G_OBJECT_CLASS(klass);
    object_class->finalize = gb_workspace_greeter_finalize;
    g_type_class_add_private(object_class, sizeof(GbWorkspaceGreeterPrivate));
+
+   widget_class = GTK_WIDGET_CLASS(klass);
+   widget_class->grab_focus = gb_workspace_greeter_grab_focus;
+   widget_class->parent_set = gb_workspace_greeter_parent_set;
+   widget_class->style_updated = gb_workspace_greeter_style_updated;
 
    gSignals[PROJECT_SELECTED] = g_signal_new("project-selected",
                                              GB_TYPE_WORKSPACE_GREETER,
@@ -242,15 +340,17 @@ gb_workspace_greeter_init (GbWorkspaceGreeter *greeter)
                                "title", _("Select a Project"),
                                "visible", TRUE,
                                NULL);
+   priv->header = g_object_ref(priv->header);
 
    align = g_object_new(GTK_TYPE_ALIGNMENT,
+                        "border-width", 24,
                         "hexpand", TRUE,
                         "vexpand", TRUE,
                         "visible", TRUE,
                         "xalign", 0.5f,
                         "xscale", 0.0f,
                         "yalign", 0.5f,
-                        "yscale", 0.0f,
+                        "yscale", 0.5f,
                         NULL);
    gtk_container_add_with_properties(GTK_CONTAINER(greeter), align,
                                      "left-attach", 0,
@@ -262,13 +362,14 @@ gb_workspace_greeter_init (GbWorkspaceGreeter *greeter)
    frame_ = g_object_new(GTK_TYPE_FRAME,
                          "width-request", 500,
                          "shadow-type", GTK_SHADOW_IN,
-                         "vexpand", FALSE,
+                         "valign", GTK_ALIGN_CENTER,
                          "hexpand", FALSE,
                          "visible", TRUE,
                          NULL);
    gtk_container_add(GTK_CONTAINER(align), frame_);
 
    priv->scroller = g_object_new(GTK_TYPE_SCROLLED_WINDOW,
+                                 "vexpand", TRUE,
                                  "visible", TRUE,
                                  NULL);
    gtk_container_add(GTK_CONTAINER(frame_), GTK_WIDGET(priv->scroller));
@@ -277,6 +378,7 @@ gb_workspace_greeter_init (GbWorkspaceGreeter *greeter)
                                  "can-focus", FALSE,
                                  "activate-on-single-click", TRUE,
                                  "selection-mode", GTK_SELECTION_NONE,
+                                 "vexpand", TRUE,
                                  "visible", TRUE,
                                  NULL);
    gtk_list_box_set_header_func(GTK_LIST_BOX(priv->projects),
@@ -291,16 +393,13 @@ gb_workspace_greeter_init (GbWorkspaceGreeter *greeter)
    list = get_recent_projects();
 
    for (iter = list; iter; iter = iter->next) {
-      /* TODO: get name/date from project */
-      row = make_row(NULL, NULL, NULL);
+      row = make_row(iter->data);
       gtk_container_add(GTK_CONTAINER(priv->projects), row);
    }
 
-   row = make_row(_("New Project"), NULL, NULL);
+   row = make_row(NULL);
    gtk_container_add(GTK_CONTAINER(priv->projects), row);
 
    g_list_foreach(list, (GFunc)g_object_unref, NULL);
    g_list_free(list);
-
-   g_signal_connect(greeter, "parent-set", G_CALLBACK(on_parent_set), NULL);
 }

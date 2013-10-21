@@ -21,8 +21,12 @@
 
 #include <gtk/gtk.h>
 
+#include "gb-back-forward-list.h"
+#include "gb-command-stack.h"
+#include "gb-document.h"
 #include "gb-project.h"
-#include "gb-workspace-layout.h"
+#include "gb-workspace-docs.h"
+#include "gb-workspace-editor.h"
 
 G_BEGIN_DECLS
 
@@ -36,18 +40,7 @@ G_BEGIN_DECLS
 
 typedef struct _GbWorkspace        GbWorkspace;
 typedef struct _GbWorkspaceClass   GbWorkspaceClass;
-typedef enum   _GbWorkspaceMode    GbWorkspaceMode;
 typedef struct _GbWorkspacePrivate GbWorkspacePrivate;
-
-enum _GbWorkspaceMode
-{
-   GB_WORKSPACE_SPLASH,
-   GB_WORKSPACE_EDIT,
-   GB_WORKSPACE_UI,
-   GB_WORKSPACE_DEBUG,
-   GB_WORKSPACE_GIT,
-   GB_WORKSPACE_DOCS,
-};
 
 struct _GbWorkspace
 {
@@ -62,14 +55,19 @@ struct _GbWorkspaceClass
    GtkApplicationWindowClass parent_class;
 };
 
-GbProject *gb_workspace_get_project    (GbWorkspace     *workspace);
-GType      gb_workspace_get_type       (void) G_GNUC_CONST;
-gboolean   gb_workspace_is_fullscreen  (GbWorkspace     *workspace);
-void       gb_workspace_set_mode       (GbWorkspace     *workspace,
-                                        GbWorkspaceMode  mode);
-void       gb_workspace_set_project    (GbWorkspace     *workspace,
-                                        GbProject       *project);
-void       gb_workspace_update_actions (GbWorkspace     *workspace);
+GType               gb_workspace_get_type              (void) G_GNUC_CONST;
+GbWorkspace        *gb_workspace_new                   (void);
+GbBackForwardList  *gb_workspace_get_back_forward_list (GbWorkspace        *workspace);
+GbCommandStack     *gb_workspace_get_command_stack     (GbWorkspace        *workspace);
+GbProject          *gb_workspace_get_project           (GbWorkspace        *workspace);
+void                gb_workspace_set_project           (GbWorkspace        *workspace,
+                                                        GbProject          *project);
+GbWorkspaceDocs    *gb_workspace_get_docs              (GbWorkspace        *workspace);
+GbWorkspaceEditor  *gb_workspace_get_editor            (GbWorkspace        *workspace);
+GbDocument         *gb_workspace_get_current_document  (GbWorkspace        *workspace);
+GbWorkspaceSection *gb_workspace_get_current_section   (GbWorkspace        *workspace);
+void                gb_workspace_set_current_section   (GbWorkspace        *workspace,
+                                                        GbWorkspaceSection *section);
 
 G_END_DECLS
 

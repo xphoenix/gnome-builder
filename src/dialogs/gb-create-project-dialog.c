@@ -201,6 +201,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
                     "visible", TRUE,
                     "xalign", 1.0f,
                     NULL);
+   gtk_style_context_add_class(gtk_widget_get_style_context(l), "dim-label");
    gtk_container_add(GTK_CONTAINER(grid), l);
 
    priv->entry = g_object_new(GTK_TYPE_ENTRY,
@@ -233,6 +234,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
                     "visible", TRUE,
                     "xalign", 1.0f,
                     NULL);
+   gtk_style_context_add_class(gtk_widget_get_style_context(l), "dim-label");
    gtk_container_add_with_properties(GTK_CONTAINER(grid), l,
                                      "top-attach", 1,
                                      "left-attach", 0,
@@ -269,6 +271,7 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
                     "visible", TRUE,
                     "xalign", 1.0f,
                     NULL);
+   gtk_style_context_add_class(gtk_widget_get_style_context(l), "dim-label");
    gtk_container_add_with_properties(GTK_CONTAINER(grid), l,
                                      "top-attach", 2,
                                      "left-attach", 0,

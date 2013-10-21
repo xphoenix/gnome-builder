@@ -1,6 +1,0 @@
-<ui>
-   <popup name="menu">
-      <menuitem name="find" action="find" accelerators="true"/>
-      <separator/>
-   </popup>
-</ui>

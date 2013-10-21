@@ -2,3 +2,4 @@ gb-application-resource.c
 gb-application-resource.h
 gnome-builder
 gnome-builder-worker
+*.valid

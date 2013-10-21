@@ -16,31 +16,23 @@ AM_CPPFLAGS = \
 	$(JSON_CFLAGS) \
 	$(VTE_CFLAGS) \
 	-DG_LOG_DOMAIN=\"Builder\" \
-	-I$(top_srcdir)/src \
-	-I$(top_builddir)/src \
-	-I$(top_srcdir)/src/animation \
-	-I$(top_srcdir)/src/app \
-	-I$(top_srcdir)/src/browser \
-	-I$(top_srcdir)/src/commands \
-	-I$(top_srcdir)/src/compiler \
-	-I$(top_srcdir)/src/dbus \
-	-I$(top_srcdir)/src/debugger \
-	-I$(top_srcdir)/src/dialogs \
-	-I$(top_srcdir)/src/docs \
-	-I$(top_srcdir)/src/language \
-	-I$(top_srcdir)/src/log \
-	-I$(top_srcdir)/src/multiprocess \
-	-I$(top_srcdir)/src/nautilus \
-	-I$(top_srcdir)/src/profiler \
-	-I$(top_srcdir)/src/project \
-	-I$(top_srcdir)/src/runner \
-	-I$(top_srcdir)/src/search \
-	-I$(top_srcdir)/src/source \
-	-I$(top_srcdir)/src/symbol \
-	-I$(top_srcdir)/src/terminal \
-	-I$(top_srcdir)/src/trie \
-	-I$(top_srcdir)/src/worker \
-	-I$(top_srcdir)/src/workspace
+	-I$(srcdir) \
+	-I$(builddir) \
+	-I$(srcdir)/animation \
+	-I$(srcdir)/command \
+	-I$(srcdir)/core \
+	-I$(srcdir)/dialogs \
+	-I$(srcdir)/editor \
+	-I$(srcdir)/git \
+	-I$(srcdir)/language \
+	-I$(srcdir)/language/c \
+	-I$(srcdir)/log \
+	-I$(srcdir)/nautilus \
+	-I$(srcdir)/project \
+	-I$(srcdir)/resources \
+	-I$(srcdir)/snippets \
+	-I$(srcdir)/util \
+	-I$(srcdir)/workspace
 
 
 AM_LDFLAGS = \
@@ -58,360 +50,138 @@ AM_LDFLAGS = \
 	$(VTE_LIBS)
 
 
-noinst_LTLIBRARIES += libanimation.la
-libanimation_la_SOURCES = \
+bin_PROGRAMS += gnome-builder
+gnome_builder_SOURCES = \
+	$(built_sources) \
+	gnome-builder.c \
 	animation/gb-animation.c \
 	animation/gb-animation.h \
 	animation/gb-frame-source.c \
-	animation/gb-frame-source.h
-
-
-noinst_LTLIBRARIES += libapp.la
-libapp_la_DEPS = \
-	$(GB_APPLICATION_RESOURCE_C) \
-	$(GB_APPLICATION_RESOURCE_H)
-libapp_la_LIBADD = \
-	libanimation.la \
-	libmultiprocess.la
-libapp_la_SOURCES = \
-	$(GB_APPLICATION_RESOURCE_C) \
-	$(GB_APPLICATION_RESOURCE_H) \
-	app/gb-application.c \
-	app/gb-application.h \
-	app/gb-back-forward-list.c \
-	app/gb-back-forward-list.h \
-	app/gb-file-filters.c \
-	app/gb-file-filters.h \
-	app/gb-icon-theme.c \
-	app/gb-icon-theme.h \
-	app/gb-path.c \
-	app/gb-path.h \
-	app/gb-util.c \
-	app/gb-util.h
-
-
-noinst_LTLIBRARIES += libbrowser.la
-libbrowser_la_LIBADD = \
-	libapp.la
-libbrowser_la_SOURCES = \
-	browser/gb-tree.c \
-	browser/gb-tree.h \
-	browser/gb-tree-builder.c \
-	browser/gb-tree-builder.h \
-	browser/gb-tree-builder-gir.c \
-	browser/gb-tree-builder-gir.h \
-	browser/gb-tree-builder-group.c \
-	browser/gb-tree-builder-group.h \
-	browser/gb-tree-builder-project.c \
-	browser/gb-tree-builder-project.h \
-	browser/gb-tree-node.c \
-	browser/gb-tree-node.h \
-	browser/gb-tree-node-gir.c \
-	browser/gb-tree-node-gir.h \
-	browser/gb-tree-node-group.c \
-	browser/gb-tree-node-group.h \
-	browser/gb-tree-node-project.c \
-	browser/gb-tree-node-project.h
-
-
-noinst_LTLIBRARIES += libcommands.la
-libcommands_la_SOURCES = \
-	commands/gb-command.c \
-	commands/gb-command.h \
-	commands/gb-command-dbus.c \
-	commands/gb-command-dbus.h \
-	commands/gb-command-stack.c \
-	commands/gb-command-stack.h
-
-
-noinst_LTLIBRARIES += libcompiler.la
-libcompiler_la_SOURCES = \
-	compiler/gb-compiler.c \
-	compiler/gb-compiler.h
-
-
-noinst_LTLIBRARIES += libdbus.la
-libdbus_la_SOURCES = \
-	dbus/gb-dbus-typelib.c \
-	dbus/gb-dbus-typelib.h
-
-
-noinst_LTLIBRARIES += libdebugger.la
-libdebugger_la_SOURCES = \
-	debugger/gb-debugger.c \
-	debugger/gb-debugger.h
-
-
-noinst_LTLIBRARIES += libdialogs.la
-libdialogs_la_SOURCES = \
+	animation/gb-frame-source.h \
+	command/gb-command.c \
+	command/gb-command-dbus.c \
+	command/gb-command-dbus.h \
+	command/gb-command.h \
+	command/gb-command-stack.c \
+	command/gb-command-stack.h \
+	core/gb-application.c \
+	core/gb-application.h \
+	core/gb-service.c \
+	core/gb-service.h \
+	core/gb-subprocess-manager.c \
+	core/gb-subprocess-manager.h \
 	dialogs/gb-create-project-dialog.c \
-	dialogs/gb-create-project-dialog.h
-
-
-noinst_LTLIBRARIES += libdocs.la
-libdocs_la_SOURCES = \
-	docs/gb-docs-pane.c \
-	docs/gb-docs-pane.h \
-	docs/gb-docs-provider.c \
-	docs/gb-docs-provider.h \
-	docs/gb-docs-provider-devhelp.c \
-	docs/gb-docs-provider-devhelp.h \
-	docs/gb-docs-provider-gir.c \
-	docs/gb-docs-provider-gir.h
-
-
-noinst_LTLIBRARIES += liblanguage.la
-liblanguage_LIBADD = \
-	libtrie.la
-liblanguage_la_SOURCES = \
-	language/gb-language-c-completion-provider.c \
-	language/gb-language-c-completion-provider.h
-
-
-noinst_LTLIBRARIES += liblog.la
-liblog_la_SOURCES = \
+	dialogs/gb-create-project-dialog.h \
+	dialogs/gb-prefs-dialog.c \
+	dialogs/gb-prefs-dialog.h \
+	editor/gb-source-document.c \
+	editor/gb-source-document.h \
+	editor/gb-source-view.c \
+	editor/gb-source-view.h \
+	git/gb-git-service.c \
+	git/gb-git-service.h \
 	log/gb-log.c \
-	log/gb-log.h
-
-
-noinst_LTLIBRARIES += libmultiprocess.la
-libmultiprocess_la_SOURCES = \
-	multiprocess/gb-multiprocess-manager.c \
-	multiprocess/gb-multiprocess-manager.h
-
-
-noinst_LTLIBRARIES += libprofiler.la
-libprofiler_la_SOURCES = \
-	profiler/gb-profiler.c \
-	profiler/gb-profiler.h
-
-
-noinst_LTLIBRARIES += libproject.la
-libproject_la_SOURCES = \
+	log/gb-log.h \
+	nautilus/nautilus-floating-bar.c \
+	nautilus/nautilus-floating-bar.h \
 	project/gb-project.c \
 	project/gb-project.h \
-	project/gb-project-file.c \
-	project/gb-project-file.h \
-	project/gb-project-format.c \
-	project/gb-project-format.h \
-	project/gb-project-group.c \
-	project/gb-project-group.h \
-	project/gb-project-item.c \
-	project/gb-project-item.h \
-	project/gb-project-target.c \
-	project/gb-project-target.h \
-	project/gb-project-target-c.c \
-	project/gb-project-target-c.h
-
-
-noinst_LTLIBRARIES += librunner.la
-librunner_la_SOURCES = \
-	runner/gb-runner.c \
-	runner/gb-runner.h \
-	runner/gb-runner-program.c \
-	runner/gb-runner-program.h
-
-
-noinst_LTLIBRARIES += libsearch.la
-libsearch_la_SOURCES = \
-	search/gb-search-completion.c \
-	search/gb-search-completion.h \
-	search/gb-search-provider.c \
-	search/gb-search-provider.h \
-	search/highlight.c \
-	search/highlight.h \
-	search/fuzzy.c \
-	search/fuzzy.h
-
-
-noinst_LTLIBRARIES += libsource.la
-libsource_la_LIBADD = \
-	libapp.la \
-	libcompiler.la \
-	libdbus.la \
-	liblanguage.la
-libsource_la_SOURCES = \
-	source/gb-source-diff.c \
-	source/gb-source-diff.h \
-	source/gb-source-fullscreen-container.c \
-	source/gb-source-fullscreen-container.h \
-	source/gb-source-gutter-renderer-compiler.c \
-	source/gb-source-gutter-renderer-compiler.h \
-	source/gb-source-gutter-renderer-diff.c \
-	source/gb-source-gutter-renderer-diff.h \
-	source/gb-source-overlay.c \
-	source/gb-source-overlay.h \
-	source/gb-source-pane.c \
-	source/gb-source-pane.h \
-	source/gb-source-snippet.c \
-	source/gb-source-snippet.h \
-	source/gb-source-snippet-private.h \
-	source/gb-source-snippet-chunk.c \
-	source/gb-source-snippet-chunk.h \
-	source/gb-source-snippet-completion-item.c \
-	source/gb-source-snippet-completion-item.h \
-	source/gb-source-snippet-completion-provider.c \
-	source/gb-source-snippet-completion-provider.h \
-	source/gb-source-snippet-context.c \
-	source/gb-source-snippet-context.h \
-	source/gb-source-snippet-parser.c \
-	source/gb-source-snippet-parser.h \
-	source/gb-source-snippets.c \
-	source/gb-source-snippets.h \
-	source/gb-source-snippets-manager.c \
-	source/gb-source-snippets-manager.h \
-	source/gb-source-typelib-completion-item.c \
-	source/gb-source-typelib-completion-item.h \
-	source/gb-source-typelib-completion-provider.c \
-	source/gb-source-typelib-completion-provider.h \
-	source/gb-source-view.c \
-	source/gb-source-view.h
-
-
-noinst_LTLIBRARIES += libsymbol.la
-libsymbol_la_SOURCES = \
-	symbol/gb-symbol-tree-builder-gir.c \
-	symbol/gb-symbol-tree-builder-gir.h \
-	symbol/gb-symbol-tree-gir.c \
-	symbol/gb-symbol-tree-gir.h \
-	symbol/gb-symbol-tree-node-gir.c \
-	symbol/gb-symbol-tree-node-gir.h
-
-
-noinst_LTLIBRARIES += libterminal.la
-libterminal_la_SOURCES = \
-	terminal/gb-terminal-pane.c \
-	terminal/gb-terminal-pane.h
-
-
-noinst_LTLIBRARIES += libtrie.la
-libtrie_la_SOURCES = \
-	trie/trie.c \
-	trie/trie.h
-
-
-noinst_LTLIBRARIES += libworkspace.la
-libworkspace_la_LIBADD = \
-	libanimation.la \
-	libbrowser.la \
-	libdialogs.la \
-	libproject.la \
-	libsearch.la \
-	libterminal.la
-libworkspace_la_SOURCES = \
+	project/gb-project-info.c \
+	project/gb-project-info.h \
+	project/gb-project-service.c \
+	project/gb-project-service.h \
+	snippets/gb-source-snippet.c \
+	snippets/gb-source-snippet-chunk.c \
+	snippets/gb-source-snippet-chunk.h \
+	snippets/gb-source-snippet-context.c \
+	snippets/gb-source-snippet-context.h \
+	snippets/gb-source-snippet.h \
+	snippets/gb-source-snippet-parser.c \
+	snippets/gb-source-snippet-parser.h \
+	snippets/gb-source-snippet-private.h \
+	snippets/gb-source-snippets.c \
+	snippets/gb-source-snippets.h \
+	snippets/gb-source-snippets-manager.c \
+	snippets/gb-source-snippets-manager.h \
+	util/fuzzy.c \
+	util/fuzzy.h \
+	util/gb-buffer-tasks.c \
+	util/gb-buffer-tasks.h \
+	util/gb-gtk.c \
+	util/gb-gtk.h \
+	util/gb-tab-label.c \
+	util/gb-tab-label.h \
+	util/trie.c \
+	util/trie.h \
+	workspace/gb-back-forward-list.c \
+	workspace/gb-back-forward-list.h \
+	workspace/gb-document.c \
+	workspace/gb-document.h \
+	workspace/gb-workspace-actions.c \
+	workspace/gb-workspace-actions.h \
 	workspace/gb-workspace.c \
-	workspace/gb-workspace.h \
+	workspace/gb-workspace-container.c \
+	workspace/gb-workspace-container.h \
+	workspace/gb-workspace-container-private.h \
+	workspace/gb-workspace-docs.c \
+	workspace/gb-workspace-docs.h \
+	workspace/gb-workspace-editor.c \
+	workspace/gb-workspace-editor.h \
 	workspace/gb-workspace-greeter.c \
 	workspace/gb-workspace-greeter.h \
-	workspace/gb-workspace-layout-docs.c \
-	workspace/gb-workspace-layout-docs.h \
-	workspace/gb-workspace-layout-edit.c \
-	workspace/gb-workspace-layout-edit.h \
-	workspace/gb-workspace-layout.c \
-	workspace/gb-workspace-layout.h \
-	workspace/gb-workspace-layout-splash.c \
-	workspace/gb-workspace-layout-splash.h \
-	workspace/gb-workspace-layout-switcher.c \
-	workspace/gb-workspace-layout-switcher.h \
-	workspace/gb-workspace-pane-group.c \
-	workspace/gb-workspace-pane-group.h \
-	workspace/gb-workspace-pane.c \
-	workspace/gb-workspace-pane.h \
-	workspace/gb-workspace-search-provider.c \
-	workspace/gb-workspace-search-provider.h \
-	workspace/gb-zoomable.c \
-	workspace/gb-zoomable.h \
-	nautilus/nautilus-floating-bar.c \
-	nautilus/nautilus-floating-bar.h
-
-
-bin_PROGRAMS += gnome-builder
-gnome_builder_SOURCES = gnome-builder.c
-gnome_builder_LDADD = \
-	libapp.la \
-	libbrowser.la \
-	libcompiler.la \
-	libdebugger.la \
-	libdialogs.la \
-	libdocs.la \
-	liblanguage.la \
-	liblog.la \
-	libmultiprocess.la \
-	libprofiler.la \
-	libproject.la \
-	librunner.la \
-	libsearch.la \
-	libsource.la \
-	libsymbol.la \
-	libterminal.la \
-	libtrie.la \
-	libworkspace.la
-
-
-bin_PROGRAMS += gnome-builder-worker
-gnome_builder_worker_LDADD = \
-	libdbus.la \
-	libsearch.la \
-	libtrie.la
-gnome_builder_worker_SOURCES = \
-	gnome-builder-worker.c \
-	worker/gb-worker-typelib.c
-
-
-GLIB_COMPILE_RESOURCE = glib-compile-resources
+	workspace/gb-workspace.h \
+	workspace/gb-workspace-section.c \
+	workspace/gb-workspace-section.h
 
 
 RESOURCE_FILES = \
-	data/gb-application.gresource.xml \
-	data/ui/gb-application-menu.ui \
-	data/ui/gb-tree-menu.ui \
-	data/style-schemes/solarized-dark.xml \
-	data/style-schemes/solarized-light.xml \
-	data/icons/class-16x.png \
-	data/icons/deprecated-16x.png \
-	data/icons/enum-16x.png \
-	data/icons/enum-value-16x.png \
-	data/icons/keyword-16x.png \
-	data/icons/method-16x.png \
-	data/icons/project-16x.png \
-	data/icons/static-16x.png \
-	data/icons/template-16x.png \
-	data/icons/text-x-chdr-16x.png \
-	data/icons/text-x-csrc-16x.png
+	resources/gnome-builder.gresource.xml \
+	resources/ui/gb-application-menu.ui \
+	resources/ui/gb-prefs-dialog.ui \
+	resources/ui/gb-workspace-container.ui
 
 
-GB_APPLICATION_RESOURCE_C = $(builddir)/app/gb-application-resource.c
-GB_APPLICATION_RESOURCE_H = $(builddir)/app/gb-application-resource.h
+built_sources = \
+	$(builddir)/resources/gb-resources.c \
+	$(builddir)/resources/gb-resources.h \
+	$(builddir)/git/gb-git-service-dbus.c \
+	$(builddir)/git/gb-git-service-dbus.h
 
 
-$(GB_APPLICATION_RESOURCE_C) $(GB_APPLICATION_RESOURCE_H): $(RESOURCE_FILES)
-	$(AM_V_GEN)$(GLIB_COMPILE_RESOURCE) \
-		--target=$(GB_APPLICATION_RESOURCE_C).tmp \
-		--generate-source --c-name=gb_application \
-		data/gb-application.gresource.xml
-	@$(GLIB_COMPILE_RESOURCE) \
-		--target=$(GB_APPLICATION_RESOURCE_H).tmp \
-		--generate-header --c-name=gb_application \
-		data/gb-application.gresource.xml
-	@mv $(GB_APPLICATION_RESOURCE_C).tmp $(GB_APPLICATION_RESOURCE_C)
-	@mv $(GB_APPLICATION_RESOURCE_H).tmp $(GB_APPLICATION_RESOURCE_H)
+GLIB_COMPILE_RESOURCES = glib-compile-resources
+GDBUS_CODEGEN = gdbus-codegen
 
 
-GB_DBUS_TYPELIB_C = $(builddir)/dbus/gb-dbus-typelib.c
-GB_DBUS_TYPELIB_H = $(builddir)/dbus/gb-dbus-typelib.h
+resources/gb-resources.%: $(RESOURCE_FILES)
+	$(AM_V_GEN)$(GLIB_COMPILE_RESOURCES) \
+		--sourcedir=resources \
+		--target=resources/gb-resources.c \
+		--generate-source \
+		--c-name gb \
+		resources/gnome-builder.gresource.xml
+	$(AM_V_GEN)$(GLIB_COMPILE_RESOURCES) \
+		--sourcedir=resources \
+		--target=resources/gb-resources.h \
+		--generate-header \
+		--c-name gb \
+		resources/gnome-builder.gresource.xml
 
 
-$(GB_DBUS_TYPELIB_C) $(GB_DBUS_TYPELIB_H): $(srcdir)/dbus/typelib-worker.xml
-	$(AM_V_GEN)gdbus-codegen \
+git/gb-git-service-dbus.%: git/org.gnome.Builder.Services.Git.xml
+	$(AM_V_GEN)$(GDBUS_CODEGEN) \
+		--xml-files git/org.gnome.Builder.Services.Git.xml \
 		--interface-prefix org.gnome.Builder \
-		--c-namespace GbDBus \
-		--generate-c-code $(builddir)/dbus/gb-dbus-typelib \
-		$(srcdir)/dbus/typelib-worker.xml
+		--c-namespace GbGitServiceDBus \
+		--c-generate-object-manager \
+		--generate-c-code=git/gb-git-service-dbus
 
 
-EXTRA_DIST = $(RESOURCE_FILES)
+gsettings_SCHEMAS = \
+	editor/org.gnome.Builder.Editor.DocumentSettings.gschema.xml
+.PRECIOUS: $(gsettings_SCHEMAS)
 
 
-CLEANFILES = \
-	$(GB_APPLICATION_RESOURCE_C) \
-	$(GB_APPLICATION_RESOURCE_H)
+@GSETTINGS_RULES@
+
+
+CLEANFILES = $(built_sources)
