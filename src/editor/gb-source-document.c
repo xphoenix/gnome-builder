@@ -672,7 +672,8 @@ update_cursor_position (GbSourceDocument *document,
    mark = gtk_text_buffer_get_insert(buffer);
    gtk_text_buffer_get_iter_at_mark(buffer, &iter, mark);
    line = gtk_text_iter_get_line(&iter) + 1;
-   column = gtk_text_iter_get_line_offset(&iter) + 1;
+   column = gtk_source_view_get_visual_column(GTK_SOURCE_VIEW(priv->view),
+                                              &iter) + 1;
    if (!overwrite) {
       text = g_strdup_printf(_("Ln %u, Col %u  INS"), line, column);
    } else {
