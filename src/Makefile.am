@@ -185,3 +185,6 @@ gsettings_SCHEMAS = \
 
 
 CLEANFILES = $(built_sources)
+
+run:
+	GSETTINGS_SCHEMA_DIR=editor ./gnome-builder
