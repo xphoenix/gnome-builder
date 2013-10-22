@@ -10,6 +10,7 @@ If you would like to help, email me!
 ./autogen.sh --enable-silent-rules --enable-debug=minimum
 make
 cd src
+sudo make install-gsettings-schemas
 make run
 ```
 
