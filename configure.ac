@@ -62,8 +62,10 @@ dnl ************************************************************************
 PKG_CHECK_MODULES(DEVHELP,       [libdevhelp-3.0 >= 3.2.0])
 PKG_CHECK_MODULES(GIR,           [gobject-introspection-1.0 >= 0.10.2])
 PKG_CHECK_MODULES(GJS,           [gjs-1.0 >= 1.37.0])
+PKG_CHECK_MODULES(GLADE,         [gladeui-2.0])
 PKG_CHECK_MODULES(GMODULE,       [gmodule-2.0 >= 2.28])
 PKG_CHECK_MODULES(GOBJECT,       [gobject-2.0 >= 2.28])
+PKG_CHECK_MODULES(GSCHEMAS,      [gsettings-desktop-schemas])
 PKG_CHECK_MODULES(GTK3,          [gtk+-3.0 >= 3.9.11])
 PKG_CHECK_MODULES(GTKSOURCEVIEW, [gtksourceview-3.0 >= 3.9.91])
 PKG_CHECK_MODULES(JSON,          [json-glib-1.0 >= 0.14.0])
@@ -155,7 +157,7 @@ AM_CONDITIONAL(ENABLE_GLIB_TEST, test "x$enable_glibtest" = "xyes")
 dnl ************************************************************************
 dnl Miscellaneous
 dnl ************************************************************************
-AC_PATH_PROG([XMLLINT], [xmllint])
+AM_GSETTINGS
 GTK_DOC_CHECK([1.11])
 GOBJECT_INTROSPECTION_CHECK([0.6.7])
 
