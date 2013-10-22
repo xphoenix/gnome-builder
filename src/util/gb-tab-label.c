@@ -363,6 +363,7 @@ gb_tab_label_init (GbTabLabel *label)
    button = g_object_new(GTK_TYPE_BUTTON,
                          "child", icon,
                          "relief", GTK_RELIEF_NONE,
+                         "tooltip-text", _("Close document"),
                          "valign", GTK_ALIGN_CENTER,
                          "visible", TRUE,
                          NULL);
