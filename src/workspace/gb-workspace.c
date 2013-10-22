@@ -75,6 +75,16 @@ gb_workspace_get_editor (GbWorkspace *workspace)
           NULL;
 }
 
+GbWorkspaceGlade *
+gb_workspace_get_glade (GbWorkspace *workspace)
+{
+   g_return_val_if_fail(GB_IS_WORKSPACE(workspace), NULL);
+
+   return workspace->priv->container ?
+          GB_WORKSPACE_GLADE(workspace->priv->container->priv->ui) :
+          NULL;
+}
+
 GbWorkspaceSection *
 gb_workspace_get_current_section (GbWorkspace *workspace)
 {

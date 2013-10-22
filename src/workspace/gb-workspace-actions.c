@@ -37,6 +37,7 @@ static const Accelerator gAccelators[] = {
    { "<Primary>O",     "win.open-document" },
    { "<Primary>S",     "win.save-document" },
    { "<Primary>comma", "win.preferences" },
+   { "<Control>1",     "win.move-to-glade" },
    { "<Control>2",     "win.move-to-editor" },
    { "<Control>5",     "win.move-to-docs" },
    { NULL }
@@ -227,6 +228,23 @@ gb_workspace_actions_save_document (GSimpleAction *action,
 }
 
 static void
+gb_workspace_actions_move_to_glade (GSimpleAction *action,
+                                    GVariant      *parameter,
+                                    gpointer       user_data)
+{
+   GbWorkspaceGlade *glade;
+   GbWorkspace *workspace = user_data;
+
+   g_return_if_fail(G_IS_SIMPLE_ACTION(action));
+   g_return_if_fail(GB_IS_WORKSPACE(workspace));
+
+   if ((glade = gb_workspace_get_glade(workspace))) {
+      gb_workspace_set_current_section(workspace,
+                                       GB_WORKSPACE_SECTION(glade));
+   }
+}
+
+static void
 gb_workspace_actions_move_to_docs (GSimpleAction *action,
                                    GVariant      *parameter,
                                    gpointer       user_data)
@@ -313,6 +331,7 @@ _gb_workspace_actions_init (GbWorkspace *workspace)
       { "close-document", gb_workspace_actions_close_document },
       { "move-to-docs", gb_workspace_actions_move_to_docs },
       { "move-to-editor", gb_workspace_actions_move_to_editor },
+      { "move-to-glade", gb_workspace_actions_move_to_glade },
       { "open-document", gb_workspace_actions_open_document },
       { "preferences", gb_workspace_actions_preferences },
       { "save-document", gb_workspace_actions_save_document },

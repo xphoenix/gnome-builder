@@ -27,6 +27,7 @@
 #include "gb-project.h"
 #include "gb-workspace-docs.h"
 #include "gb-workspace-editor.h"
+#include "gb-workspace-glade.h"
 
 G_BEGIN_DECLS
 
@@ -64,6 +65,7 @@ void                gb_workspace_set_project           (GbWorkspace        *work
                                                         GbProject          *project);
 GbWorkspaceDocs    *gb_workspace_get_docs              (GbWorkspace        *workspace);
 GbWorkspaceEditor  *gb_workspace_get_editor            (GbWorkspace        *workspace);
+GbWorkspaceGlade   *gb_workspace_get_glade             (GbWorkspace        *workspace);
 GbDocument         *gb_workspace_get_current_document  (GbWorkspace        *workspace);
 GbWorkspaceSection *gb_workspace_get_current_section   (GbWorkspace        *workspace);
 void                gb_workspace_set_current_section   (GbWorkspace        *workspace,
