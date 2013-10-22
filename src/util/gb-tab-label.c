@@ -333,6 +333,7 @@ gb_tab_label_init (GbTabLabel *label)
    priv = label->priv;
 
    box = g_object_new(GTK_TYPE_BOX,
+                      "hexpand", TRUE,
                       "orientation", GTK_ORIENTATION_HORIZONTAL,
                       "visible", TRUE,
                       NULL);
