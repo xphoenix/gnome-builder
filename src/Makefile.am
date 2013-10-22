@@ -9,6 +9,7 @@ AM_CPPFLAGS = \
 	$(DEVHELP_CFLAGS) \
 	$(GIR_CFLAGS) \
 	$(GJS_CFLAGS) \
+	$(GLADE_CFLAGS) \
 	$(GMODULE_CFLAGS) \
 	$(GOBJECT_CFLAGS) \
 	$(GTK3_CFLAGS) \
@@ -42,6 +43,7 @@ AM_LDFLAGS = \
 	$(DEVHELP_LIBS) \
 	$(GIR_LIBS) \
 	$(GJS_LIBS) \
+	$(GLADE_LIBS) \
 	$(GMODULE_LIBS) \
 	$(GOBJECT_LIBS) \
 	$(GTK3_LIBS) \
@@ -127,6 +129,8 @@ gnome_builder_SOURCES = \
 	workspace/gb-workspace-docs.h \
 	workspace/gb-workspace-editor.c \
 	workspace/gb-workspace-editor.h \
+	workspace/gb-workspace-glade.c \
+	workspace/gb-workspace-glade.h \
 	workspace/gb-workspace-greeter.c \
 	workspace/gb-workspace-greeter.h \
 	workspace/gb-workspace.h \
@@ -176,10 +180,7 @@ git/gb-git-service-dbus.%: git/org.gnome.Builder.Services.Git.xml
 		--generate-c-code=git/gb-git-service-dbus
 
 
-gsettings_SCHEMAS = \
-	editor/org.gnome.Builder.Editor.DocumentSettings.gschema.xml
-.PRECIOUS: $(gsettings_SCHEMAS)
-
+gsettings_SCHEMAS = editor/org.gnome.Builder.Editor.DocumentSettings.gschema.xml
 
 @GSETTINGS_RULES@
 

@@ -25,6 +25,7 @@
 #include "gb-workspace-container-private.h"
 #include "gb-workspace-docs.h"
 #include "gb-workspace-editor.h"
+#include "gb-workspace-glade.h"
 
 #define UI_RESOURCE_PATH "/org/gnome/Builder/ui/gb-workspace-container.ui"
 
@@ -113,8 +114,7 @@ gb_workspace_container_init (GbWorkspaceContainer *container)
                                    NULL);
    priv->header_bar = g_object_ref(priv->header_bar);
 
-   priv->ui = g_object_new(GTK_TYPE_LABEL,
-                           "label", "TODO: UI",
+   priv->ui = g_object_new(GB_TYPE_WORKSPACE_GLADE,
                            "visible", TRUE,
                            NULL);
    gtk_container_add_with_properties(GTK_CONTAINER(priv->stack), priv->ui,
