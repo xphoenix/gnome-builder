@@ -132,7 +132,7 @@ gb_workspace_glade_init (GbWorkspaceGlade *glade)
    project = glade_project_new();
 
    priv->hpaned1 = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
-   gtk_paned_set_position(GTK_PANED(priv->hpaned1), 200);
+   gtk_paned_set_position(GTK_PANED(priv->hpaned1), 225);
    gtk_container_add(GTK_CONTAINER(glade), priv->hpaned1);
    gtk_widget_show(priv->hpaned1);
 
@@ -142,12 +142,15 @@ gb_workspace_glade_init (GbWorkspaceGlade *glade)
    gtk_widget_show(priv->palette);
 
    priv->hpaned2 = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
-   gtk_paned_set_position(GTK_PANED(priv->hpaned2), 600);
+   gtk_paned_set_position(GTK_PANED(priv->hpaned2), 400);
    gtk_container_add(GTK_CONTAINER(priv->hpaned1), priv->hpaned2);
    gtk_widget_show(priv->hpaned2);
 
    priv->design_view = glade_design_view_new(project);
-   gtk_container_add(GTK_CONTAINER(priv->hpaned2), priv->design_view);
+   gtk_container_add_with_properties(GTK_CONTAINER(priv->hpaned2),
+                                     priv->design_view,
+                                     "resize", TRUE,
+                                     NULL);
    gtk_widget_show(priv->design_view);
 
    priv->vpaned1 = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
