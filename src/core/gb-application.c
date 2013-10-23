@@ -277,6 +277,7 @@ gb_application_activate (GApplication *application)
       workspace = gb_workspace_new();
       gtk_application_add_window(GTK_APPLICATION(application),
                                  GTK_WINDOW(workspace));
+      gtk_window_maximize(GTK_WINDOW(workspace));
       gtk_window_present(GTK_WINDOW(workspace));
    } else {
       g_application_hold(application);
