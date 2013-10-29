@@ -157,7 +157,7 @@ AM_CONDITIONAL(ENABLE_GLIB_TEST, test "x$enable_glibtest" = "xyes")
 dnl ************************************************************************
 dnl Miscellaneous
 dnl ************************************************************************
-AM_GSETTINGS
+GLIB_SETTINGS
 GTK_DOC_CHECK([1.11])
 GOBJECT_INTROSPECTION_CHECK([0.6.7])
 
