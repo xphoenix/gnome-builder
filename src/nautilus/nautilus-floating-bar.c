@@ -228,7 +228,7 @@ nautilus_floating_bar_constructed (GObject *obj)
 	self->priv->spinner = w;
 
 	gtk_widget_set_size_request (w, 16, 16);
-	gtk_widget_set_margin_left (w, 8);
+	gtk_widget_set_margin_start (w, 8);
 
 	w = gtk_label_new (NULL);
 	gtk_label_set_ellipsize (GTK_LABEL (w), PANGO_ELLIPSIZE_MIDDLE);

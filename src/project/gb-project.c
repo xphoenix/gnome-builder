@@ -20,12 +20,15 @@
 
 #include "gb-project.h"
 
-G_DEFINE_TYPE(GbProject, gb_project, G_TYPE_OBJECT)
-
 struct _GbProjectPrivate
 {
    gchar *name;
 };
+
+G_DEFINE_TYPE_WITH_CODE(GbProject,
+                        gb_project,
+                        G_TYPE_OBJECT,
+                        G_ADD_PRIVATE(GbProject))
 
 enum
 {
@@ -36,10 +39,17 @@ enum
 
 static GParamSpec *gParamSpecs[LAST_PROP];
 
+GbProject *
+gb_project_new (void)
+{
+   return g_object_new(GB_TYPE_PROJECT, NULL);
+}
+
 const gchar *
 gb_project_get_name (GbProject *project)
 {
    g_return_val_if_fail(GB_IS_PROJECT(project), NULL);
+
    return project->priv->name;
 }
 
@@ -53,7 +63,6 @@ gb_project_set_name (GbProject   *project,
    project->priv->name = g_strdup(name);
    g_object_notify_by_pspec(G_OBJECT(project), gParamSpecs[PROP_NAME]);
 }
-
 
 static void
 gb_project_finalize (GObject *object)
@@ -110,12 +119,11 @@ gb_project_class_init (GbProjectClass *klass)
    object_class->finalize = gb_project_finalize;
    object_class->get_property = gb_project_get_property;
    object_class->set_property = gb_project_set_property;
-   g_type_class_add_private(object_class, sizeof(GbProjectPrivate));
 
    gParamSpecs[PROP_NAME] =
       g_param_spec_string("name",
                           _("Name"),
-                          _("Name"),
+                          _("The name of the project."),
                           NULL,
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    g_object_class_install_property(object_class, PROP_NAME,
@@ -125,7 +133,6 @@ gb_project_class_init (GbProjectClass *klass)
 static void
 gb_project_init (GbProject *project)
 {
-   project->priv = G_TYPE_INSTANCE_GET_PRIVATE(project,
-                                               GB_TYPE_PROJECT,
-                                               GbProjectPrivate);
+   project->priv = gb_project_get_instance_private(project);
+   project->priv->name = g_strdup(_("New Project"));
 }

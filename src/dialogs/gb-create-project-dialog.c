@@ -77,8 +77,8 @@ on_notify_text (GtkWidget  *widget,
 {
    const gchar *text;
 
-   text = gtk_entry_get_text(GTK_ENTRY(widget));
-   gtk_widget_set_sensitive(button, text && *text);
+   text = gtk_entry_get_text (GTK_ENTRY(widget));
+   gtk_widget_set_sensitive (button, text && *text);
 }
 
 static void
@@ -128,8 +128,6 @@ static void
 gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
 {
    GbCreateProjectDialogPrivate *priv;
-   GtkStyleContext *style_context;
-   GtkWidget *header_bar;
    GtkWidget *box;
    GtkWidget *l;
    GtkWidget *button;
@@ -141,49 +139,28 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
                                   GB_TYPE_CREATE_PROJECT_DIALOG,
                                   GbCreateProjectDialogPrivate);
 
-   g_object_set(dialog,
-                "default-height", 375,
-                "default-width", 600,
-                "title", _("New Project"),
-                NULL);
+   g_object_set (dialog,
+                 "default-height", 375,
+                 "default-width", 600,
+                 "title", _("New Project"),
+                 NULL);
 
-   box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+   gtk_dialog_add_buttons (GTK_DIALOG (dialog),
+                           _("Cancel"), GTK_RESPONSE_CANCEL,
+                           _("Create"), GTK_RESPONSE_OK,
+                           NULL);
+   gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
 
-   header_bar = g_object_new(GTK_TYPE_HEADER_BAR,
-                             "hexpand", TRUE,
-                             "show-close-button", FALSE,
-                             "title", _("New Project"),
-                             "vexpand", FALSE,
-                             "visible", TRUE,
-                             NULL);
-   gtk_window_set_titlebar(GTK_WINDOW(dialog), header_bar);
+   box = gtk_dialog_get_content_area (GTK_DIALOG(dialog));
 
-   button = g_object_new(GTK_TYPE_BUTTON,
-                         "label", _("Cancel"),
-                         "margin-top", 3,
-                         "margin-left", 3,
-                         "margin-bottom", 3,
-                         "vexpand", FALSE,
-                         "visible", TRUE,
-                         NULL);
-   g_signal_connect(button, "clicked", G_CALLBACK(cancel_clicked), dialog);
-   gtk_header_bar_pack_start(GTK_HEADER_BAR(header_bar), button);
+   button = gtk_dialog_get_widget_for_response (GTK_DIALOG (dialog),
+                                                GTK_RESPONSE_CANCEL);
+   g_signal_connect (button, "clicked", G_CALLBACK (cancel_clicked), dialog);
 
-   button = g_object_new(GTK_TYPE_BUTTON,
-                         "can-default", TRUE,
-                         "label", _("Create"),
-                         "margin-top", 3,
-                         "margin-right", 3,
-                         "margin-bottom", 3,
-                         "sensitive", FALSE,
-                         "vexpand", FALSE,
-                         "visible", TRUE,
-                         NULL);
+   button = gtk_dialog_get_widget_for_response (GTK_DIALOG (dialog),
+                                                GTK_RESPONSE_OK);
    g_signal_connect(button, "clicked", G_CALLBACK(create_clicked), dialog);
-   style_context = gtk_widget_get_style_context(button);
-   gtk_style_context_add_class(style_context, "suggested-action");
-   gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button);
-   gtk_window_set_default(GTK_WINDOW(dialog), button);
+   gtk_window_set_default (GTK_WINDOW(dialog), button);
    priv->create = button;
 
    grid = g_object_new(GTK_TYPE_GRID,
@@ -247,8 +224,8 @@ gb_create_project_dialog_init (GbCreateProjectDialog *dialog)
                          "visible", TRUE,
                          "width-chars", 30,
                          NULL);
-   path = g_build_filename(g_get_home_dir(), "Projects", NULL);
-   gtk_file_chooser_select_filename(GTK_FILE_CHOOSER(button), path);
+   path = g_build_filename(g_get_home_dir(), _("Projects"), NULL);
+   gtk_file_chooser_select_filename (GTK_FILE_CHOOSER (button), path);
    g_free(path);
    gtk_container_add_with_properties(GTK_CONTAINER(grid), button,
                                      "top-attach", 1,

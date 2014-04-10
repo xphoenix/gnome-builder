@@ -20,134 +20,63 @@
 
 #include "gb-workspace-section.h"
 
-G_DEFINE_TYPE(GbWorkspaceSection, gb_workspace_section, GTK_TYPE_BIN)
-
 struct _GbWorkspaceSectionPrivate
 {
-   GbDocument *current_document;
+   gpointer dummy;
 };
 
-enum
-{
-   PROP_0,
-   PROP_CURRENT_DOCUMENT,
-   LAST_PROP
-};
+G_DEFINE_ABSTRACT_TYPE_WITH_CODE(GbWorkspaceSection,
+                                 gb_workspace_section,
+                                 GTK_TYPE_BIN,
+                                 G_ADD_PRIVATE(GbWorkspaceSection))
 
-static GParamSpec *gParamSpecs[LAST_PROP];
-
-GbDocument *
-gb_workspace_section_get_current_document (GbWorkspaceSection *section)
+/**
+ * gb_workspace_section_get_actions:
+ * @section: (in): A #GbWorkspaceSection.
+ *
+ * Fetches a #GActionGroup for actions within this section.
+ *
+ * Returns: (transfer none): A #GActionGroup.
+ */
+GActionGroup *
+gb_workspace_section_get_actions (GbWorkspaceSection *section)
 {
+   GbWorkspaceSectionClass *klass;
+
    g_return_val_if_fail(GB_IS_WORKSPACE_SECTION(section), NULL);
 
-   return section->priv->current_document;
+   klass = GB_WORKSPACE_SECTION_GET_CLASS(section);
+
+   if (klass->get_actions) {
+      return klass->get_actions(section);
+   }
+
+   return NULL;
 }
 
 void
-gb_workspace_section_set_current_document (GbWorkspaceSection *section,
-                                           GbDocument         *document)
+gb_workspace_section_set_project (GbWorkspaceSection *section,
+                                  GbProject          *project)
 {
-   GbWorkspaceSectionPrivate *priv;
+   GbWorkspaceSectionClass *klass;
 
    g_return_if_fail(GB_IS_WORKSPACE_SECTION(section));
-   g_return_if_fail(!document || GB_IS_DOCUMENT(document));
+   g_return_if_fail(!project || GB_IS_PROJECT(project));
 
-   priv = section->priv;
+   klass = GB_WORKSPACE_SECTION_GET_CLASS(section);
 
-   if (priv->current_document) {
-      g_object_remove_weak_pointer(G_OBJECT(priv->current_document),
-                                   (gpointer *)&priv->current_document);
-      priv->current_document = NULL;
-   }
-
-   if (document) {
-      priv->current_document = document;
-      g_object_add_weak_pointer(G_OBJECT(document),
-                                (gpointer *)&priv->current_document);
-   }
-
-   g_object_notify_by_pspec(G_OBJECT(section),
-                            gParamSpecs[PROP_CURRENT_DOCUMENT]);
-}
-
-static void
-gb_workspace_section_finalize (GObject *object)
-{
-   GbWorkspaceSectionPrivate *priv;
-
-   priv = GB_WORKSPACE_SECTION(object)->priv;
-
-   if (priv->current_document) {
-      g_object_remove_weak_pointer(G_OBJECT(priv->current_document),
-                                   (gpointer *)&priv->current_document);
-      priv->current_document = NULL;
-   }
-
-   G_OBJECT_CLASS(gb_workspace_section_parent_class)->finalize(object);
-}
-
-static void
-gb_workspace_section_get_property (GObject    *object,
-                                   guint       prop_id,
-                                   GValue     *value,
-                                   GParamSpec *pspec)
-{
-   GbWorkspaceSection *section = GB_WORKSPACE_SECTION(object);
-
-   switch (prop_id) {
-   case PROP_CURRENT_DOCUMENT:
-      g_value_set_object(value,
-                         gb_workspace_section_get_current_document(section));
-      break;
-   default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-   }
-}
-
-static void
-gb_workspace_section_set_property (GObject      *object,
-                                   guint         prop_id,
-                                   const GValue *value,
-                                   GParamSpec   *pspec)
-{
-   GbWorkspaceSection *section = GB_WORKSPACE_SECTION(object);
-
-   switch (prop_id) {
-   case PROP_CURRENT_DOCUMENT:
-      gb_workspace_section_set_current_document(section,
-                                                g_value_get_object(value));
-      break;
-   default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+   if (klass->set_project) {
+      klass->set_project(section, project);
    }
 }
 
 static void
 gb_workspace_section_class_init (GbWorkspaceSectionClass *klass)
 {
-   GObjectClass *object_class;
-
-   object_class = G_OBJECT_CLASS(klass);
-   object_class->finalize = gb_workspace_section_finalize;
-   object_class->get_property = gb_workspace_section_get_property;
-   object_class->set_property = gb_workspace_section_set_property;
-   g_type_class_add_private(object_class, sizeof(GbWorkspaceSectionPrivate));
-
-   gParamSpecs[PROP_CURRENT_DOCUMENT] =
-      g_param_spec_object("current-document",
-                          _("Current Document"),
-                          _("The current document for the section."),
-                          GB_TYPE_DOCUMENT,
-                          (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-   g_object_class_install_property(object_class, PROP_CURRENT_DOCUMENT,
-                                   gParamSpecs[PROP_CURRENT_DOCUMENT]);
 }
 
 static void
 gb_workspace_section_init (GbWorkspaceSection *section)
 {
-   section->priv = G_TYPE_INSTANCE_GET_PRIVATE(section,
-                                               GB_TYPE_WORKSPACE_SECTION,
-                                               GbWorkspaceSectionPrivate);
+   section->priv = gb_workspace_section_get_instance_private(section);
 }

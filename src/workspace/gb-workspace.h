@@ -21,13 +21,7 @@
 
 #include <gtk/gtk.h>
 
-#include "gb-back-forward-list.h"
-#include "gb-command-stack.h"
-#include "gb-document.h"
 #include "gb-project.h"
-#include "gb-workspace-docs.h"
-#include "gb-workspace-editor.h"
-#include "gb-workspace-glade.h"
 
 G_BEGIN_DECLS
 
@@ -56,20 +50,11 @@ struct _GbWorkspaceClass
    GtkApplicationWindowClass parent_class;
 };
 
-GType               gb_workspace_get_type              (void) G_GNUC_CONST;
-GbWorkspace        *gb_workspace_new                   (void);
-GbBackForwardList  *gb_workspace_get_back_forward_list (GbWorkspace        *workspace);
-GbCommandStack     *gb_workspace_get_command_stack     (GbWorkspace        *workspace);
-GbProject          *gb_workspace_get_project           (GbWorkspace        *workspace);
-void                gb_workspace_set_project           (GbWorkspace        *workspace,
-                                                        GbProject          *project);
-GbWorkspaceDocs    *gb_workspace_get_docs              (GbWorkspace        *workspace);
-GbWorkspaceEditor  *gb_workspace_get_editor            (GbWorkspace        *workspace);
-GbWorkspaceGlade   *gb_workspace_get_glade             (GbWorkspace        *workspace);
-GbDocument         *gb_workspace_get_current_document  (GbWorkspace        *workspace);
-GbWorkspaceSection *gb_workspace_get_current_section   (GbWorkspace        *workspace);
-void                gb_workspace_set_current_section   (GbWorkspace        *workspace,
-                                                        GbWorkspaceSection *section);
+GtkWidget *gb_workspace_new         (void);
+GType      gb_workspace_get_type    (void) G_GNUC_CONST;
+GbProject *gb_workspace_get_project (GbWorkspace *workspace);
+void       gb_workspace_set_project (GbWorkspace *workspace,
+                                     GbProject   *project);
 
 G_END_DECLS
 

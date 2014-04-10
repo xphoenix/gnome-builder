@@ -1,0 +1,18 @@
+<schemalist>
+  <schema id="org.gnome.builder.preferences.editor" path="/org/gnome/builder/preferences/editor/" gettext-domain="gnome-builder">
+    <key name="style-scheme" type="s">
+      <default l10n="messages">"tango"</default>
+      <summary>The name of a style scheme</summary>
+      <description>
+        The name of a GtkSourceView style scheme to use in the editor.
+      </description>
+    </key>
+    <key name="font" type="s">
+      <default l10n="messages">"Monospace"</default>
+      <summary>The name font description.</summary>
+      <description>
+	The font to use within the editor.
+      </description>
+    </key>
+  </schema>
+</schemalist>

@@ -20,18 +20,18 @@ AM_CPPFLAGS = \
 	-I$(srcdir) \
 	-I$(builddir) \
 	-I$(srcdir)/animation \
-	-I$(srcdir)/command \
 	-I$(srcdir)/core \
+	-I$(srcdir)/debugger \
+	-I$(srcdir)/designer \
 	-I$(srcdir)/dialogs \
+	-I$(srcdir)/docs \
 	-I$(srcdir)/editor \
+	-I$(srcdir)/gedit \
 	-I$(srcdir)/git \
-	-I$(srcdir)/language \
-	-I$(srcdir)/language/c \
-	-I$(srcdir)/log \
 	-I$(srcdir)/nautilus \
 	-I$(srcdir)/project \
 	-I$(srcdir)/resources \
-	-I$(srcdir)/snippets \
+	-I$(srcdir)/trie \
 	-I$(srcdir)/util \
 	-I$(srcdir)/workspace
 
@@ -56,131 +56,121 @@ bin_PROGRAMS += gnome-builder
 gnome_builder_SOURCES = \
 	$(built_sources) \
 	gnome-builder.c \
-	animation/gb-animation.c \
-	animation/gb-animation.h \
-	animation/gb-frame-source.c \
-	animation/gb-frame-source.h \
-	command/gb-command.c \
-	command/gb-command-dbus.c \
-	command/gb-command-dbus.h \
-	command/gb-command.h \
-	command/gb-command-stack.c \
-	command/gb-command-stack.h \
+	core/gb-dbus-daemon.c \
+	core/gb-log.c \
+	core/gb-dbus-daemon.h \
 	core/gb-application.c \
-	core/gb-application.h \
 	core/gb-service.c \
+	core/gb-log.h \
 	core/gb-service.h \
-	core/gb-subprocess-manager.c \
-	core/gb-subprocess-manager.h \
-	dialogs/gb-create-project-dialog.c \
-	dialogs/gb-create-project-dialog.h \
-	dialogs/gb-prefs-dialog.c \
-	dialogs/gb-prefs-dialog.h \
-	editor/gb-source-document.c \
-	editor/gb-source-document.h \
-	editor/gb-source-view.c \
-	editor/gb-source-view.h \
-	git/gb-git-service.c \
-	git/gb-git-service.h \
-	log/gb-log.c \
-	log/gb-log.h \
-	nautilus/nautilus-floating-bar.c \
-	nautilus/nautilus-floating-bar.h \
+	core/gb-application.h \
+	docs/gb-docs-tab.c \
+	docs/gb-docs-section.h \
+	docs/gb-docs-tab.h \
+	docs/gb-docs-section.c \
+	animation/gb-frame-source.h \
+	animation/gb-animation.h \
+	animation/gb-animation.c \
+	animation/gb-frame-source.c \
+	workspace/gb-tab-label.h \
+	workspace/gb-workspace-greeter.c \
+	workspace/gb-notebook.h \
+	workspace/gb-workspace-container.h \
+	workspace/gb-workspace-container.c \
+	workspace/gb-tab.c \
+	workspace/gb-notebook-group.c \
+	workspace/gb-tab-label.c \
+	workspace/gb-workspace.h \
+	workspace/gb-tab.h \
+	workspace/gb-workspace-section.c \
+	workspace/gb-notebook-group.h \
+	workspace/gb-workspace-greeter.h \
+	workspace/gb-notebook.c \
+	workspace/gb-workspace-section.h \
+	workspace/gb-workspace.c \
+	project/gb-project-item.h \
+	project/gb-project-info.h \
+	project/gb-project-service.h \
+	project/gb-project-service.c \
+	project/gb-project-info.c \
 	project/gb-project.c \
 	project/gb-project.h \
-	project/gb-project-info.c \
-	project/gb-project-info.h \
-	project/gb-project-service.c \
-	project/gb-project-service.h \
-	snippets/gb-source-snippet.c \
-	snippets/gb-source-snippet-chunk.c \
-	snippets/gb-source-snippet-chunk.h \
-	snippets/gb-source-snippet-context.c \
-	snippets/gb-source-snippet-context.h \
-	snippets/gb-source-snippet.h \
-	snippets/gb-source-snippet-parser.c \
-	snippets/gb-source-snippet-parser.h \
-	snippets/gb-source-snippet-private.h \
-	snippets/gb-source-snippets.c \
-	snippets/gb-source-snippets.h \
-	snippets/gb-source-snippets-manager.c \
-	snippets/gb-source-snippets-manager.h \
-	util/fuzzy.c \
-	util/fuzzy.h \
+	dialogs/gb-create-project-dialog.c \
+	dialogs/gb-create-project-dialog.h \
+	git/gb-git-section.h \
+	git/gb-git-section.c \
+	trie/trie.c \
+	trie/trie.h \
+	designer/gb-designer-section.c \
+	designer/gb-designer-section.h \
+	nautilus/nautilus-floating-bar.c \
+	nautilus/nautilus-floating-bar.h \
+	editor/gb-source-snippet-completion-provider.h \
+	editor/gb-source-snippet.c \
+	editor/gb-source-snippet-completion-item.h \
+	editor/gb-editor-tab.h \
+	editor/gb-editor-section.c \
+	editor/gb-source-snippet-chunk.c \
+	editor/gb-source-snippet-private.h \
+	editor/gb-source-overlay.c \
+	editor/gb-editor-document.h \
+	editor/gb-source-snippets-manager.c \
+	editor/gb-source-snippet-parser.h \
+	editor/gb-source-snippet-chunk.h \
+	editor/gb-editor-document.c \
+	editor/gb-source-snippet.h \
+	editor/gb-source-snippets-manager.h \
+	editor/gb-source-snippets.h \
+	editor/gb-source-snippet-context.c \
+	editor/gb-source-snippet-parser.c \
+	editor/gb-source-view.c \
+	editor/gb-source-view.h \
+	editor/gb-source-snippet-completion-item.c \
+	editor/gb-source-snippet-context.h \
+	editor/gb-editor-tab.c \
+	editor/gb-source-snippets.c \
+	editor/gb-editor-section.h \
+	editor/gb-source-snippet-completion-provider.c \
+	editor/gb-source-overlay.h \
+	util/gb-gtk.c \
 	util/gb-buffer-tasks.c \
 	util/gb-buffer-tasks.h \
-	util/gb-gtk.c \
 	util/gb-gtk.h \
-	util/gb-tab-label.c \
-	util/gb-tab-label.h \
-	util/trie.c \
-	util/trie.h \
-	workspace/gb-back-forward-list.c \
-	workspace/gb-back-forward-list.h \
-	workspace/gb-document.c \
-	workspace/gb-document.h \
-	workspace/gb-workspace-actions.c \
-	workspace/gb-workspace-actions.h \
-	workspace/gb-workspace.c \
-	workspace/gb-workspace-container.c \
-	workspace/gb-workspace-container.h \
-	workspace/gb-workspace-container-private.h \
-	workspace/gb-workspace-docs.c \
-	workspace/gb-workspace-docs.h \
-	workspace/gb-workspace-editor.c \
-	workspace/gb-workspace-editor.h \
-	workspace/gb-workspace-glade.c \
-	workspace/gb-workspace-glade.h \
-	workspace/gb-workspace-greeter.c \
-	workspace/gb-workspace-greeter.h \
-	workspace/gb-workspace.h \
-	workspace/gb-workspace-section.c \
-	workspace/gb-workspace-section.h
+	gedit/gedit-close-button.h \
+	gedit/gedit-close-button.c \
+	debugger/gb-debugger-section.h \
+	debugger/gb-debugger-section.c
 
 
+# TODO: icons and stuff from gresource
 RESOURCE_FILES = \
-	resources/gnome-builder.gresource.xml \
-	resources/ui/gb-application-menu.ui \
-	resources/ui/gb-prefs-dialog.ui \
-	resources/ui/gb-workspace-container.ui
+	gnome-builder.gresource.xml
 
 
 built_sources = \
-	$(builddir)/resources/gb-resources.c \
-	$(builddir)/resources/gb-resources.h \
-	$(builddir)/git/gb-git-service-dbus.c \
-	$(builddir)/git/gb-git-service-dbus.h
+	resources/gb-resources.c \
+	resources/gb-resources.h
 
 
 GLIB_COMPILE_RESOURCES = glib-compile-resources
-GDBUS_CODEGEN = gdbus-codegen
 
 
 resources/gb-resources.%: $(RESOURCE_FILES)
 	$(AM_V_GEN)$(GLIB_COMPILE_RESOURCES) \
-		--sourcedir=resources \
 		--target=resources/gb-resources.c \
 		--generate-source \
 		--c-name gb \
-		resources/gnome-builder.gresource.xml
+		gnome-builder.gresource.xml
 	$(AM_V_GEN)$(GLIB_COMPILE_RESOURCES) \
-		--sourcedir=resources \
 		--target=resources/gb-resources.h \
 		--generate-header \
 		--c-name gb \
-		resources/gnome-builder.gresource.xml
+		gnome-builder.gresource.xml
 
 
-git/gb-git-service-dbus.%: git/org.gnome.Builder.Services.Git.xml
-	$(AM_V_GEN)$(GDBUS_CODEGEN) \
-		--xml-files git/org.gnome.Builder.Services.Git.xml \
-		--interface-prefix org.gnome.Builder \
-		--c-namespace GbGitServiceDBus \
-		--c-generate-object-manager \
-		--generate-c-code=git/gb-git-service-dbus
-
-
-gsettings_SCHEMAS = editor/org.gnome.Builder.Editor.DocumentSettings.gschema.xml
+gsettings_SCHEMAS = \
+	editor/org.gnome.builder.preferences.editor.gschema.xml \
+	editor/org.gnome.builder.preferences.editor.language.gschema.xml
 
 @GSETTINGS_RULES@
 

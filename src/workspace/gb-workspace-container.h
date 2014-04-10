@@ -21,9 +21,6 @@
 
 #include <gtk/gtk.h>
 
-#include "gb-workspace-editor.h"
-#include "gb-workspace-docs.h"
-
 G_BEGIN_DECLS
 
 #define GB_TYPE_WORKSPACE_CONTAINER            (gb_workspace_container_get_type())
@@ -40,7 +37,7 @@ typedef struct _GbWorkspaceContainerPrivate GbWorkspaceContainerPrivate;
 
 struct _GbWorkspaceContainer
 {
-   GtkGrid parent;
+   GtkBin parent;
 
    /*< private >*/
    GbWorkspaceContainerPrivate *priv;
@@ -48,11 +45,10 @@ struct _GbWorkspaceContainer
 
 struct _GbWorkspaceContainerClass
 {
-   GtkGridClass parent_class;
+   GtkBinClass parent_class;
 };
 
-GType      gb_workspace_container_get_type (void) G_GNUC_CONST;
-GtkWidget *gb_workspace_container_new      (void);
+GType gb_workspace_container_get_type (void) G_GNUC_CONST;
 
 G_END_DECLS
 

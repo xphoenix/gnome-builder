@@ -34,7 +34,7 @@ GTask *gb_buffer_load_task_new (gpointer               source_object,
                                 GAsyncReadyCallback    callback,
                                 gpointer               user_data);
 
-GTask *gb_buffer_save_task_new (GtkTextBuffer         *buffer,
+GTask *gb_buffer_save_task_new (gpointer               source_object,
                                 GFile                 *file,
                                 GConverter            *endecoder,
                                 GConverter            *compressor,

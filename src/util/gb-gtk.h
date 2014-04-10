@@ -28,6 +28,12 @@ gpointer gb_gtk_builder_load_and_get_object         (const gchar *resource_path,
 void     gb_gtk_progress_bar_file_progress_callback (goffset      current_num_bytes,
                                                      goffset      total_num_bytes,
                                                      gpointer     user_data);
+void     gb_gtk_widget_hide_in_idle                 (guint        timeout_msec,
+                                                     GtkWidget   *widget);
+
+void _gb_rgba_shade (const GdkRGBA *color,
+                     gdouble        factor,
+                     GdkRGBA       *result);
 
 
 G_END_DECLS

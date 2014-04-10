@@ -402,8 +402,6 @@ gb_source_view_class_init (GbSourceViewClass *klass)
 static void
 gb_source_view_init (GbSourceView *view)
 {
-   PangoFontDescription *font_desc;
-
    view->priv = G_TYPE_INSTANCE_GET_PRIVATE(view,
                                             GB_TYPE_SOURCE_VIEW,
                                             GbSourceViewPrivate);
@@ -414,8 +412,4 @@ gb_source_view_init (GbSourceView *view)
                     "notify::buffer",
                     G_CALLBACK(gb_source_view_notify_buffer),
                     NULL);
-
-   font_desc = pango_font_description_from_string("Monospace");
-   gtk_widget_override_font(GTK_WIDGET(view), font_desc);
-   pango_font_description_free(font_desc);
 }

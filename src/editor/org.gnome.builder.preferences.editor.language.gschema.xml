@@ -1,0 +1,81 @@
+<schemalist>
+  <schema id="org.gnome.builder.preferences.editor.language" gettext-domain="gnome-builder">
+
+    <key name="style-scheme" type="s">
+      <default l10n="messages">"tango"</default>
+      <summary>The name of a style scheme</summary>
+      <description>
+        The name of a GtkSourceView style scheme to use in the editor.
+      </description>
+    </key>
+
+    <key name="highlight-matching-brackets" type="b">
+      <default>false</default>
+      <summary>Highlight matching brackets</summary>
+      <description>
+        If matching brackets should be highlighted when the cursor
+        is hovered over one of them.
+      </description>
+    </key>
+
+    <key name="highlight-current-line" type="b">
+      <default>false</default>
+      <summary>Highlight current line</summary>
+      <description>
+        If the current line should be highlighted in the source editor.
+      </description>
+    </key>
+
+    <key name="insert-spaces-instead-of-tabs" type="b">
+      <default>false</default>
+      <summary>Highlight current line</summary>
+      <description>
+        If spaces should be inserted instead of tabs.
+      </description>
+    </key>
+
+    <key name="right-margin-position" type="i">
+      <range min="1" max="1000"/>
+      <default>80</default>
+      <summary>Right margin position</summary>
+      <description>
+        The character offset of the right margin.
+      </description>
+    </key>
+
+    <key name="show-line-marks" type="b">
+      <default>false</default>
+      <summary>Show line marks</summary>
+      <description>
+        Width of an tab character expressed in number of spaces.
+      </description>
+    </key>
+
+    <key name="show-line-numbers" type="b">
+      <default>true</default>
+      <summary>Show line numbers</summary>
+      <description>
+        If line numbers should be shown.
+      </description>
+    </key>
+
+    <key name="show-right-margin" type="b">
+      <default>true</default>
+      <summary>Show right margin</summary>
+      <description>
+        Draw a line indicating the right margin using the
+        right-margin-position.
+      </description>
+    </key>
+
+    <key name="tab-width" type="i">
+      <range min="1" max="32"/>
+      <default>4</default>
+      <summary>Tab width</summary>
+      <description>
+        Width of an tab character expressed in number of spaces.
+      </description>
+    </key>
+
+  </schema>
+</schemalist>

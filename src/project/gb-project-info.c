@@ -104,7 +104,7 @@ gb_project_info_set_last_modified_at (GbProjectInfo *info,
 GFile *
 gb_project_info_get_file (GbProjectInfo *info)
 {
-   g_return_if_fail(GB_IS_PROJECT_INFO(info));
+   g_return_val_if_fail(GB_IS_PROJECT_INFO(info), NULL);
 
    return info->priv->file;
 }

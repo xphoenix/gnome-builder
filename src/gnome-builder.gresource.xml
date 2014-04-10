@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/gnome/Builder">
+    <file compressed="true" alias="ui/gb-application-menu.ui">core/gb-application-menu.ui</file>
+    <file compressed="true" alias="ui/gb-workspace-menu.ui">workspace/gb-workspace-menu.ui</file>
+    <file compressed="false">icons/class-16x.png</file>
+    <file compressed="false">icons/deprecated-16x.png</file>
+    <file compressed="false">icons/enum-16x.png</file>
+    <file compressed="false">icons/enum-value-16x.png</file>
+    <file compressed="false">icons/keyword-16x.png</file>
+    <file compressed="false">icons/method-16x.png</file>
+    <file compressed="false">icons/project-16x.png</file>
+    <file compressed="false">icons/static-16x.png</file>
+    <file compressed="false">icons/template-16x.png</file>
+    <file compressed="false">icons/text-x-chdr-16x.png</file>
+    <file compressed="false">icons/text-x-csrc-16x.png</file>
+  </gresource>
+</gresources>

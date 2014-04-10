@@ -1,0 +1,72 @@
+<interface>
+  <menu id='menu'>
+    <section>
+      <submenu>
+        <attribute name='label' translatable='yes'>_New</attribute>
+        <item>
+          <attribute name='label' translatable='yes'>_New File</attribute>
+          <attribute name='action'>section.new-document</attribute>
+          <attribute name='accel'>&lt;Primary&gt;n</attribute>
+        </item>
+        <item>
+          <attribute name='label' translatable='yes'>_New Widget</attribute>
+          <attribute name='action'>designer.new-widget</attribute>
+        </item>
+        <item>
+          <attribute name='label' translatable='yes'>_New Class</attribute>
+          <attribute name='action'>editor.new-class</attribute>
+        </item>
+      </submenu>
+      <item>
+        <attribute name='label' translatable='yes'>New Tab _Group</attribute>
+        <attribute name='action'>section.new-tab-group</attribute>
+        <attribute name='accel'>&lt;Primary&gt;&lt;Alt&gt;n</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name='label' translatable='yes'>_Open...</attribute>
+        <attribute name='action'>section.open-document</attribute>
+        <attribute name='accel'>&lt;Primary&gt;o</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name='label' translatable='yes'>_Save</attribute>
+        <attribute name='action'>section.save-document</attribute>
+        <attribute name='accel'>&lt;Primary&gt;s</attribute>
+      </item>
+      <item>
+        <attribute name='label' translatable='yes'>_Save As...</attribute>
+        <attribute name='action'>section.save-document-as</attribute>
+        <attribute name='accel'>&lt;Primary&gt;&lt;Shift&gt;s</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name='label' translatable='yes'>_Find</attribute>
+        <attribute name='action'>section.find</attribute>
+        <attribute name='accel'>&lt;Primary&gt;f</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name='label' translatable='yes'>Zoom In</attribute>
+        <attribute name='action'>section.zoom-pane-in</attribute>
+        <attribute name='accel'>&lt;Primary&gt;plus</attribute>
+      </item>
+      <item>
+        <attribute name='label' translatable='yes'>Zoom Out</attribute>
+        <attribute name='action'>section.zoom-pane-out</attribute>
+        <attribute name='accel'>&lt;Primary&gt;minus</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name='label' translatable='yes'>_Close</attribute>
+        <attribute name='action'>section.close</attribute>
+        <attribute name='accel'>&lt;Primary&gt;w</attribute>
+      </item>
+    </section>
+  </menu>
+</interface>

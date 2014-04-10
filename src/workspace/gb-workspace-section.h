@@ -21,7 +21,7 @@
 
 #include <gtk/gtk.h>
 
-#include "gb-document.h"
+#include "gb-project.h"
 
 G_BEGIN_DECLS
 
@@ -48,12 +48,16 @@ struct _GbWorkspaceSection
 struct _GbWorkspaceSectionClass
 {
    GtkBinClass parent_class;
+
+   void          (*set_project)  (GbWorkspaceSection *section,
+                                  GbProject          *project);
+   GActionGroup *(*get_actions)  (GbWorkspaceSection *section);
 };
 
-GType       gb_workspace_section_get_type             (void) G_GNUC_CONST;
-GbDocument *gb_workspace_section_get_current_document (GbWorkspaceSection *section);
-void        gb_workspace_section_set_current_document (GbWorkspaceSection *section,
-                                                       GbDocument         *document);
+GType         gb_workspace_section_get_type    (void) G_GNUC_CONST;
+void          gb_workspace_section_set_project (GbWorkspaceSection *section,
+                                                GbProject          *project);
+GActionGroup *gb_workspace_section_get_actions (GbWorkspaceSection *section);
 
 G_END_DECLS
 

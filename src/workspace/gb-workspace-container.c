@@ -18,18 +18,60 @@
 
 #include <glib/gi18n.h>
 
-#include "gb-application.h"
+#include "gb-debugger-section.h"
+#include "gb-designer-section.h"
+#include "gb-docs-section.h"
+#include "gb-editor-section.h"
+#include "gb-git-section.h"
 #include "gb-gtk.h"
-#include "gb-workspace.h"
 #include "gb-workspace-container.h"
-#include "gb-workspace-container-private.h"
-#include "gb-workspace-docs.h"
-#include "gb-workspace-editor.h"
-#include "gb-workspace-glade.h"
 
-#define UI_RESOURCE_PATH "/org/gnome/Builder/ui/gb-workspace-container.ui"
+#define MENU_UI_PATH "/org/gnome/Builder/ui/gb-workspace-menu.ui"
+#define MENU_UI_NAME "menu"
 
-G_DEFINE_TYPE(GbWorkspaceContainer, gb_workspace_container, GTK_TYPE_GRID)
+struct _GbWorkspaceContainerPrivate
+{
+   GtkWidget *build;
+   GtkWidget *debugger;
+   GtkWidget *designer;
+   GtkWidget *docs;
+   GtkWidget *editor;
+   GtkWidget *git;
+   GtkWidget *header;
+   GtkWidget *menu_button;
+   GtkWidget *stack;
+   GtkWidget *stack_switcher;
+};
+
+enum
+{
+   PROP_0,
+   LAST_PROP
+};
+
+//static GParamSpec *gParamSpecs[LAST_PROP];
+
+G_DEFINE_TYPE_WITH_CODE(GbWorkspaceContainer,
+                        gb_workspace_container,
+                        GTK_TYPE_BIN,
+                        G_ADD_PRIVATE(GbWorkspaceContainer))
+
+static void
+register_actions (GbWorkspaceSection *section,
+                  const gchar        *name)
+{
+   GActionGroup *actions;
+   GtkWidget *toplevel;
+
+   g_return_if_fail(GB_IS_WORKSPACE_SECTION(section));
+
+   actions = gb_workspace_section_get_actions(section);
+   toplevel = gtk_widget_get_toplevel(GTK_WIDGET(section));
+
+   if (GTK_IS_APPLICATION_WINDOW(toplevel)) {
+      gtk_widget_insert_action_group(toplevel, name, actions);
+   }
+}
 
 static void
 gb_workspace_container_parent_set (GtkWidget *widget,
@@ -37,30 +79,80 @@ gb_workspace_container_parent_set (GtkWidget *widget,
 {
    GbWorkspaceContainerPrivate *priv;
    GtkWidget *toplevel;
+   GtkWidget *child;
 
-   g_return_if_fail(GB_WORKSPACE_CONTAINER(widget));
+   g_return_if_fail(GB_IS_WORKSPACE_CONTAINER(widget));
 
    priv = GB_WORKSPACE_CONTAINER(widget)->priv;
 
    toplevel = gtk_widget_get_toplevel(widget);
-   if (!GB_IS_WORKSPACE(toplevel)) {
-      return;
+   if (GTK_IS_WINDOW(toplevel)) {
+      gtk_window_set_titlebar(GTK_WINDOW(toplevel), priv->header);
    }
 
-   gtk_window_set_titlebar(GTK_WINDOW(toplevel), priv->header_bar);
+   register_actions(GB_WORKSPACE_SECTION(priv->debugger), "debugger");
+   register_actions(GB_WORKSPACE_SECTION(priv->designer), "designer");
+   register_actions(GB_WORKSPACE_SECTION(priv->editor), "editor");
+   register_actions(GB_WORKSPACE_SECTION(priv->git), "git");
+   register_actions(GB_WORKSPACE_SECTION(priv->docs), "docs");
+
+   child = gtk_stack_get_visible_child(GTK_STACK(priv->stack));
+   register_actions(GB_WORKSPACE_SECTION(child), "section");
+}
+
+static void
+on_section_changed (GbWorkspaceContainer *container,
+                    GParamSpec           *pspec,
+                    GtkStack             *stack)
+{
+   GtkWidget *child;
+
+   g_return_if_fail(GB_IS_WORKSPACE_CONTAINER(container));
+   g_return_if_fail(GTK_IS_STACK(stack));
+
+   child = gtk_stack_get_visible_child(stack);
+
+   if (child) {
+      register_actions(GB_WORKSPACE_SECTION(child), "section");
+   }
 }
 
 static void
 gb_workspace_container_finalize (GObject *object)
 {
-   GbWorkspaceContainerPrivate *priv;
+   GbWorkspaceContainerPrivate *priv = GB_WORKSPACE_CONTAINER(object)->priv;
 
-   priv = GB_WORKSPACE_CONTAINER(object)->priv;
-
-   g_clear_object(&priv->header_bar);
-   g_clear_object(&priv->menu_model);
+   g_clear_object(&priv->header);
 
    G_OBJECT_CLASS(gb_workspace_container_parent_class)->finalize(object);
+}
+
+static void
+gb_workspace_container_get_property (GObject    *object,
+                                     guint       prop_id,
+                                     GValue     *value,
+                                     GParamSpec *pspec)
+{
+   //GbWorkspaceContainer *container = GB_WORKSPACE_CONTAINER(object);
+
+   switch (prop_id) {
+   default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+   }
+}
+
+static void
+gb_workspace_container_set_property (GObject      *object,
+                                     guint         prop_id,
+                                     const GValue *value,
+                                     GParamSpec   *pspec)
+{
+   //GbWorkspaceContainer *container = GB_WORKSPACE_CONTAINER(object);
+
+   switch (prop_id) {
+   default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+   }
 }
 
 static void
@@ -71,7 +163,8 @@ gb_workspace_container_class_init (GbWorkspaceContainerClass *klass)
 
    object_class = G_OBJECT_CLASS(klass);
    object_class->finalize = gb_workspace_container_finalize;
-   g_type_class_add_private(object_class, sizeof(GbWorkspaceContainerPrivate));
+   object_class->get_property = gb_workspace_container_get_property;
+   object_class->set_property = gb_workspace_container_set_property;
 
    widget_class = GTK_WIDGET_CLASS(klass);
    widget_class->parent_set = gb_workspace_container_parent_set;
@@ -81,133 +174,47 @@ static void
 gb_workspace_container_init (GbWorkspaceContainer *container)
 {
    GbWorkspaceContainerPrivate *priv;
+   GMenuModel *menu_model;
    GtkWidget *icon;
-   GtkWidget *hbox;
-   gboolean rtl;
+   GtkMenu *popup;
 
-   container->priv = G_TYPE_INSTANCE_GET_PRIVATE(container,
-                                                 GB_TYPE_WORKSPACE_CONTAINER,
-                                                 GbWorkspaceContainerPrivate);
+   container->priv = gb_workspace_container_get_instance_private(container);
 
    priv = container->priv;
 
-   rtl = gtk_widget_get_direction(GTK_WIDGET(container)) == GTK_TEXT_DIR_RTL;
-
-   priv->stack = g_object_new(GTK_TYPE_STACK,
-                              "hexpand", TRUE,
-                              "transition-type",
-                                 GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT,
-                              "vexpand", TRUE,
-                              "visible", TRUE,
-                              NULL);
+   priv->stack =
+      g_object_new(GTK_TYPE_STACK,
+                   "transition-type", GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT,
+                   "visible", TRUE,
+                   NULL);
    gtk_container_add(GTK_CONTAINER(container), priv->stack);
 
    priv->stack_switcher = g_object_new(GTK_TYPE_STACK_SWITCHER,
                                        "stack", priv->stack,
                                        "visible", TRUE,
                                        NULL);
+   g_signal_connect_object(priv->stack,
+                           "notify::visible-child",
+                           G_CALLBACK(on_section_changed),
+                           container,
+                           (G_CONNECT_SWAPPED | G_CONNECT_AFTER));
 
-   priv->header_bar = g_object_new(GTK_TYPE_HEADER_BAR,
-                                   "show-close-button", TRUE,
-                                   "custom-title", priv->stack_switcher,
-                                   "visible", TRUE,
-                                   NULL);
-   priv->header_bar = g_object_ref(priv->header_bar);
-
-   priv->ui = g_object_new(GB_TYPE_WORKSPACE_GLADE,
-                           "visible", TRUE,
-                           NULL);
-   gtk_container_add_with_properties(GTK_CONTAINER(priv->stack), priv->ui,
-                                     "name", "ui",
-                                     "position", 0,
-                                     "title", _("UI"),
-                                     NULL);
-
-   priv->edit = g_object_new(GB_TYPE_WORKSPACE_EDITOR,
-                             "hexpand", TRUE,
-                             "vexpand", TRUE,
-                             "visible", TRUE,
-                             NULL);
-   gtk_container_add_with_properties(GTK_CONTAINER(priv->stack), priv->edit,
-                                     "name", "edit",
-                                     "position", 1,
-                                     "title", _("Edit"),
-                                     NULL);
-
-   priv->debug = g_object_new(GTK_TYPE_LABEL,
-                              "label", "TODO: Debug",
-                              "visible", TRUE,
-                              NULL);
-   gtk_container_add_with_properties(GTK_CONTAINER(priv->stack), priv->debug,
-                                     "name", "debug",
-                                     "position", 2,
-                                     "title", _("Debug"),
-                                     NULL);
-
-   priv->git = g_object_new(GTK_TYPE_LABEL,
-                            "label", "TODO: Git",
-                            "visible", TRUE,
-                            NULL);
-   gtk_container_add_with_properties(GTK_CONTAINER(priv->stack), priv->git,
-                                     "name", "git",
-                                     "position", 3,
-                                     "title", _("Git"),
-                                     NULL);
-
-   priv->docs = g_object_new(GB_TYPE_WORKSPACE_DOCS,
-                             "visible", TRUE,
-                             NULL);
-   gtk_container_add_with_properties(GTK_CONTAINER(priv->stack), priv->docs,
-                                     "name", "docs",
-                                     "position", 4,
-                                     "title", _("Docs"),
-                                     NULL);
-
-   hbox = g_object_new(GTK_TYPE_BOX,
-                       "orientation", GTK_ORIENTATION_HORIZONTAL,
-                       "visible", TRUE,
-                       NULL);
-   gtk_style_context_add_class(gtk_widget_get_style_context(hbox), "linked");
-   gtk_header_bar_pack_start(GTK_HEADER_BAR(priv->header_bar), hbox);
+   priv->header = g_object_new(GTK_TYPE_HEADER_BAR,
+                               "custom-title", priv->stack_switcher,
+                               "show-close-button", TRUE,
+                               "visible", TRUE,
+                               NULL);
+   priv->header = g_object_ref(priv->header);
 
    priv->build = g_object_new(GTK_TYPE_BUTTON,
+                              "hexpand", FALSE,
                               "label", _("Build"),
+                              "valign", GTK_ALIGN_CENTER,
                               "visible", TRUE,
                               NULL);
    gtk_style_context_add_class(gtk_widget_get_style_context(priv->build),
                                "suggested-action");
-   gtk_container_add(GTK_CONTAINER(hbox), priv->build);
-
-   icon = g_object_new(GTK_TYPE_IMAGE,
-                       "icon-name", rtl ?
-                                    "media-playback-start-rtl-symbolic" :
-                                    "media-playback-start-symbolic",
-                       "icon-size", GTK_ICON_SIZE_MENU,
-                       "valign", GTK_ALIGN_CENTER,
-                       "visible", TRUE,
-                       NULL);
-   priv->run = g_object_new(GTK_TYPE_BUTTON,
-                            "child", icon,
-                            "visible", TRUE,
-                            NULL);
-   gtk_style_context_add_class(gtk_widget_get_style_context(priv->run),
-                               "suggested-action");
-   gtk_container_add(GTK_CONTAINER(hbox), priv->run);
-
-   icon = g_object_new(GTK_TYPE_IMAGE,
-                       "icon-name", "edit-find-symbolic",
-                       "icon-size", GTK_ICON_SIZE_MENU,
-                       "valign", GTK_ALIGN_CENTER,
-                       "visible", TRUE,
-                       NULL);
-   priv->search = g_object_new(GTK_TYPE_TOGGLE_BUTTON,
-                               "child", icon,
-                               "visible", TRUE,
-                               NULL);
-   gtk_header_bar_pack_end(GTK_HEADER_BAR(priv->header_bar), priv->search);
-
-   priv->menu_model =
-      gb_gtk_builder_load_and_get_object(UI_RESOURCE_PATH, "menu");
+   gtk_header_bar_pack_start(GTK_HEADER_BAR(priv->header), priv->build);
 
    icon = g_object_new(GTK_TYPE_IMAGE,
                        "icon-name", "emblem-system-symbolic",
@@ -215,15 +222,48 @@ gb_workspace_container_init (GbWorkspaceContainer *container)
                        "valign", GTK_ALIGN_CENTER,
                        "visible", TRUE,
                        NULL);
+
+   menu_model = gb_gtk_builder_load_and_get_object(MENU_UI_PATH, MENU_UI_NAME);
    priv->menu_button = g_object_new(GTK_TYPE_MENU_BUTTON,
                                     "child", icon,
                                     "direction", GTK_ARROW_DOWN,
-                                    "menu-model", priv->menu_model,
+                                    "menu-model", menu_model,
                                     "visible", TRUE,
                                     NULL);
-   gtk_header_bar_pack_end(GTK_HEADER_BAR(priv->header_bar),
+   popup = gtk_menu_button_get_popup(GTK_MENU_BUTTON(priv->menu_button));
+   gtk_widget_set_halign(GTK_WIDGET(popup), GTK_ALIGN_END);
+   gtk_header_bar_pack_end(GTK_HEADER_BAR(priv->header),
                            priv->menu_button);
-   g_object_set(gtk_menu_button_get_popup(GTK_MENU_BUTTON(priv->menu_button)),
-                "halign", GTK_ALIGN_END,
-                NULL);
+   g_object_unref(menu_model);
+
+   priv->editor = g_object_new(GB_TYPE_EDITOR_SECTION,
+                             "visible", TRUE,
+                             NULL);
+   gtk_stack_add_titled(GTK_STACK(priv->stack), priv->editor, "editor", _("Edit"));
+   gtk_stack_set_visible_child(GTK_STACK(priv->stack), priv->editor);
+
+   priv->debugger = g_object_new(GB_TYPE_DEBUGGER_SECTION,
+                                 "visible", TRUE,
+                                 NULL);
+   gtk_stack_add_titled(GTK_STACK(priv->stack), priv->debugger, "debug",
+                        _("Debug"));
+
+   priv->git = g_object_new(GB_TYPE_GIT_SECTION,
+                             "visible", TRUE,
+                             NULL);
+   gtk_stack_add_titled(GTK_STACK(priv->stack), priv->git, "git", _("Git"));
+
+   priv->docs = g_object_new(GB_TYPE_DOCS_SECTION,
+                             "visible", TRUE,
+                             NULL);
+   gtk_stack_add_titled(GTK_STACK(priv->stack), priv->docs, "docs", _("Docs"));
+
+   priv->designer = g_object_new(GB_TYPE_DESIGNER_SECTION,
+                                 "visible", TRUE,
+                                 NULL);
+   gtk_stack_add_titled(GTK_STACK(priv->stack), priv->designer, "ui", _("UI"));
+   gtk_container_child_set(GTK_CONTAINER(priv->stack),
+                           priv->designer,
+                           "position", 0,
+                           NULL);
 }

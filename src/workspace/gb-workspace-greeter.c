@@ -210,6 +210,7 @@ on_row_activated (GtkListBox         *list_box,
    if (!project_info) {
       dialog = g_object_new(GB_TYPE_CREATE_PROJECT_DIALOG,
                             "transient-for", toplevel,
+                            "use-header-bar", TRUE,
                             NULL);
       if (GTK_RESPONSE_OK == gtk_dialog_run(GTK_DIALOG(dialog))) {
          project = local_project = gb_create_project_dialog_get_project(
