@@ -312,6 +312,7 @@ gb_editor_tab_open (GbEditorTab *tab,
                               _("Cancel"), GTK_RESPONSE_CANCEL,
                               _("Open"), GTK_RESPONSE_OK,
                               NULL);
+      gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
 
       if (GTK_RESPONSE_OK == gtk_dialog_run (GTK_DIALOG (dialog))) {
          file = gtk_file_chooser_get_file (GTK_FILE_CHOOSER (dialog));
