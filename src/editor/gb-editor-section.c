@@ -279,6 +279,7 @@ gb_editor_section_on_open_document (GSimpleAction *action,
                           _("Cancel"), GTK_RESPONSE_CANCEL,
                           _("Open"), GTK_RESPONSE_OK,
                           NULL);
+   gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
 
    ret = gtk_dialog_run(GTK_DIALOG(dialog));
 
