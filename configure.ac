@@ -139,6 +139,7 @@ dnl Check for Required Packages
 dnl ***********************************************************************
 m4_define([gtk_required_version], [3.17.1])
 m4_define([glib_required_version], [2.45.1])
+m4_define([glade_required_version], [3.19.0])
 m4_define([gtksourceview_required_version], [3.17.2])
 m4_define([ggit_required_version], [0.22.9])
 m4_define([gjs_required_version], [1.42.0])
@@ -154,6 +155,7 @@ PKG_CHECK_MODULES(BUILDER,  [gtk+-3.0 >= gtk_required_version
                              libdevhelp-3.0 >= devhelp_required_version
                              libgit2-glib-1.0 >= ggit_required_version
                              libpeas-1.0 >= peas_required_version
+                             gladeui-2.0 >= glade_required_version
 			     vte-2.91 >= vte_required_version])
 PKG_CHECK_MODULES(EGG,      [glib-2.0 >= glib_required_version
                              gtk+-3.0 >= gtk_required_version])
@@ -387,6 +389,7 @@ AC_CONFIG_FILES([
 	plugins/devhelp/Makefile
 	plugins/device-manager/Makefile
 	plugins/file-search/Makefile
+	plugins/glade/Makefile
 	plugins/symbol-tree/Makefile
 	plugins/sysmon/Makefile
 	plugins/terminal/Makefile

@@ -3,6 +3,7 @@ SUBDIRS = \
 	devhelp \
 	device-manager \
 	file-search \
+	glade \
 	symbol-tree \
 	sysmon \
 	terminal \

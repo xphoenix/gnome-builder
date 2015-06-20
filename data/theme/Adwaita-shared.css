@@ -83,3 +83,14 @@ SymbolTree GtkSearchEntry {
   border-top: none;
   border-radius: 0px;
 }
+
+
+/*
+ * Glade panel styling.
+ */
+GbGladePanel GladeInspector GtkEntry {
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  border-radius: 0px;
+}
