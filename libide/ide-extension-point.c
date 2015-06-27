@@ -35,6 +35,7 @@ typedef struct
   const gchar *module_name;
   GType        type;
   gint         priority;
+  guint        loaded : 1;
 } IdeExtension;
 
 enum {
@@ -65,6 +66,7 @@ ide_extension_new (GType type,
   exten = g_slice_new0 (IdeExtension);
   exten->type = type;
   exten->priority = priority;
+  exten->loaded = TRUE;
 
   plugin = g_type_get_plugin (type);
 
@@ -81,19 +83,54 @@ ide_extension_new (GType type,
 }
 
 static void
-ide_extension_free (IdeExtension *exten)
+load_plugin_cb (PeasEngine     *engine,
+                PeasPluginInfo *plugin_info,
+                gpointer        unused)
 {
-  g_slice_free (IdeExtension, exten);
-}
+  const gchar *module_name;
+  GHashTableIter iter;
+  gpointer key;
+  gpointer value;
 
-static void
-ide_extension_point_changed (IdeExtensionPoint *self)
-{
-  g_assert (IDE_IS_EXTENSION_POINT (self));
+  g_assert (PEAS_IS_ENGINE (engine));
+  g_assert (plugin_info != NULL);
 
-  g_print ("cahnged!!!\n");
+  /*
+   * FIXME: Since we don't have loader information, we could possibly have
+   *        two plugins from different loaders with the same module name.
+   */
 
-  g_signal_emit (self, gSignals [CHANGED], 0);
+  module_name = peas_plugin_info_get_module_name (plugin_info);
+
+  g_rec_mutex_lock (&gExtensionsMutex);
+
+  g_hash_table_iter_init (&iter, gExtensions);
+
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      IdeExtensionPoint *point = value;
+      gboolean emit_changed = FALSE;
+      gsize i;
+
+      for (i = 0; i < point->extensions->len; i++)
+        {
+          IdeExtension *exten = g_ptr_array_index (point->extensions, i);
+
+          if (g_strcmp0 (exten->module_name, module_name) == 0)
+            {
+              if (exten->loaded != TRUE)
+                {
+                  exten->loaded = TRUE;
+                  emit_changed = TRUE;
+                }
+            }
+        }
+
+      if (emit_changed)
+        g_signal_emit (point, gSignals [CHANGED], 0);
+    }
+
+  g_rec_mutex_unlock (&gExtensionsMutex);
 }
 
 static void
@@ -123,6 +160,7 @@ unload_plugin_cb (PeasEngine     *engine,
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       IdeExtensionPoint *point = value;
+      gboolean emit_changed = FALSE;
       gsize i;
 
       for (i = 0; i < point->extensions->len; i++)
@@ -131,12 +169,16 @@ unload_plugin_cb (PeasEngine     *engine,
 
           if (g_strcmp0 (exten->module_name, module_name) == 0)
             {
-              g_ptr_array_remove_index (point->extensions, i);
-              if (i == 0)
-                ide_extension_point_changed (point);
-              ide_extension_free (exten);
+              if (exten->loaded != FALSE)
+                {
+                  exten->loaded = FALSE;
+                  emit_changed = TRUE;
+                }
             }
         }
+
+      if (emit_changed)
+        g_signal_emit (point, gSignals [CHANGED], 0);
     }
 
   g_rec_mutex_unlock (&gExtensionsMutex);
@@ -152,6 +194,10 @@ ensure_plugin_signals_locked (void)
       PeasEngine *engine;
 
       engine = peas_engine_get_default ();
+      g_signal_connect (engine,
+                        "load-plugin",
+                        G_CALLBACK (load_plugin_cb),
+                        NULL);
       g_signal_connect (engine,
                         "unload-plugin",
                         G_CALLBACK (unload_plugin_cb),
@@ -291,7 +337,6 @@ ide_extension_point_implement (const gchar *name,
 {
   IdeExtensionPoint *self;
   IdeExtension *exten;
-  gboolean emit_changed = TRUE;
 
   g_return_if_fail (name);
   g_return_if_fail (*name != '\0');
@@ -301,19 +346,10 @@ ide_extension_point_implement (const gchar *name,
   self = ide_extension_point_lookup (name);
   exten = ide_extension_new (implementation_type, priority);
 
-  if (self->extensions->len > 0)
-    {
-      IdeExtension *first = g_ptr_array_index (self->extensions, 0);
-
-      if (first->priority < priority)
-        emit_changed = FALSE;
-    }
-
   g_ptr_array_add (self->extensions, exten);
   g_ptr_array_sort (self->extensions, compare_extension);
 
-  if (emit_changed)
-    g_signal_emit (self, gSignals [CHANGED], 0);
+  g_signal_emit (self, gSignals [CHANGED], 0);
 }
 
 /**
@@ -331,12 +367,18 @@ ide_extension_point_create (const gchar *name,
   IdeExtensionPoint *self;
   gpointer ret = NULL;
   va_list args;
+  gint i;
 
   self = ide_extension_point_lookup (name);
 
-  if (self->extensions->len > 0)
+  for (i = 0; (ret == NULL) && (i < self->extensions->len); i++)
     {
-      IdeExtension *exten = g_ptr_array_index (self->extensions, 0);
+      IdeExtension *exten;
+
+      exten = g_ptr_array_index (self->extensions, i);
+
+      if (!exten->loaded)
+        continue;
 
       va_start (args, first_property);
       ret = g_object_new_valist (exten->type, first_property, args);
