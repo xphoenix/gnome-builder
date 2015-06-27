@@ -70,6 +70,7 @@ typedef struct
   gchar                  *title;
 
   EggSignalGroup         *file_signals;
+  EggSignalGroup         *highlighter_extension_signals;
 
   GFileMonitor           *file_monitor;
 
@@ -566,6 +567,7 @@ ide_buffer_reload_highlighter (IdeBuffer *self)
 {
   IdeBufferPrivate *priv = ide_buffer_get_instance_private (self);
   IdeHighlighter *highlighter = NULL;
+  IdeExtensionPoint *point = NULL;
   IdeLanguage *language;
 
   g_assert (IDE_IS_BUFFER (self));
@@ -579,6 +581,7 @@ ide_buffer_reload_highlighter (IdeBuffer *self)
 
       lang_id = ide_language_get_id (language);
       name = g_strdup_printf ("org.gnome.builder.highlighter.%s", lang_id);
+      point = ide_extension_point_lookup (name);
       highlighter = ide_extension_point_create (name,
                                                 "context", priv->context,
                                                 NULL);
@@ -587,6 +590,8 @@ ide_buffer_reload_highlighter (IdeBuffer *self)
 
   if (priv->highlight_engine != NULL)
     ide_highlight_engine_set_highlighter (priv->highlight_engine, highlighter);
+
+  egg_signal_group_set_target (priv->highlighter_extension_signals, point);
 
   g_clear_object (&highlighter);
 }
@@ -961,6 +966,16 @@ ide_buffer_constructed (GObject *object)
 }
 
 static void
+ide_buffer__highlighter_extension_changed (IdeBuffer         *self,
+                                           IdeExtensionPoint *point)
+{
+  g_assert (IDE_IS_BUFFER (self));
+  g_assert (IDE_IS_EXTENSION_POINT (point));
+
+  ide_buffer_reload_highlighter (self);
+}
+
+static void
 ide_buffer_dispose (GObject *object)
 {
   IdeBuffer *self = (IdeBuffer *)object;
@@ -1002,6 +1017,7 @@ ide_buffer_dispose (GObject *object)
   g_clear_pointer (&priv->content, g_bytes_unref);
   g_clear_pointer (&priv->title, g_free);
   g_clear_object (&priv->file);
+  g_clear_object (&priv->highlighter_extension_signals);
   g_clear_object (&priv->highlight_engine);
   g_clear_object (&priv->symbol_resolver);
 
@@ -1266,6 +1282,8 @@ ide_buffer_init (IdeBuffer *self)
 
   IDE_ENTRY;
 
+  EGG_COUNTER_INC (instances);
+
   priv->file_signals = egg_signal_group_new (IDE_TYPE_FILE);
   egg_signal_group_connect_object (priv->file_signals,
                                    "notify::language",
@@ -1278,9 +1296,14 @@ ide_buffer_init (IdeBuffer *self)
                                    self,
                                    G_CONNECT_SWAPPED);
 
-  priv->diagnostics_line_cache = g_hash_table_new (g_direct_hash, g_direct_equal);
+  priv->highlighter_extension_signals = egg_signal_group_new (IDE_TYPE_EXTENSION_POINT);
+  egg_signal_group_connect_object (priv->highlighter_extension_signals,
+                                   "changed",
+                                   G_CALLBACK (ide_buffer__highlighter_extension_changed),
+                                   self,
+                                   G_CONNECT_SWAPPED);
 
-  EGG_COUNTER_INC (instances);
+  priv->diagnostics_line_cache = g_hash_table_new (g_direct_hash, g_direct_equal);
 
   IDE_EXIT;
 }
