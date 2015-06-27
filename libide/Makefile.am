@@ -65,6 +65,8 @@ libide_1_0_la_public_sources = \
 	ide-executable.h \
 	ide-executer.c \
 	ide-executer.h \
+	ide-extension-point.c \
+	ide-extension-point.h \
 	ide-file-settings.c \
 	ide-file-settings.defs \
 	ide-file-settings.h \
