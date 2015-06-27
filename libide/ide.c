@@ -27,12 +27,15 @@
 #include "ide-autotools-build-system.h"
 #include "ide-autotools-project-miner.h"
 #include "ide-c-language.h"
+#include "ide-clang-highlighter.h"
 #include "ide-clang-service.h"
+#include "ide-ctags-highlighter.h"
 #include "ide-ctags-service.h"
 #include "ide-device-provider.h"
 #include "ide-directory-build-system.h"
 #include "ide-directory-vcs.h"
 #include "ide-editorconfig-file-settings.h"
+#include "ide-extension-point.h"
 #include "ide-file-settings.h"
 #include "ide-gca-service.h"
 #include "ide-git-vcs.h"
@@ -47,6 +50,7 @@
 #include "ide-python-language.h"
 #include "ide-search-provider.h"
 #include "ide-vala-language.h"
+#include "ide-xml-highlighter.h"
 #include "ide-xml-language.h"
 
 #include "modeline-parser.h"
@@ -101,6 +105,34 @@ ide_init_ctor (void)
   g_io_extension_point_register (IDE_SCRIPT_EXTENSION_POINT);
   g_io_extension_point_register (IDE_SERVICE_EXTENSION_POINT);
   g_io_extension_point_register (IDE_VCS_EXTENSION_POINT);
+
+  /*
+   * TODO: These should be moved to plugins.
+   */
+
+  ide_extension_point_implement ("org.gnome.builder.highlighter.xml",
+                                 IDE_TYPE_XML_HIGHLIGHTER,
+                                 0);
+
+  ide_extension_point_implement ("org.gnome.builder.highlighter.c",
+                                 IDE_TYPE_CLANG_HIGHLIGHTER,
+                                 0);
+  ide_extension_point_implement ("org.gnome.builder.highlighter.cpp",
+                                 IDE_TYPE_CLANG_HIGHLIGHTER,
+                                 0);
+  ide_extension_point_implement ("org.gnome.builder.highlighter.chdr",
+                                 IDE_TYPE_CLANG_HIGHLIGHTER,
+                                 0);
+
+  ide_extension_point_implement ("org.gnome.builder.highlighter.c",
+                                 IDE_TYPE_CTAGS_HIGHLIGHTER,
+                                 100);
+  ide_extension_point_implement ("org.gnome.builder.highlighter.cpp",
+                                 IDE_TYPE_CTAGS_HIGHLIGHTER,
+                                 100);
+  ide_extension_point_implement ("org.gnome.builder.highlighter.chdr",
+                                 IDE_TYPE_CTAGS_HIGHLIGHTER,
+                                 100);
 
   g_io_extension_point_implement (IDE_BUILD_SYSTEM_EXTENSION_POINT,
                                   IDE_TYPE_AUTOTOOLS_BUILD_SYSTEM,

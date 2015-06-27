@@ -18,6 +18,8 @@
 
 #include <glib/gi18n.h>
 
+#include "egg-signal-group.h"
+
 #include "ide-c-format-provider.h"
 #include "ide-c-indenter.h"
 #include "ide-c-language.h"
@@ -26,7 +28,10 @@
 #include "ide-clang-highlighter.h"
 #include "ide-clang-symbol-resolver.h"
 #include "ide-diagnostician.h"
+#include "ide-extension-point.h"
 #include "ide-internal.h"
+
+#define C_HIGHLIGHTER "org.gnome.builder.highlighter.c"
 
 typedef struct
 {
@@ -35,6 +40,8 @@ typedef struct
   IdeIndenter       *indenter;
   IdeRefactory      *refactory;
   IdeSymbolResolver *symbol_resolver;
+
+  EggSignalGroup    *highlighter_extension_signals;
 } IdeCLanguagePrivate;
 
 static void _g_initable_iface_init (GInitableIface *iface);
@@ -120,11 +127,36 @@ ide_c_language_get_name (IdeLanguage *self)
 }
 
 static void
+highlighter_changed (IdeCLanguage      *self,
+                     IdeExtensionPoint *point)
+{
+  IdeCLanguagePrivate *priv = ide_c_language_get_instance_private (self);
+  IdeContext *context = ide_object_get_context (IDE_OBJECT (self));
+
+  g_clear_object (&priv->highlighter);
+  priv->highlighter = ide_extension_point_create (C_HIGHLIGHTER,
+                                                  "context", context,
+                                                  NULL);
+}
+
+static void
+ide_c_language_constructed (GObject *object)
+{
+  IdeCLanguage *self = (IdeCLanguage *)object;
+
+  highlighter_changed (self, NULL);
+
+  G_OBJECT_CLASS (ide_c_language_parent_class)->constructed (object);
+}
+
+static void
 ide_c_language_dispose (GObject *object)
 {
   IdeCLanguage *self = (IdeCLanguage *)object;
   IdeCLanguagePrivate *priv = ide_c_language_get_instance_private (self);
 
+  g_clear_object (&priv->highlighter_extension_signals);
+  g_clear_object (&priv->highlighter);
   g_clear_object (&priv->diagnostician);
   g_clear_object (&priv->highlighter);
   g_clear_object (&priv->indenter);
@@ -148,12 +180,21 @@ ide_c_language_class_init (IdeCLanguageClass *klass)
   language_class->get_symbol_resolver = ide_c_language_get_symbol_resolver;
   language_class->get_name = ide_c_language_get_name;
 
+  object_class->constructed = ide_c_language_constructed;
   object_class->dispose = ide_c_language_dispose;
 }
 
 static void
 ide_c_language_init (IdeCLanguage *self)
 {
+  IdeCLanguagePrivate *priv = ide_c_language_get_instance_private (self);
+
+  priv->highlighter_extension_signals = egg_signal_group_new (IDE_TYPE_EXTENSION_POINT);
+  egg_signal_group_connect_object (priv->highlighter_extension_signals,
+                                   "changed",
+                                   G_CALLBACK (highlighter_changed),
+                                   self,
+                                   G_CONNECT_SWAPPED);
 }
 
 static gboolean
@@ -176,6 +217,7 @@ ide_c_language_initiable_init (GInitable     *initable,
     {
       IdeContext *context;
       IdeDiagnosticProvider *provider;
+      g_autofree gchar *path = NULL;
 
       context = ide_object_get_context (IDE_OBJECT (initable));
 
@@ -190,13 +232,6 @@ ide_c_language_initiable_init (GInitable     *initable,
                                NULL);
       _ide_diagnostician_add_provider (priv->diagnostician, provider);
       g_clear_object (&provider);
-
-      /*
-       * Create our highlighter that will use clang for semantic highlighting.
-       */
-      priv->highlighter = g_object_new (IDE_TYPE_CLANG_HIGHLIGHTER,
-                                        "context", context,
-                                        NULL);
 
       /*
        * Create our indenter to provide as-you-type indentation.

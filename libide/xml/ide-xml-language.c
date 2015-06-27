@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ide-extension-point.h"
 #include "ide-xml-language.h"
 #include "ide-xml-indenter.h"
 #include "ide-xml-highlighter.h"
@@ -66,9 +67,16 @@ ide_xml_language_get_highlighter (IdeLanguage *language)
       IdeContext *context;
 
       context = ide_object_get_context (IDE_OBJECT (language));
-      self->highlighter = g_object_new (IDE_TYPE_XML_HIGHLIGHTER,
-                                        "context", context,
-                                        NULL);
+
+      /*
+       * TODO: This should all go, once we get rid of IdeLanguage.
+       *       Now that we have access to extension points, we should
+       *       be able to put this into IdeBuffer and (un)hook things
+       *       as plugins are (un)loaded.
+       */
+      self->highlighter = ide_extension_point_create ("org.gnome.builder.highlighter.xml",
+                                                      "context", context,
+                                                      NULL);
     }
 
   return IDE_HIGHLIGHTER (self->highlighter);
