@@ -597,7 +597,7 @@ ide_buffer_reload_highlighter (IdeBuffer *self)
 }
 
 static void
-ide_buffer_reload_symbol_provider (IdeBuffer *self)
+ide_buffer_reload_symbol_resolver (IdeBuffer *self)
 {
   IdeBufferPrivate *priv = ide_buffer_get_instance_private (self);
   IdeSymbolResolver *symbol_resolver = NULL;
@@ -1376,7 +1376,7 @@ ide_buffer_set_file (IdeBuffer *self,
                                     g_object_ref (self));
       ide_buffer_reload_change_monitor (self);
       ide_buffer_reload_highlighter (self);
-      ide_buffer_reload_symbol_provider (self);
+      ide_buffer_reload_symbol_resolver (self);
       /*
        * FIXME: More hack for 3.16.3. This all needs refactorying.
        *        In particular, IdeFile should probably subclass GtkSourceFile.
@@ -1972,7 +1972,7 @@ ide_buffer_rehighlight (IdeBuffer *self)
 }
 
 static void
-ide_buffer__symbol_provider_lookup_symbol_cb (GObject      *object,
+ide_buffer__symbol_resolver_lookup_symbol_cb (GObject      *object,
                                               GAsyncResult *result,
                                               gpointer      user_data)
 {
@@ -2032,7 +2032,7 @@ ide_buffer_get_symbol_at_location_async (IdeBuffer           *self,
   ide_symbol_resolver_lookup_symbol_async (priv->symbol_resolver,
                                            srcloc,
                                            cancellable,
-                                           ide_buffer__symbol_provider_lookup_symbol_cb,
+                                           ide_buffer__symbol_resolver_lookup_symbol_cb,
                                            g_object_ref (task));
 }
 
@@ -2057,7 +2057,7 @@ ide_buffer_get_symbol_at_location_finish (IdeBuffer     *self,
 }
 
 static void
-ide_buffer__symbol_provider_get_symbols_cb (GObject      *object,
+ide_buffer__symbol_resolver_get_symbols_cb (GObject      *object,
                                             GAsyncResult *result,
                                             gpointer      user_data)
 {
@@ -2105,7 +2105,7 @@ ide_buffer_get_symbols_async (IdeBuffer           *self,
   ide_symbol_resolver_get_symbols_async (priv->symbol_resolver,
                                          priv->file,
                                          cancellable,
-                                         ide_buffer__symbol_provider_get_symbols_cb,
+                                         ide_buffer__symbol_resolver_get_symbols_cb,
                                          g_object_ref (task));
 }
 
