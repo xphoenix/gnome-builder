@@ -301,8 +301,6 @@ ide_highlight_engine_tick (IdeHighlightEngine *self)
   GtkTextIter invalid_end;
   GSList *tags_iter;
 
-  IDE_PROBE;
-
   g_assert (IDE_IS_HIGHLIGHT_ENGINE (self));
   g_assert (self->buffer != NULL);
   g_assert (self->highlighter != NULL);
@@ -316,11 +314,12 @@ ide_highlight_engine_tick (IdeHighlightEngine *self)
   gtk_text_buffer_get_iter_at_mark (buffer, &invalid_begin, self->invalid_begin);
   gtk_text_buffer_get_iter_at_mark (buffer, &invalid_end, self->invalid_end);
 
-  IDE_TRACE_MSG ("Highlight Range [%u:%u,%u:%u]",
+  IDE_TRACE_MSG ("Highlight Range [%u:%u,%u:%u] (%s)",
                  gtk_text_iter_get_line (&invalid_begin),
                  gtk_text_iter_get_line_offset (&invalid_begin),
                  gtk_text_iter_get_line (&invalid_end),
-                 gtk_text_iter_get_line_offset (&invalid_end));
+                 gtk_text_iter_get_line_offset (&invalid_end),
+                 G_OBJECT_TYPE_NAME (self->highlighter));
 
   if (gtk_text_iter_compare (&invalid_begin, &invalid_end) >= 0)
     IDE_GOTO (up_to_date);
