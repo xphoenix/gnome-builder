@@ -156,6 +156,28 @@ get_symbol_tree_cb (GObject      *object,
     g_task_return_pointer (task, g_object_ref (symbol_tree), g_object_unref);
 }
 
+static IdeSymbolResolver *
+get_symbol_resolver (IdeLanguage *language)
+{
+  IdeSymbolResolver *ret;
+  IdeContext *context;
+  const gchar *lang_id;
+  gchar *name;
+
+  g_assert (IDE_IS_LANGUAGE (language));
+
+  context = ide_object_get_context (IDE_OBJECT (language));
+
+  lang_id = ide_language_get_id (language);
+  name = g_strdup_printf ("org.gnome.builder.symbol-resolver.%s", lang_id);
+  ret = ide_extension_point_create (name,
+                                    "context", context,
+                                    NULL);
+  g_free (name);
+
+  return ret;
+}
+
 static void
 populate_cache_cb (EggTaskCache  *cache,
                    gconstpointer  key,
@@ -165,7 +187,7 @@ populate_cache_cb (EggTaskCache  *cache,
   GbEditorDocument *document = (GbEditorDocument *)key;
   IdeLanguage *language;
   IdeFile *file;
-  IdeSymbolResolver *resolver;
+  g_autoptr(IdeSymbolResolver) resolver = NULL;
 
   g_assert (EGG_IS_TASK_CACHE (cache));
   g_assert (GB_IS_EDITOR_DOCUMENT (document));
@@ -173,7 +195,7 @@ populate_cache_cb (EggTaskCache  *cache,
 
   if ((file = ide_buffer_get_file (IDE_BUFFER (document))) &&
       (language = ide_file_get_language (file)) &&
-      (resolver = ide_language_get_symbol_resolver (language)))
+      (resolver = get_symbol_resolver (language)))
     {
       ide_symbol_resolver_get_symbol_tree_async (resolver,
                                                  ide_file_get_file (file),

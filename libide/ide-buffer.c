@@ -71,6 +71,7 @@ typedef struct
 
   EggSignalGroup         *file_signals;
   EggSignalGroup         *highlighter_extension_signals;
+  EggSignalGroup         *symbol_extension_signals;
 
   GFileMonitor           *file_monitor;
 
@@ -572,6 +573,9 @@ ide_buffer_reload_highlighter (IdeBuffer *self)
 
   g_assert (IDE_IS_BUFFER (self));
 
+  if (priv->file == NULL)
+    return;
+
   language = ide_file_get_language (priv->file);
 
   if (language != NULL)
@@ -601,19 +605,35 @@ ide_buffer_reload_symbol_resolver (IdeBuffer *self)
 {
   IdeBufferPrivate *priv = ide_buffer_get_instance_private (self);
   IdeSymbolResolver *symbol_resolver = NULL;
+  IdeExtensionPoint *point = NULL;
+  IdeLanguage *language;
 
   g_assert (IDE_IS_BUFFER (self));
 
-  if (priv->file != NULL)
-    {
-      IdeLanguage *language;
+  if (priv->file == NULL)
+    return;
 
-      language = ide_file_get_language (priv->file);
-      if (language != NULL)
-        symbol_resolver = ide_language_get_symbol_resolver (language);
+  language = ide_file_get_language (priv->file);
+
+  if (language != NULL)
+    {
+      const gchar *lang_id;
+      gchar *name;
+
+      lang_id = ide_language_get_id (language);
+      name = g_strdup_printf ("org.gnome.builder.symbol-resolver.%s", lang_id);
+      point = ide_extension_point_lookup (name);
+      symbol_resolver = ide_extension_point_create (name,
+                                                    "context", priv->context,
+                                                    NULL);
+      g_free (name);
     }
 
   g_set_object (&priv->symbol_resolver, symbol_resolver);
+
+  egg_signal_group_set_target (priv->symbol_extension_signals, point);
+
+  g_clear_object (&symbol_resolver);
 }
 
 static void
@@ -966,16 +986,6 @@ ide_buffer_constructed (GObject *object)
 }
 
 static void
-ide_buffer__highlighter_extension_changed (IdeBuffer         *self,
-                                           IdeExtensionPoint *point)
-{
-  g_assert (IDE_IS_BUFFER (self));
-  g_assert (IDE_IS_EXTENSION_POINT (point));
-
-  ide_buffer_reload_highlighter (self);
-}
-
-static void
 ide_buffer_dispose (GObject *object)
 {
   IdeBuffer *self = (IdeBuffer *)object;
@@ -1299,7 +1309,14 @@ ide_buffer_init (IdeBuffer *self)
   priv->highlighter_extension_signals = egg_signal_group_new (IDE_TYPE_EXTENSION_POINT);
   egg_signal_group_connect_object (priv->highlighter_extension_signals,
                                    "changed",
-                                   G_CALLBACK (ide_buffer__highlighter_extension_changed),
+                                   G_CALLBACK (ide_buffer_reload_highlighter),
+                                   self,
+                                   G_CONNECT_SWAPPED);
+
+  priv->symbol_extension_signals = egg_signal_group_new (IDE_TYPE_EXTENSION_POINT);
+  egg_signal_group_connect_object (priv->symbol_extension_signals,
+                                   "changed",
+                                   G_CALLBACK (ide_buffer_reload_symbol_resolver),
                                    self,
                                    G_CONNECT_SWAPPED);
 

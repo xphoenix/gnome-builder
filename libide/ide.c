@@ -29,6 +29,7 @@
 #include "ide-c-language.h"
 #include "ide-clang-highlighter.h"
 #include "ide-clang-service.h"
+#include "ide-clang-symbol-resolver.h"
 #include "ide-ctags-highlighter.h"
 #include "ide-ctags-service.h"
 #include "ide-device-provider.h"
@@ -134,6 +135,16 @@ ide_init_ctor (void)
       ide_extension_point_implement (name, IDE_TYPE_CTAGS_HIGHLIGHTER, 100);
       g_free (name);
     }
+
+  ide_extension_point_implement ("org.gnome.builder.symbol-resolver.c",
+                                 IDE_TYPE_CLANG_SYMBOL_RESOLVER,
+                                 0);
+  ide_extension_point_implement ("org.gnome.builder.symbol-resolver.cpp",
+                                 IDE_TYPE_CLANG_SYMBOL_RESOLVER,
+                                 0);
+  ide_extension_point_implement ("org.gnome.builder.symbol-resolver.chdr",
+                                 IDE_TYPE_CLANG_SYMBOL_RESOLVER,
+                                 0);
 
   g_io_extension_point_implement (IDE_BUILD_SYSTEM_EXTENSION_POINT,
                                   IDE_TYPE_AUTOTOOLS_BUILD_SYSTEM,

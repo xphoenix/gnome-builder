@@ -47,6 +47,7 @@ G_BEGIN_DECLS
 #include "ide-enums.h"
 #include "ide-executable.h"
 #include "ide-executer.h"
+#include "ide-extension-point.h"
 #include "ide-file.h"
 #include "ide-file-settings.h"
 #include "ide-global.h"

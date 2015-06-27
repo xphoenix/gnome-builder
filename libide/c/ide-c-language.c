@@ -25,7 +25,6 @@
 #include "ide-c-language.h"
 #include "ide-clang-completion-provider.h"
 #include "ide-clang-diagnostic-provider.h"
-#include "ide-clang-symbol-resolver.h"
 #include "ide-diagnostician.h"
 #include "ide-extension-point.h"
 #include "ide-internal.h"
@@ -35,7 +34,6 @@ typedef struct
   IdeDiagnostician  *diagnostician;
   IdeIndenter       *indenter;
   IdeRefactory      *refactory;
-  IdeSymbolResolver *symbol_resolver;
 } IdeCLanguagePrivate;
 
 static void _g_initable_iface_init (GInitableIface *iface);
@@ -92,17 +90,6 @@ ide_c_language_get_refactory (IdeLanguage *language)
   return priv->refactory;
 }
 
-static IdeSymbolResolver *
-ide_c_language_get_symbol_resolver (IdeLanguage *language)
-{
-  IdeCLanguage *self = (IdeCLanguage *)language;
-  IdeCLanguagePrivate *priv = ide_c_language_get_instance_private (self);
-
-  g_return_val_if_fail (IDE_IS_C_LANGUAGE (self), NULL);
-
-  return priv->symbol_resolver;
-}
-
 static const gchar *
 ide_c_language_get_name (IdeLanguage *self)
 {
@@ -118,7 +105,6 @@ ide_c_language_dispose (GObject *object)
   g_clear_object (&priv->diagnostician);
   g_clear_object (&priv->indenter);
   g_clear_object (&priv->refactory);
-  g_clear_object (&priv->symbol_resolver);
 
   G_OBJECT_CLASS (ide_c_language_parent_class)->dispose (object);
 }
@@ -133,7 +119,6 @@ ide_c_language_class_init (IdeCLanguageClass *klass)
   language_class->get_diagnostician = ide_c_language_get_diagnostician;
   language_class->get_indenter = ide_c_language_get_indenter;
   language_class->get_refactory = ide_c_language_get_refactory;
-  language_class->get_symbol_resolver = ide_c_language_get_symbol_resolver;
   language_class->get_name = ide_c_language_get_name;
 
   object_class->dispose = ide_c_language_dispose;
@@ -193,14 +178,6 @@ ide_c_language_initiable_init (GInitable     *initable,
       /*
        * TODO: Refactory design (rename local, extract method, etc).
        */
-
-      /*
-       * Create our symbol resolver to help discover symbols within a file
-       * as well as what symbol is at "location X".
-       */
-      priv->symbol_resolver = g_object_new (IDE_TYPE_CLANG_SYMBOL_RESOLVER,
-                                            "context", context,
-                                            NULL);
 
       return TRUE;
     }
