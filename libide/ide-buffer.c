@@ -31,6 +31,7 @@
 #include "ide-diagnostic.h"
 #include "ide-diagnostician.h"
 #include "ide-diagnostics.h"
+#include "ide-extension-point.h"
 #include "ide-file.h"
 #include "ide-file-settings.h"
 #include "ide-highlighter.h"
@@ -565,20 +566,29 @@ ide_buffer_reload_highlighter (IdeBuffer *self)
 {
   IdeBufferPrivate *priv = ide_buffer_get_instance_private (self);
   IdeHighlighter *highlighter = NULL;
+  IdeLanguage *language;
 
   g_assert (IDE_IS_BUFFER (self));
 
-  if (priv->file != NULL)
-    {
-      IdeLanguage *language;
+  language = ide_file_get_language (priv->file);
 
-      language = ide_file_get_language (priv->file);
-      if (language != NULL)
-        highlighter = ide_language_get_highlighter (language);
+  if (language != NULL)
+    {
+      const gchar *lang_id;
+      gchar *name;
+
+      lang_id = ide_language_get_id (language);
+      name = g_strdup_printf ("org.gnome.builder.highlighter.%s", lang_id);
+      highlighter = ide_extension_point_create (name,
+                                                "context", priv->context,
+                                                NULL);
+      g_free (name);
     }
 
   if (priv->highlight_engine != NULL)
     ide_highlight_engine_set_highlighter (priv->highlight_engine, highlighter);
+
+  g_clear_object (&highlighter);
 }
 
 static void

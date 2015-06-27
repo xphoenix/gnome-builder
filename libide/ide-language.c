@@ -22,7 +22,6 @@
 #include "ide-ctags-service.h"
 #include "ide-diagnostician.h"
 #include "ide-gca-diagnostic-provider.h"
-#include "ide-highlighter.h"
 #include "ide-indenter.h"
 #include "ide-internal.h"
 #include "ide-language.h"
@@ -39,7 +38,6 @@ G_DEFINE_TYPE_WITH_PRIVATE (IdeLanguage, ide_language, IDE_TYPE_OBJECT)
 enum {
   PROP_0,
   PROP_DIAGNOSTICIAN,
-  PROP_HIGHLIGHTER,
   PROP_INDENTER,
   PROP_ID,
   PROP_NAME,
@@ -173,52 +171,6 @@ ide_language_real_get_diagnostician (IdeLanguage *self)
   return gDiagnostician;
 }
 
-static IdeHighlighter *
-ide_language_real_get_highlighter (IdeLanguage *self)
-{
-  IdeLanguagePrivate *priv = ide_language_get_instance_private (self);
-
-  g_assert (IDE_IS_LANGUAGE (self));
-
-  if (ide_str_equal0 (priv->id, "c") ||
-      ide_str_equal0 (priv->id, "cpp") ||
-      ide_str_equal0 (priv->id, "chdr") ||
-      ide_str_equal0 (priv->id, "python") ||
-      ide_str_equal0 (priv->id, "js") ||
-      ide_str_equal0 (priv->id, "css") ||
-      ide_str_equal0 (priv->id, "html"))
-    {
-      IdeCtagsService *service;
-      IdeContext *context;
-
-      context = ide_object_get_context (IDE_OBJECT (self));
-      service = ide_context_get_service_typed (context, IDE_TYPE_CTAGS_SERVICE);
-      return ide_ctags_service_get_highlighter (service);
-    }
-
-  return NULL;
-}
-
-/**
- * ide_language_get_highlighter:
- *
- * Fetches the #IdeHighlighter for the #IdeLanguage.
- *
- * If @language does not provide a semantic highlighter, %NULL is returned.
- *
- * Returns: (transfer none) (nullable): An #IdeHighlighter or %NULL.
- */
-IdeHighlighter *
-ide_language_get_highlighter (IdeLanguage *self)
-{
-  g_return_val_if_fail (IDE_IS_LANGUAGE (self), NULL);
-
-  if (IDE_LANGUAGE_GET_CLASS (self)->get_highlighter)
-    return IDE_LANGUAGE_GET_CLASS (self)->get_highlighter (self);
-
-  return NULL;
-}
-
 /**
  * ide_language_get_indenter:
  *
@@ -340,10 +292,6 @@ ide_language_get_property (GObject    *object,
       g_value_set_object (value, ide_language_get_diagnostician (self));
       break;
 
-    case PROP_HIGHLIGHTER:
-      g_value_set_object (value, ide_language_get_highlighter (self));
-      break;
-
     case PROP_ID:
       g_value_set_string (value, ide_language_get_id (self));
       break;
@@ -398,20 +346,12 @@ ide_language_class_init (IdeLanguageClass *klass)
 
   klass->get_completion_providers = ide_language_real_get_completion_providers;
   klass->get_diagnostician = ide_language_real_get_diagnostician;
-  klass->get_highlighter = ide_language_real_get_highlighter;
 
   gParamSpecs [PROP_DIAGNOSTICIAN] =
     g_param_spec_object ("diagnostician",
                          _("Diagnostician"),
                          _("The diagnostician for the language."),
                          IDE_TYPE_DIAGNOSTICIAN,
-                         (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
-
-  gParamSpecs [PROP_HIGHLIGHTER] =
-    g_param_spec_object ("highlighter",
-                         _("Highlighter"),
-                         _("The semantic highlighter for the language."),
-                         IDE_TYPE_HIGHLIGHTER,
                          (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
   gParamSpecs [PROP_ID] =

@@ -90,6 +90,8 @@ static void
 ide_init_ctor (void)
 {
   GgitFeatureFlags ggit_flags;
+  const gchar *ctags_types[] = { "c", "cpp", "chdr", "python", "js", "css", "html", NULL };
+  gint i;
 
   g_irepository_prepend_search_path (LIBDIR"/gnome-builder/girepository-1.0");
 
@@ -124,15 +126,14 @@ ide_init_ctor (void)
                                  IDE_TYPE_CLANG_HIGHLIGHTER,
                                  0);
 
-  ide_extension_point_implement ("org.gnome.builder.highlighter.c",
-                                 IDE_TYPE_CTAGS_HIGHLIGHTER,
-                                 100);
-  ide_extension_point_implement ("org.gnome.builder.highlighter.cpp",
-                                 IDE_TYPE_CTAGS_HIGHLIGHTER,
-                                 100);
-  ide_extension_point_implement ("org.gnome.builder.highlighter.chdr",
-                                 IDE_TYPE_CTAGS_HIGHLIGHTER,
-                                 100);
+  for (i = 0; ctags_types [i]; i++)
+    {
+      gchar *name;
+
+      name = g_strdup_printf ("org.gnome.builder.highlighter.%s", ctags_types [i]);
+      ide_extension_point_implement (name, IDE_TYPE_CTAGS_HIGHLIGHTER, 100);
+      g_free (name);
+    }
 
   g_io_extension_point_implement (IDE_BUILD_SYSTEM_EXTENSION_POINT,
                                   IDE_TYPE_AUTOTOOLS_BUILD_SYSTEM,

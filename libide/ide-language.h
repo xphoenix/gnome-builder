@@ -35,7 +35,6 @@ struct _IdeLanguageClass
   IdeObjectClass parent;
 
   IdeDiagnostician  *(*get_diagnostician)        (IdeLanguage *self);
-  IdeHighlighter    *(*get_highlighter)          (IdeLanguage *self);
   IdeIndenter       *(*get_indenter)             (IdeLanguage *self);
   const gchar       *(*get_name)                 (IdeLanguage *self);
   IdeRefactory      *(*get_refactory)            (IdeLanguage *self);
@@ -45,7 +44,6 @@ struct _IdeLanguageClass
 };
 
 IdeDiagnostician  *ide_language_get_diagnostician        (IdeLanguage *self);
-IdeHighlighter    *ide_language_get_highlighter          (IdeLanguage *self);
 const gchar       *ide_language_get_id                   (IdeLanguage *self);
 IdeIndenter       *ide_language_get_indenter             (IdeLanguage *self);
 const gchar       *ide_language_get_name                 (IdeLanguage *self);
