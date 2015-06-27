@@ -327,7 +327,7 @@ compare_extension (gconstpointer a,
   if (exta->priority == extb->priority)
     return g_strcmp0 (g_type_name (exta->type), g_type_name (extb->type));
 
-  return exta->priority - extb->priority;
+  return extb->priority - exta->priority;
 }
 
 void
