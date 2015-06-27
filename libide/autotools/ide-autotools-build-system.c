@@ -27,6 +27,7 @@
 
 #include "ide-autotools-build-system.h"
 #include "ide-autotools-builder.h"
+#include "ide-buffer.h"
 #include "ide-buffer-manager.h"
 #include "ide-context.h"
 #include "ide-debug.h"
