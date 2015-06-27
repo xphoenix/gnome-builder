@@ -25,8 +25,7 @@ G_BEGIN_DECLS
 
 #define IDE_TYPE_XML_HIGHLIGHTER (ide_xml_highlighter_get_type())
 
-G_DECLARE_FINAL_TYPE (IdeXmlHighlighter, ide_xml_highlighter,
-                      IDE, XML_HIGHLIGHTER, IdeHighlighter)
+G_DECLARE_FINAL_TYPE (IdeXmlHighlighter, ide_xml_highlighter, IDE, XML_HIGHLIGHTER, IdeObject)
 
 G_END_DECLS
 

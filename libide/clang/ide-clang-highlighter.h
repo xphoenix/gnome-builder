@@ -30,8 +30,7 @@ G_BEGIN_DECLS
 #define IDE_CLANG_HIGHLIGHTER_ENUM_NAME     "def:constant"
 #define IDE_CLANG_HIGHLIGHTER_MACRO_NAME    "c:macro-name"
 
-G_DECLARE_FINAL_TYPE (IdeClangHighlighter, ide_clang_highlighter,
-                      IDE, CLANG_HIGHLIGHTER, IdeHighlighter)
+G_DECLARE_FINAL_TYPE (IdeClangHighlighter, ide_clang_highlighter, IDE, CLANG_HIGHLIGHTER, IdeObject)
 
 G_END_DECLS
 

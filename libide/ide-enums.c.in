@@ -8,7 +8,7 @@
 #include "ide-buffer.h"
 #include "ide-diagnostic.h"
 #include "ide-doap.h"
-#include "ide-highlighter.h"
+#include "ide-highlight-engine.h"
 #include "ide-indent-style.h"
 #include "ide-source-view.h"
 #include "ide-symbol.h"

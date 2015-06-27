@@ -22,10 +22,12 @@
 #include <string.h>
 
 #include "egg-signal-group.h"
+#include "ide-buffer.h"
 #include "ide-debug.h"
 #include "ide-highlight-engine.h"
-#include "ide-types.h"
+#include "ide-highlighter.h"
 #include "ide-internal.h"
+#include "ide-types.h"
 
 #define HIGHLIGHT_QUANTA_USEC      5000
 #define PRIVATE_TAG_PREFIX        "gb-private-tag"
@@ -875,7 +877,7 @@ ide_highlight_engine_set_highlighter (IdeHighlightEngine *self,
 
   if (g_set_object (&self->highlighter, highlighter))
     {
-      _ide_highlighter_set_highlighter_engine (highlighter, self);
+      IDE_HIGHLIGHTER_GET_IFACE (highlighter)->set_engine (highlighter, self);
       ide_highlight_engine_reload (self);
       g_object_notify_by_pspec (G_OBJECT (self), gParamSpecs [PROP_HIGHLIGHTER]);
     }

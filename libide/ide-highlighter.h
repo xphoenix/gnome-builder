@@ -22,6 +22,7 @@
 #include <gtk/gtk.h>
 
 #include "ide-buffer.h"
+#include "ide-highlight-engine.h"
 #include "ide-object.h"
 #include "ide-source-view.h"
 #include "ide-types.h"
@@ -30,21 +31,11 @@ G_BEGIN_DECLS
 
 #define IDE_TYPE_HIGHLIGHTER (ide_highlighter_get_type())
 
-G_DECLARE_DERIVABLE_TYPE (IdeHighlighter, ide_highlighter, IDE, HIGHLIGHTER, IdeObject)
+G_DECLARE_INTERFACE (IdeHighlighter, ide_highlighter, IDE, HIGHLIGHTER, IdeObject)
 
-typedef enum
+struct _IdeHighlighterInterface
 {
-  IDE_HIGHLIGHT_STOP,
-  IDE_HIGHLIGHT_CONTINUE,
-} IdeHighlightResult;
-
-typedef IdeHighlightResult (*IdeHighlightCallback) (const GtkTextIter *begin,
-                                                    const GtkTextIter *end,
-                                                    const gchar       *style_name);
-
-struct _IdeHighlighterClass
-{
-  IdeObjectClass parent;
+  GTypeInterface parent_iface;
 
   /**
    * IdeHighlighter::update:
@@ -59,20 +50,26 @@ struct _IdeHighlighterClass
    * @location should be set to the position that the highlighter got to
    * before yielding back to the engine.
    */
-  void (*update)     (IdeHighlighter       *self,
-                      IdeHighlightCallback  callback,
-                      const GtkTextIter    *range_begin,
-                      const GtkTextIter    *range_end,
-                      GtkTextIter          *location);
+  void (*update) (IdeHighlighter       *self,
+                  IdeHighlightCallback  callback,
+                  const GtkTextIter    *range_begin,
+                  const GtkTextIter    *range_end,
+                  GtkTextIter          *location);
+
+  /**
+   * IdeHighlighter::set-engine:
+   *
+   * This vfunc is called when the highlighter is attached to an engine.
+   */
+  void (*set_engine) (IdeHighlighter     *self,
+                      IdeHighlightEngine *engine);
 };
 
-void                 ide_highlighter_update               (IdeHighlighter       *self,
-                                                           IdeHighlightCallback  callback,
-                                                           const GtkTextIter    *range_begin,
-                                                           const GtkTextIter    *range_end,
-                                                           GtkTextIter          *location);
-
-IdeHighlightEngine  *ide_highlighter_get_highlight_engine (IdeHighlighter       *self);
+void ide_highlighter_update (IdeHighlighter       *self,
+                             IdeHighlightCallback  callback,
+                             const GtkTextIter    *range_begin,
+                             const GtkTextIter    *range_end,
+                             GtkTextIter          *location);
 
 G_END_DECLS
 

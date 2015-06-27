@@ -31,7 +31,6 @@
 #include "ide-source-view.h"
 #include "ide-source-view-mode.h"
 #include "ide-symbol.h"
-#include "ide-highlight-engine.h"
 
 G_BEGIN_DECLS
 
@@ -124,8 +123,6 @@ IdeUnsavedFile     *_ide_unsaved_file_new                   (GFile              
                                                              GBytes                *content,
                                                              const gchar           *temp_path,
                                                              gint64                 sequence);
-void                _ide_highlighter_set_highlighter_engine (IdeHighlighter        *highlighter,
-                                                             IdeHighlightEngine    *highlight_engine);
 
 G_END_DECLS
 

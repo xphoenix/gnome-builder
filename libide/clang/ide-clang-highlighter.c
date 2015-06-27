@@ -18,6 +18,7 @@
 
 #include <glib/gi18n.h>
 
+#include "ide-buffer.h"
 #include "ide-clang-highlighter.h"
 #include "ide-clang-service.h"
 #include "ide-clang-translation-unit.h"
@@ -25,10 +26,14 @@
 
 struct _IdeClangHighlighter
 {
-  IdeHighlighter parent_instance;
+  IdeObject parent_instance;
 };
 
-G_DEFINE_TYPE (IdeClangHighlighter, ide_clang_highlighter, IDE_TYPE_HIGHLIGHTER)
+static void ide_clang_highlighter_iface_init (IdeHighlighterInterface *iface);
+
+G_DEFINE_TYPE_WITH_CODE (IdeClangHighlighter, ide_clang_highlighter, IDE_TYPE_OBJECT,
+                         G_IMPLEMENT_INTERFACE (IDE_TYPE_HIGHLIGHTER,
+                                                ide_clang_highlighter_iface_init))
 
 static inline gboolean
 accepts_char (gunichar ch)
@@ -59,11 +64,11 @@ select_next_word (GtkTextIter *begin,
 }
 
 static void
-ide_clang_highlighter_real_update (IdeHighlighter       *highlighter,
-                                   IdeHighlightCallback  callback,
-                                   const GtkTextIter    *range_begin,
-                                   const GtkTextIter    *range_end,
-                                   GtkTextIter          *location)
+ide_clang_highlighter_update (IdeHighlighter       *highlighter,
+                              IdeHighlightCallback  callback,
+                              const GtkTextIter    *range_begin,
+                              const GtkTextIter    *range_end,
+                              GtkTextIter          *location)
 {
   g_autoptr(IdeClangTranslationUnit) unit = NULL;
   GtkTextBuffer *text_buffer;
@@ -134,11 +139,14 @@ completed:
 }
 
 static void
+ide_clang_highlighter_iface_init (IdeHighlighterInterface *iface)
+{
+  iface->update = ide_clang_highlighter_update;
+}
+
+static void
 ide_clang_highlighter_class_init (IdeClangHighlighterClass *klass)
 {
-  IdeHighlighterClass *highlighter_class = IDE_HIGHLIGHTER_CLASS (klass);
-
-  highlighter_class->update = ide_clang_highlighter_real_update;
 }
 
 static void

@@ -20,33 +20,37 @@
 
 #include "egg-signal-group.h"
 
-#include "ide-xml-highlighter.h"
-#include "ide-context.h"
 #include "ide-buffer.h"
-#include "ide-xml.h"
+#include "ide-context.h"
 #include "ide-highlight-engine.h"
+#include "ide-xml-highlighter.h"
+#include "ide-xml.h"
 
 #define HIGHLIGH_TIMEOUT_MSEC    35
 #define XML_TAG_MATCH_STYLE_NAME "xml:tag-match"
 
 struct _IdeXmlHighlighter
 {
-  IdeHighlighter  parent_instance;
+  IdeObject           parent_instance;
 
-  EggSignalGroup *signal_group;
-  GtkTextMark    *iter_mark;
-  GtkTextBuffer  *buffer;
-  guint           highlight_timeout;
-  guint           has_tags : 1;
+  IdeHighlightEngine *engine;
+  EggSignalGroup     *signal_group;
+  GtkTextMark        *iter_mark;
+  GtkTextBuffer      *buffer;
+  guint               highlight_timeout;
+  guint               has_tags : 1;
 };
 
-G_DEFINE_TYPE (IdeXmlHighlighter, ide_xml_highlighter, IDE_TYPE_HIGHLIGHTER)
+static void ide_xml_highlighter_iface_init (IdeHighlighterInterface *iface);
+
+G_DEFINE_TYPE_WITH_CODE (IdeXmlHighlighter, ide_xml_highlighter, IDE_TYPE_OBJECT,
+                         G_IMPLEMENT_INTERFACE (IDE_TYPE_HIGHLIGHTER,
+                                                ide_xml_highlighter_iface_init));
 
 static gboolean
 ide_xml_highlighter_highlight_timeout_handler (gpointer data)
 {
   IdeXmlHighlighter *self = data;
-  IdeHighlightEngine *engine;
   GtkTextTag *tag;
   GtkTextIter iter;
   GtkTextIter start;
@@ -56,8 +60,7 @@ ide_xml_highlighter_highlight_timeout_handler (gpointer data)
   g_assert (self->buffer != NULL);
   g_assert (self->iter_mark != NULL);
 
-  engine = ide_highlighter_get_highlight_engine (IDE_HIGHLIGHTER (self));
-  tag = ide_highlight_engine_get_style (engine, XML_TAG_MATCH_STYLE_NAME);
+  tag = ide_highlight_engine_get_style (self->engine, XML_TAG_MATCH_STYLE_NAME);
 
   /*
    * Clear previous tags. We could save the previous
@@ -203,17 +206,17 @@ ide_xml_highlighter_on_buffer_set (IdeXmlHighlighter  *self,
 }
 
 static void
-ide_xml_highlighter_on_highlight_engine_set (IdeHighlighter  *self,
-                                             GParamSpec      *pspec,
-                                             gpointer        *data)
+ide_xml_highlighter_set_engine (IdeHighlighter     *highlighter,
+                                IdeHighlightEngine *engine)
 {
-  IdeXmlHighlighter *highlighter = (IdeXmlHighlighter *)self;
-  IdeHighlightEngine *engine;
+  IdeXmlHighlighter *self = (IdeXmlHighlighter *)highlighter;
   IdeBuffer *buffer = NULL;
 
-  g_assert (IDE_IS_XML_HIGHLIGHTER (highlighter));
+  g_assert (IDE_IS_XML_HIGHLIGHTER (self));
 
-  if ((engine = ide_highlighter_get_highlight_engine (self)))
+  self->engine = engine;
+
+  if (engine != NULL)
     {
       buffer = ide_highlight_engine_get_buffer (engine);
       /*
@@ -228,7 +231,7 @@ ide_xml_highlighter_on_highlight_engine_set (IdeHighlighter  *self,
                                G_CONNECT_SWAPPED);
     }
 
-  ide_xml_highlighter_set_buffer (highlighter, buffer);
+  ide_xml_highlighter_set_buffer (self, buffer);
 }
 
 static void
@@ -248,6 +251,12 @@ ide_xml_highlighter_engine_dispose (GObject *object)
 }
 
 static void
+ide_xml_highlighter_iface_init (IdeHighlighterInterface *iface)
+{
+  iface->set_engine = ide_xml_highlighter_set_engine;
+}
+
+static void
 ide_xml_highlighter_class_init (IdeXmlHighlighterClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -258,12 +267,8 @@ ide_xml_highlighter_class_init (IdeXmlHighlighterClass *klass)
 static void
 ide_xml_highlighter_init (IdeXmlHighlighter *self)
 {
-  g_signal_connect (self,
-                    "notify::highlight-engine",
-                    G_CALLBACK (ide_xml_highlighter_on_highlight_engine_set),
-                    NULL);
-
   self->signal_group = egg_signal_group_new (IDE_TYPE_BUFFER);
+
   egg_signal_group_connect_object (self->signal_group,
                                    "cursor-moved",
                                    G_CALLBACK (ide_xml_highlighter_cursor_moved_cb),

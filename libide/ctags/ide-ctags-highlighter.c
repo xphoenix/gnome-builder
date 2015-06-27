@@ -18,6 +18,7 @@
 
 #include <glib/gi18n.h>
 
+#include "ide-buffer.h"
 #include "ide-ctags-highlighter.h"
 #include "ide-debug.h"
 #include "ide-file.h"
@@ -25,11 +26,16 @@
 
 struct _IdeCtagsHighlighter
 {
-  IdeHighlighter parent_instance;
-  GPtrArray     *indexes;
+  IdeObject  parent_instance;
+
+  GPtrArray *indexes;
 };
 
-G_DEFINE_TYPE (IdeCtagsHighlighter, ide_ctags_highlighter, IDE_TYPE_HIGHLIGHTER)
+static void ide_ctags_highlighter_iface_init (IdeHighlighterInterface *iface);
+
+G_DEFINE_TYPE_WITH_CODE (IdeCtagsHighlighter, ide_ctags_highlighter, IDE_TYPE_OBJECT,
+                         G_IMPLEMENT_INTERFACE (IDE_TYPE_HIGHLIGHTER,
+                                                ide_ctags_highlighter_iface_init))
 
 static inline gboolean
 accepts_char (gunichar ch)
@@ -117,11 +123,11 @@ get_tag (IdeCtagsHighlighter *self,
 }
 
 static void
-ide_ctags_highlighter_real_update (IdeHighlighter       *highlighter,
-                                   IdeHighlightCallback  callback,
-                                   const GtkTextIter    *range_begin,
-                                   const GtkTextIter    *range_end,
-                                   GtkTextIter          *location)
+ide_ctags_highlighter_update (IdeHighlighter       *highlighter,
+                              IdeHighlightCallback  callback,
+                              const GtkTextIter    *range_begin,
+                              const GtkTextIter    *range_end,
+                              GtkTextIter          *location)
 {
   GtkTextBuffer *text_buffer;
   GtkSourceBuffer *source_buffer;
@@ -228,14 +234,17 @@ ide_ctags_highlighter_finalize (GObject *object)
 }
 
 static void
+ide_ctags_highlighter_iface_init (IdeHighlighterInterface *iface)
+{
+  iface->update = ide_ctags_highlighter_update;
+}
+
+static void
 ide_ctags_highlighter_class_init (IdeCtagsHighlighterClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  IdeHighlighterClass *highlighter_class = IDE_HIGHLIGHTER_CLASS (klass);
 
   object_class->finalize = ide_ctags_highlighter_finalize;
-  highlighter_class->update = ide_ctags_highlighter_real_update;
-
 }
 
 static void

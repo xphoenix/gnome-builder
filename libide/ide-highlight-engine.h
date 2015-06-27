@@ -20,13 +20,22 @@
 #define IDE_HIGHLIGHT_ENGINE_H
 
 #include "ide-buffer.h"
-#include "ide-highlighter.h"
 
 G_BEGIN_DECLS
 
 #define IDE_TYPE_HIGHLIGHT_ENGINE (ide_highlight_engine_get_type())
 
 G_DECLARE_FINAL_TYPE (IdeHighlightEngine, ide_highlight_engine, IDE, HIGHLIGHT_ENGINE, GObject)
+
+typedef enum
+{
+  IDE_HIGHLIGHT_STOP,
+  IDE_HIGHLIGHT_CONTINUE,
+} IdeHighlightResult;
+
+typedef IdeHighlightResult (*IdeHighlightCallback) (const GtkTextIter *begin,
+                                                    const GtkTextIter *end,
+                                                    const gchar       *style_name);
 
 IdeHighlightEngine *ide_highlight_engine_new             (IdeBuffer          *buffer);
 IdeBuffer          *ide_highlight_engine_get_buffer      (IdeHighlightEngine *self);

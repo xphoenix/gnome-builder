@@ -418,7 +418,7 @@ glib_enum_headers =  \
 	doap/ide-doap.h \
 	ide-buffer.h \
 	ide-diagnostic.h \
-	ide-highlighter.h \
+	ide-highlight-engine.h \
 	ide-indent-style.h \
 	ide-source-view.h \
 	ide-symbol.h \
