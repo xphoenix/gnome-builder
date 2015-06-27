@@ -27,11 +27,11 @@ G_BEGIN_DECLS
 
 #define IDE_TYPE_SYMBOL_RESOLVER (ide_symbol_resolver_get_type())
 
-G_DECLARE_DERIVABLE_TYPE (IdeSymbolResolver, ide_symbol_resolver, IDE, SYMBOL_RESOLVER, IdeObject)
+G_DECLARE_INTERFACE (IdeSymbolResolver, ide_symbol_resolver, IDE, SYMBOL_RESOLVER, IdeObject)
 
-struct _IdeSymbolResolverClass
+struct _IdeSymbolResolverInterface
 {
-  IdeObjectClass parent;
+  GTypeInterface parent_iface;
 
   void           (*lookup_symbol_async)    (IdeSymbolResolver    *self,
                                             IdeSourceLocation    *location,

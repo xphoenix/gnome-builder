@@ -28,10 +28,16 @@
 
 struct _IdeClangSymbolResolver
 {
-  IdeSymbolResolver parent_instance;
+  IdeObject parent_instance;
 };
 
-G_DEFINE_TYPE (IdeClangSymbolResolver, ide_clang_symbol_resolver, IDE_TYPE_SYMBOL_RESOLVER)
+static void symbol_resolver_init (IdeSymbolResolverInterface *iface);
+
+G_DEFINE_TYPE_WITH_CODE (IdeClangSymbolResolver,
+                         ide_clang_symbol_resolver,
+                         IDE_TYPE_OBJECT,
+                         G_IMPLEMENT_INTERFACE (IDE_TYPE_SYMBOL_RESOLVER,
+                                                symbol_resolver_init))
 
 static void
 ide_clang_symbol_resolver_lookup_symbol_cb (GObject      *object,
@@ -321,16 +327,19 @@ ide_clang_symbol_resolver_get_symbol_tree_finish (IdeSymbolResolver  *resolver,
 }
 
 static void
+symbol_resolver_init (IdeSymbolResolverInterface *iface)
+{
+  iface->lookup_symbol_async = ide_clang_symbol_resolver_lookup_symbol_async;
+  iface->lookup_symbol_finish = ide_clang_symbol_resolver_lookup_symbol_finish;
+  iface->get_symbols_async = ide_clang_symbol_resolver_get_symbols_async;
+  iface->get_symbols_finish = ide_clang_symbol_resolver_get_symbols_finish;
+  iface->get_symbol_tree_async = ide_clang_symbol_resolver_get_symbol_tree_async;
+  iface->get_symbol_tree_finish = ide_clang_symbol_resolver_get_symbol_tree_finish;
+}
+
+static void
 ide_clang_symbol_resolver_class_init (IdeClangSymbolResolverClass *klass)
 {
-  IdeSymbolResolverClass *symbol_resolver_class = IDE_SYMBOL_RESOLVER_CLASS (klass);
-
-  symbol_resolver_class->lookup_symbol_async = ide_clang_symbol_resolver_lookup_symbol_async;
-  symbol_resolver_class->lookup_symbol_finish = ide_clang_symbol_resolver_lookup_symbol_finish;
-  symbol_resolver_class->get_symbols_async = ide_clang_symbol_resolver_get_symbols_async;
-  symbol_resolver_class->get_symbols_finish = ide_clang_symbol_resolver_get_symbols_finish;
-  symbol_resolver_class->get_symbol_tree_async = ide_clang_symbol_resolver_get_symbol_tree_async;
-  symbol_resolver_class->get_symbol_tree_finish = ide_clang_symbol_resolver_get_symbol_tree_finish;
 }
 
 static void

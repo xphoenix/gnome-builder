@@ -26,7 +26,8 @@ G_BEGIN_DECLS
 #define IDE_TYPE_CLANG_SYMBOL_RESOLVER (ide_clang_symbol_resolver_get_type())
 
 G_DECLARE_FINAL_TYPE (IdeClangSymbolResolver, ide_clang_symbol_resolver,
-                      IDE, CLANG_SYMBOL_RESOLVER, IdeSymbolResolver)
+                      IDE, CLANG_SYMBOL_RESOLVER,
+                      IdeObject)
 
 G_END_DECLS
 

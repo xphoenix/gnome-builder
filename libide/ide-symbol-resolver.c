@@ -19,15 +19,10 @@
 #include "ide-file.h"
 #include "ide-symbol-resolver.h"
 
-G_DEFINE_ABSTRACT_TYPE (IdeSymbolResolver, ide_symbol_resolver, IDE_TYPE_OBJECT)
+G_DEFINE_INTERFACE (IdeSymbolResolver, ide_symbol_resolver, IDE_TYPE_OBJECT)
 
 static void
-ide_symbol_resolver_class_init (IdeSymbolResolverClass *klass)
-{
-}
-
-static void
-ide_symbol_resolver_init (IdeSymbolResolver *self)
+ide_symbol_resolver_default_init (IdeSymbolResolverInterface *iface)
 {
 }
 
@@ -54,8 +49,7 @@ ide_symbol_resolver_lookup_symbol_async  (IdeSymbolResolver   *self,
   g_return_if_fail (location != NULL);
   g_return_if_fail (!cancellable || G_IS_CANCELLABLE (cancellable));
 
-  IDE_SYMBOL_RESOLVER_GET_CLASS (self)->
-    lookup_symbol_async (self, location, cancellable, callback, user_data);
+  IDE_SYMBOL_RESOLVER_GET_IFACE (self)->lookup_symbol_async (self, location, cancellable, callback, user_data);
 }
 
 /**
@@ -77,7 +71,7 @@ ide_symbol_resolver_lookup_symbol_finish (IdeSymbolResolver  *self,
   g_return_val_if_fail (IDE_IS_SYMBOL_RESOLVER (self), NULL);
   g_return_val_if_fail (G_IS_ASYNC_RESULT (result), NULL);
 
-  return IDE_SYMBOL_RESOLVER_GET_CLASS (self)->lookup_symbol_finish (self, result, error);
+  return IDE_SYMBOL_RESOLVER_GET_IFACE (self)->lookup_symbol_finish (self, result, error);
 }
 
 void
@@ -91,8 +85,7 @@ ide_symbol_resolver_get_symbols_async (IdeSymbolResolver   *self,
   g_return_if_fail (IDE_IS_FILE (file));
   g_return_if_fail (!cancellable || G_IS_CANCELLABLE (cancellable));
 
-  IDE_SYMBOL_RESOLVER_GET_CLASS (self)->
-    get_symbols_async (self, file, cancellable, callback, user_data);
+  IDE_SYMBOL_RESOLVER_GET_IFACE (self)->get_symbols_async (self, file, cancellable, callback, user_data);
 }
 
 /**
@@ -112,7 +105,7 @@ ide_symbol_resolver_get_symbols_finish (IdeSymbolResolver  *self,
   g_return_val_if_fail (IDE_IS_SYMBOL_RESOLVER (self), NULL);
   g_return_val_if_fail (G_IS_ASYNC_RESULT (result), NULL);
 
-  return IDE_SYMBOL_RESOLVER_GET_CLASS (self)->get_symbols_finish (self, result, error);
+  return IDE_SYMBOL_RESOLVER_GET_IFACE (self)->get_symbols_finish (self, result, error);
 }
 
 void
@@ -125,7 +118,7 @@ ide_symbol_resolver_get_symbol_tree_async (IdeSymbolResolver   *self,
   g_return_if_fail (IDE_IS_SYMBOL_RESOLVER (self));
   g_return_if_fail (G_IS_FILE (file));
 
-  IDE_SYMBOL_RESOLVER_GET_CLASS (self)->get_symbol_tree_async (self, file, cancellable, callback, user_data);
+  IDE_SYMBOL_RESOLVER_GET_IFACE (self)->get_symbol_tree_async (self, file, cancellable, callback, user_data);
 }
 
 /**
@@ -143,5 +136,5 @@ ide_symbol_resolver_get_symbol_tree_finish (IdeSymbolResolver  *self,
   g_return_val_if_fail (IDE_IS_SYMBOL_RESOLVER (self), NULL);
   g_return_val_if_fail (!result || G_IS_ASYNC_RESULT (result), NULL);
 
-  return IDE_SYMBOL_RESOLVER_GET_CLASS (self)->get_symbol_tree_finish (self, result, error);
+  return IDE_SYMBOL_RESOLVER_GET_IFACE (self)->get_symbol_tree_finish (self, result, error);
 }
