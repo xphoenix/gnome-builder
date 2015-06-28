@@ -27,13 +27,14 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (IdeExtensionPoint, ide_extension_point, IDE, EXTENSION_POINT, GObject)
 
-IdeExtensionPoint *ide_extension_point_lookup    (const gchar *name);
-void               ide_extension_point_implement (const gchar *name,
-                                                  GType        implementation_type,
-                                                  gint         priority);
-gpointer           ide_extension_point_create    (const gchar *name,
-                                                  const gchar *first_property,
-                                                  ...);
+void               ide_extension_point_register (GType        interface_type,
+                                                 const gchar *match_key,
+                                                 const gchar *priority_key);
+IdeExtensionPoint *ide_extension_point_lookup   (GType        interface_type);
+gpointer           ide_extension_point_create   (GType        interface_type,
+                                                 const gchar *match_key,
+                                                 const gchar *first_property,
+                                                 ...);
 
 G_END_DECLS
 
