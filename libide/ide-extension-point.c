@@ -351,7 +351,5 @@ ide_extension_point_create (GType        type,
       va_end (args);
     }
 
-  g_print ("Created Type: %s\n", ret ? G_OBJECT_TYPE_NAME (ret) : "<None>");
-
   return ret;
 }
