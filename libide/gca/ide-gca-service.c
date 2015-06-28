@@ -26,7 +26,7 @@
 
 struct _IdeGcaService
 {
-  IdeService       parent_instance;
+  IdeObject        parent_instance;
 
   gulong           bus_closed_handler;
 
@@ -34,7 +34,8 @@ struct _IdeGcaService
   GHashTable      *proxy_cache;
 };
 
-G_DEFINE_TYPE (IdeGcaService, ide_gca_service, IDE_TYPE_SERVICE)
+G_DEFINE_TYPE_EXTENDED (IdeGcaService, ide_gca_service, IDE_TYPE_OBJECT, 0,
+                        G_IMPLEMENT_INTERFACE (IDE_TYPE_SERVICE, NULL))
 
 static void
 on_bus_closed (GDBusConnection *bus,

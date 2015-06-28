@@ -17,6 +17,7 @@
  */
 
 #include <glib/gi18n.h>
+#include <libpeas/peas.h>
 
 #include "ide-clang-diagnostic-provider.h"
 #include "ide-clang-service.h"
@@ -25,8 +26,19 @@
 #include "ide-diagnostics.h"
 #include "ide-file.h"
 
-G_DEFINE_TYPE (IdeClangDiagnosticProvider, ide_clang_diagnostic_provider,
-               IDE_TYPE_DIAGNOSTIC_PROVIDER)
+static void diagnostic_provider_init (IdeDiagnosticProviderInterface *iface);
+
+struct _IdeClangDiagnosticProvider
+{
+  IdeObject parent_instance;
+};
+
+G_DEFINE_DYNAMIC_TYPE_EXTENDED (IdeClangDiagnosticProvider,
+                                ide_clang_diagnostic_provider,
+                                IDE_TYPE_OBJECT,
+                                0,
+                                G_IMPLEMENT_INTERFACE (IDE_TYPE_DIAGNOSTIC_PROVIDER,
+                                                       diagnostic_provider_init))
 
 static void
 get_translation_unit_cb (GObject      *object,
@@ -159,16 +171,33 @@ ide_clang_diagnostic_provider_diagnose_finish (IdeDiagnosticProvider  *provider,
 }
 
 static void
+diagnostic_provider_init (IdeDiagnosticProviderInterface *iface)
+{
+  iface->diagnose_async = ide_clang_diagnostic_provider_diagnose_async;
+  iface->diagnose_finish = ide_clang_diagnostic_provider_diagnose_finish;
+}
+
+static void
 ide_clang_diagnostic_provider_class_init (IdeClangDiagnosticProviderClass *klass)
 {
-  IdeDiagnosticProviderClass *provider_class;
+}
 
-  provider_class = IDE_DIAGNOSTIC_PROVIDER_CLASS (klass);
-  provider_class->diagnose_async = ide_clang_diagnostic_provider_diagnose_async;
-  provider_class->diagnose_finish = ide_clang_diagnostic_provider_diagnose_finish;
+static void
+ide_clang_diagnostic_provider_class_finalize (IdeClangDiagnosticProviderClass *klass)
+{
 }
 
 static void
 ide_clang_diagnostic_provider_init (IdeClangDiagnosticProvider *self)
 {
+}
+
+void
+peas_register_types (PeasObjectModule *module)
+{
+  ide_clang_diagnostic_provider_register_type (G_TYPE_MODULE (module));
+
+  peas_object_module_register_extension_type (module,
+                                              IDE_TYPE_DIAGNOSTIC_PROVIDER,
+                                              IDE_TYPE_CLANG_DIAGNOSTIC_PROVIDER);
 }

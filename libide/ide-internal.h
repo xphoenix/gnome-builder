@@ -19,12 +19,10 @@
 #ifndef IDE_PRIVATE_H
 #define IDE_PRIVATE_H
 
-#include <clang-c/Index.h>
 #include <gtksourceview/gtksource.h>
 
 #include "ide-back-forward-item.h"
 #include "ide-back-forward-list.h"
-#include "ide-clang-translation-unit.h"
 #include "ide-diagnostic.h"
 #include "ide-types.h"
 #include "ide-settings.h"

@@ -1,0 +1,11 @@
+[Plugin]
+Module=gnome-builder-plugin-clang-completion
+Name=Clang Completion
+Description=Provides auto-completion for C and C++ using Clang.
+Authors=Christian Hergert <christian@hergert.me>
+Copyright=Copyright © 2015 Christian Hergert
+Builtin=true
+Hidden=true
+Depends=gnome-builder-plugin-clang
+X-Completion-Languages=c,chdr,cpp
+X-Completion-Priority=100

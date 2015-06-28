@@ -1,4 +1,9 @@
 SUBDIRS = \
+	clang \
+	clang-completion \
+	clang-diagnostics \
+	clang-highlighter \
+	clang-symbol-resolver \
 	command-bar \
 	devhelp \
 	device-manager \

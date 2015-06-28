@@ -383,6 +383,11 @@ AC_CONFIG_FILES([
 	libide/Makefile
 
 	plugins/Makefile
+	plugins/clang/Makefile
+	plugins/clang-completion/Makefile
+	plugins/clang-highlighter/Makefile
+	plugins/clang-diagnostics/Makefile
+	plugins/clang-symbol-resolver/Makefile
 	plugins/command-bar/Makefile
 	plugins/devhelp/Makefile
 	plugins/device-manager/Makefile

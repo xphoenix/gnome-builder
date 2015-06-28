@@ -210,25 +210,6 @@ libide_1_0_la_SOURCES = \
 	c/ide-c-format-provider.h \
 	c/ide-c-indenter.c \
 	c/ide-c-indenter.h \
-	clang/ide-clang-completion-item.c \
-	clang/ide-clang-completion-item.h \
-	clang/ide-clang-completion-provider.c \
-	clang/ide-clang-completion-provider.h \
-	clang/ide-clang-diagnostic-provider.c \
-	clang/ide-clang-diagnostic-provider.h \
-	clang/ide-clang-highlighter.c \
-	clang/ide-clang-highlighter.h \
-	clang/ide-clang-private.h \
-	clang/ide-clang-service.c \
-	clang/ide-clang-service.h \
-	clang/ide-clang-symbol-resolver.c \
-	clang/ide-clang-symbol-resolver.h \
-	clang/ide-clang-symbol-node.c \
-	clang/ide-clang-symbol-node.h \
-	clang/ide-clang-symbol-tree.c \
-	clang/ide-clang-symbol-tree.h \
-	clang/ide-clang-translation-unit.c \
-	clang/ide-clang-translation-unit.h \
 	ctags/ide-ctags-builder.c \
 	ctags/ide-ctags-builder.h \
 	ctags/ide-ctags-completion-item.c \
@@ -334,7 +315,6 @@ libide_1_0_la_SOURCES = \
 
 libide_1_0_la_includes = \
 	$(DEBUG_CFLAGS) \
-	$(CLANG_CFLAGS) \
 	-DLIBDIR="\"$(libdir)\"" \
 	-I$(top_builddir)/libide \
 	-I$(top_srcdir)/contrib/egg \
@@ -344,7 +324,6 @@ libide_1_0_la_includes = \
 	-I$(srcdir) \
 	-I$(srcdir)/autotools \
 	-I$(srcdir)/c \
-	-I$(srcdir)/clang \
 	-I$(srcdir)/ctags \
 	-I$(srcdir)/directory \
 	-I$(srcdir)/doap \
@@ -395,10 +374,8 @@ libide_1_0_la_LDFLAGS = \
 	$(NULL)
 
 libide_1_0_la_LIBADD = \
-	$(CLANG_LDFLAGS) \
 	$(LIBIDE_LIBS) \
 	$(SHM_LIB) \
-	-lclang \
 	-lm \
 	$(top_builddir)/contrib/egg/libegg.la \
 	$(top_builddir)/contrib/libeditorconfig/libeditorconfig.la \

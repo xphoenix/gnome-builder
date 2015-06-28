@@ -23,8 +23,6 @@
 #include "ide-c-format-provider.h"
 #include "ide-c-indenter.h"
 #include "ide-c-language.h"
-#include "ide-clang-completion-provider.h"
-#include "ide-clang-diagnostic-provider.h"
 #include "ide-diagnostician.h"
 #include "ide-extension-point.h"
 #include "ide-internal.h"
@@ -51,8 +49,10 @@ ide_c_language_get_completion_providers (IdeLanguage *language)
   g_return_val_if_fail (IDE_IS_C_LANGUAGE (language), NULL);
 
   providers = IDE_LANGUAGE_CLASS (ide_c_language_parent_class)->get_completion_providers (language);
+#if 0
   providers = g_list_append (providers, g_object_new (IDE_TYPE_C_FORMAT_PROVIDER, NULL));
   providers = g_list_append (providers, g_object_new (IDE_TYPE_CLANG_COMPLETION_PROVIDER, NULL));
+#endif
 
   return providers;
 }
@@ -148,22 +148,9 @@ ide_c_language_initiable_init (GInitable     *initable,
       (g_strcmp0 (id, "cpp") == 0))
     {
       IdeContext *context;
-      IdeDiagnosticProvider *provider;
       g_autofree gchar *path = NULL;
 
       context = ide_object_get_context (IDE_OBJECT (initable));
-
-      /*
-       * Create our diagnostician using clang as a backend.
-       */
-      priv->diagnostician = g_object_new (IDE_TYPE_DIAGNOSTICIAN,
-                                          "context", context,
-                                          NULL);
-      provider = g_object_new (IDE_TYPE_CLANG_DIAGNOSTIC_PROVIDER,
-                               "context", context,
-                               NULL);
-      _ide_diagnostician_add_provider (priv->diagnostician, provider);
-      g_clear_object (&provider);
 
       /*
        * Create our indenter to provide as-you-type indentation.

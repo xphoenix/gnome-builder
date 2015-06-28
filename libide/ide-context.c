@@ -521,11 +521,8 @@ ide_context_dispose (GObject *object)
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       IdeService *service = value;
-
       g_assert (IDE_IS_SERVICE (service));
-
-      if (ide_service_get_running (service))
-        ide_service_stop (service);
+      ide_service_stop (service);
     }
 
   G_OBJECT_CLASS (ide_context_parent_class)->dispose (object);
@@ -1212,9 +1209,8 @@ ide_context_init_services (gpointer             source_object,
   while (g_hash_table_iter_next (&hiter, NULL, &v))
     {
       IdeService *service = v;
-
-      if (!ide_service_get_running (service))
-        ide_service_start (service);
+      g_assert (IDE_IS_SERVICE (service));
+      ide_service_start (service);
     }
 
   g_task_return_boolean (task, TRUE);

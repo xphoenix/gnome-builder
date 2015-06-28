@@ -21,6 +21,7 @@
 #include <devhelp/dh-assistant-view.h>
 #include <devhelp/dh-book-manager.h>
 #include <glib/gi18n.h>
+#include <libpeas/peas.h>
 
 #include "ide-buffer.h"
 #include "ide-clang-completion-item.h"
@@ -56,12 +57,12 @@ typedef struct
 
 static void completion_provider_iface_init (GtkSourceCompletionProviderIface *);
 
-G_DEFINE_TYPE_EXTENDED (IdeClangCompletionProvider,
-                        ide_clang_completion_provider,
-                        G_TYPE_OBJECT,
-                        0,
-                        G_IMPLEMENT_INTERFACE (GTK_SOURCE_TYPE_COMPLETION_PROVIDER,
-                                               completion_provider_iface_init))
+G_DEFINE_DYNAMIC_TYPE_EXTENDED (IdeClangCompletionProvider,
+                                ide_clang_completion_provider,
+                                G_TYPE_OBJECT,
+                                0,
+                                G_IMPLEMENT_INTERFACE (GTK_SOURCE_TYPE_COMPLETION_PROVIDER,
+                                                       completion_provider_iface_init))
 
 static DhBookManager *
 get_book_manager (void)
@@ -201,6 +202,11 @@ ide_clang_completion_provider_class_init (IdeClangCompletionProviderClass *klass
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = ide_clang_completion_provider_finalize;
+}
+
+static void
+ide_clang_completion_provider_class_finalize (IdeClangCompletionProviderClass *klass)
+{
 }
 
 static void
@@ -536,4 +542,14 @@ completion_provider_iface_init (GtkSourceCompletionProviderIface *iface)
   iface->get_info_widget = ide_clang_completion_provider_get_info_widget;
   iface->update_info = ide_clang_completion_provider_update_info;
   iface->get_priority = ide_clang_completion_provider_get_priority;
+}
+
+void
+peas_register_types (PeasObjectModule *module)
+{
+  ide_clang_completion_provider_register_type (G_TYPE_MODULE (module));
+
+  peas_object_module_register_extension_type (module,
+                                              GTK_SOURCE_TYPE_COMPLETION_PROVIDER,
+                                              IDE_TYPE_CLANG_COMPLETION_PROVIDER);
 }

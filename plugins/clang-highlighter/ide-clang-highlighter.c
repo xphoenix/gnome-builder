@@ -17,6 +17,8 @@
  */
 
 #include <glib/gi18n.h>
+#include <libpeas/peas.h>
+#include <ide.h>
 
 #include "ide-buffer.h"
 #include "ide-clang-highlighter.h"
@@ -31,9 +33,9 @@ struct _IdeClangHighlighter
 
 static void ide_clang_highlighter_iface_init (IdeHighlighterInterface *iface);
 
-G_DEFINE_TYPE_WITH_CODE (IdeClangHighlighter, ide_clang_highlighter, IDE_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (IDE_TYPE_HIGHLIGHTER,
-                                                ide_clang_highlighter_iface_init))
+G_DEFINE_DYNAMIC_TYPE_EXTENDED (IdeClangHighlighter, ide_clang_highlighter, IDE_TYPE_OBJECT, 0,
+                                G_IMPLEMENT_INTERFACE (IDE_TYPE_HIGHLIGHTER,
+                                                       ide_clang_highlighter_iface_init))
 
 static inline gboolean
 accepts_char (gunichar ch)
@@ -145,6 +147,11 @@ ide_clang_highlighter_iface_init (IdeHighlighterInterface *iface)
 }
 
 static void
+ide_clang_highlighter_class_finalize (IdeClangHighlighterClass *klass)
+{
+}
+
+static void
 ide_clang_highlighter_class_init (IdeClangHighlighterClass *klass)
 {
 }
@@ -152,4 +159,14 @@ ide_clang_highlighter_class_init (IdeClangHighlighterClass *klass)
 static void
 ide_clang_highlighter_init (IdeClangHighlighter *self)
 {
+}
+
+void
+peas_register_types (PeasObjectModule *module)
+{
+  ide_clang_highlighter_register_type (G_TYPE_MODULE (module));
+
+  peas_object_module_register_extension_type (module,
+                                              IDE_TYPE_HIGHLIGHTER,
+                                              IDE_TYPE_CLANG_HIGHLIGHTER);
 }

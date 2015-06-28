@@ -36,7 +36,7 @@
 
 struct _IdeCtagsService
 {
-  IdeService                   parent_instance;
+  IdeObject                    parent_instance;
 
   GtkSourceCompletionProvider *provider;
   IdeHighlighter              *highlighter;
@@ -47,7 +47,10 @@ struct _IdeCtagsService
   guint                        miner_ran : 1;
 };
 
-G_DEFINE_TYPE (IdeCtagsService, ide_ctags_service, IDE_TYPE_SERVICE)
+static void service_iface_init (IdeServiceInterface *iface);
+
+G_DEFINE_TYPE_EXTENDED (IdeCtagsService, ide_ctags_service, IDE_TYPE_OBJECT, 0,
+                        G_IMPLEMENT_INTERFACE (IDE_TYPE_SERVICE, service_iface_init))
 
 static void
 ide_ctags_service_build_index_init_cb (GObject      *object,
@@ -404,16 +407,19 @@ ide_ctags_service_finalize (GObject *object)
 }
 
 static void
+service_iface_init (IdeServiceInterface *iface)
+{
+  iface->start = ide_ctags_service_start;
+  iface->stop = ide_ctags_service_stop;
+}
+
+static void
 ide_ctags_service_class_init (IdeCtagsServiceClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  IdeServiceClass *service_class = IDE_SERVICE_CLASS (klass);
 
   object_class->constructed = ide_ctags_service_constructed;
   object_class->finalize = ide_ctags_service_finalize;
-
-  service_class->start = ide_ctags_service_start;
-  service_class->stop = ide_ctags_service_stop;
 }
 
 static void

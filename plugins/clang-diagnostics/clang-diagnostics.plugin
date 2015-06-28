@@ -1,0 +1,11 @@
+[Plugin]
+Module=gnome-builder-plugin-clang-diagnostics
+Name=Clang Diagnostics
+Description=Uses clang to provide diagnostics as you type, such as errors and warnings.
+Authors=Christian Hergert <christian@hergert.me>
+Copyright=Copyright © 2015 Christian Hergert
+Builtin=true
+Hidden=true
+Depends=gnome-builder-plugin-clang
+X-Diagnostic-Languages=c,chdr,cpp
+X-Diagnostic-Priority=100

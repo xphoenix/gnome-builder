@@ -27,7 +27,7 @@ G_BEGIN_DECLS
 
 #define IDE_TYPE_GCA_SERVICE (ide_gca_service_get_type())
 
-G_DECLARE_FINAL_TYPE (IdeGcaService, ide_gca_service, IDE, GCA_SERVICE, IdeService)
+G_DECLARE_FINAL_TYPE (IdeGcaService, ide_gca_service, IDE, GCA_SERVICE, IdeObject)
 
 void        ide_gca_service_get_proxy_async  (IdeGcaService        *self,
                                               const gchar          *language_id,

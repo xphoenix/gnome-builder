@@ -37,7 +37,7 @@
 
 struct _IdeGcaDiagnosticProvider
 {
-  IdeDiagnosticProvider parent_instance;
+  IdeObject parent_instance;
 
   GHashTable *document_cache;
 };
@@ -50,8 +50,11 @@ typedef struct
   gchar          *language_id;
 } DiagnoseState;
 
-G_DEFINE_TYPE (IdeGcaDiagnosticProvider, ide_gca_diagnostic_provider,
-               IDE_TYPE_DIAGNOSTIC_PROVIDER)
+static void diagnostic_provider_init (IdeDiagnosticProviderInterface *iface);
+
+G_DEFINE_TYPE_EXTENDED (IdeGcaDiagnosticProvider, ide_gca_diagnostic_provider, IDE_TYPE_OBJECT, 0,
+                        G_IMPLEMENT_INTERFACE (IDE_TYPE_DIAGNOSTIC_PROVIDER,
+                                               diagnostic_provider_init))
 
 static void
 diagnose_state_free (gpointer data)
@@ -440,20 +443,22 @@ ide_gca_diagnostic_provider_finalize (GObject *object)
 }
 
 static void
+diagnostic_provider_init (IdeDiagnosticProviderInterface *iface)
+{
+  iface->diagnose_async = ide_gca_diagnostic_provider_diagnose_async;
+  iface->diagnose_finish = ide_gca_diagnostic_provider_diagnose_finish;
+}
+
+static void
 ide_gca_diagnostic_provider_class_init (IdeGcaDiagnosticProviderClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  IdeDiagnosticProviderClass *provider_class = IDE_DIAGNOSTIC_PROVIDER_CLASS (klass);
 
   object_class->finalize = ide_gca_diagnostic_provider_finalize;
-
-  provider_class->diagnose_async = ide_gca_diagnostic_provider_diagnose_async;
-  provider_class->diagnose_finish = ide_gca_diagnostic_provider_diagnose_finish;
 }
 
 static void
 ide_gca_diagnostic_provider_init (IdeGcaDiagnosticProvider *self)
 {
-  self->document_cache = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                                g_free, g_object_unref);
+  self->document_cache = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
 }

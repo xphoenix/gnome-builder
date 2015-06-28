@@ -18,6 +18,8 @@
 
 #define G_LOG_DOMAIN "clang-symbol-resolver"
 
+#include <libpeas/peas.h>
+
 #include "ide-context.h"
 #include "ide-clang-service.h"
 #include "ide-clang-symbol-resolver.h"
@@ -33,11 +35,12 @@ struct _IdeClangSymbolResolver
 
 static void symbol_resolver_init (IdeSymbolResolverInterface *iface);
 
-G_DEFINE_TYPE_WITH_CODE (IdeClangSymbolResolver,
-                         ide_clang_symbol_resolver,
-                         IDE_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (IDE_TYPE_SYMBOL_RESOLVER,
-                                                symbol_resolver_init))
+G_DEFINE_DYNAMIC_TYPE_EXTENDED (IdeClangSymbolResolver,
+                                ide_clang_symbol_resolver,
+                                IDE_TYPE_OBJECT,
+                                0,
+                                G_IMPLEMENT_INTERFACE (IDE_TYPE_SYMBOL_RESOLVER,
+                                                       symbol_resolver_init))
 
 static void
 ide_clang_symbol_resolver_lookup_symbol_cb (GObject      *object,
@@ -343,6 +346,21 @@ ide_clang_symbol_resolver_class_init (IdeClangSymbolResolverClass *klass)
 }
 
 static void
+ide_clang_symbol_resolver_class_finalize (IdeClangSymbolResolverClass *klass)
+{
+}
+
+static void
 ide_clang_symbol_resolver_init (IdeClangSymbolResolver *self)
 {
+}
+
+void
+peas_register_types (PeasObjectModule *module)
+{
+  ide_clang_symbol_resolver_register_type (G_TYPE_MODULE (module));
+
+  peas_object_module_register_extension_type (module,
+                                              IDE_TYPE_SYMBOL_RESOLVER,
+                                              IDE_TYPE_CLANG_SYMBOL_RESOLVER);
 }

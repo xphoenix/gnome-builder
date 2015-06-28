@@ -28,7 +28,7 @@ G_BEGIN_DECLS
 
 #define IDE_TYPE_CTAGS_SERVICE (ide_ctags_service_get_type())
 
-G_DECLARE_FINAL_TYPE (IdeCtagsService, ide_ctags_service, IDE, CTAGS_SERVICE, IdeService)
+G_DECLARE_FINAL_TYPE (IdeCtagsService, ide_ctags_service, IDE, CTAGS_SERVICE, IdeObject)
 
 GtkSourceCompletionProvider *ide_ctags_service_get_provider    (IdeCtagsService *self);
 IdeHighlighter              *ide_ctags_service_get_highlighter (IdeCtagsService *self);

@@ -17,6 +17,7 @@
  */
 #include <glib/gi18n.h>
 
+#include "ide-context.h"
 #include "ide-highlighter.h"
 
 G_DEFINE_INTERFACE (IdeHighlighter, ide_highlighter, IDE_TYPE_OBJECT)
@@ -41,6 +42,13 @@ ide_highlighter_default_init (IdeHighlighterInterface *iface)
 {
   iface->set_engine = dummy_set_engine;
   iface->update = dummy_update;
+
+  g_object_interface_install_property (iface,
+                                       g_param_spec_object ("context",
+                                                            "Context",
+                                                            "Context",
+                                                            IDE_TYPE_CONTEXT,
+                                                            (G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS)));
 }
 
 /**

@@ -24,7 +24,6 @@
 #include "egg-counter.h"
 #include "egg-task-cache.h"
 
-#include "ide-clang-highlighter.h"
 #include "ide-build-system.h"
 #include "ide-clang-private.h"
 #include "ide-clang-service.h"
@@ -36,11 +35,16 @@
 #include "ide-unsaved-file.h"
 #include "ide-unsaved-files.h"
 
+#define IDE_CLANG_HIGHLIGHTER_TYPE          "c:type"
+#define IDE_CLANG_HIGHLIGHTER_FUNCTION_NAME "def:function"
+#define IDE_CLANG_HIGHLIGHTER_ENUM_NAME     "def:constant"
+#define IDE_CLANG_HIGHLIGHTER_MACRO_NAME    "c:macro-name"
+
 #define DEFAULT_EVICTION_MSEC (60 * 1000)
 
 struct _IdeClangService
 {
-  IdeService    parent_instance;
+  IdeObject     parent_instance;
 
   CXIndex       index;
   GCancellable *cancellable;
@@ -65,7 +69,10 @@ typedef struct
   const gchar       *filename;
 } IndexRequest;
 
-G_DEFINE_TYPE (IdeClangService, ide_clang_service, IDE_TYPE_SERVICE)
+static void service_iface_init (IdeServiceInterface *iface);
+
+G_DEFINE_TYPE_EXTENDED (IdeClangService, ide_clang_service, IDE_TYPE_OBJECT, 0,
+                        G_IMPLEMENT_INTERFACE (IDE_TYPE_SERVICE, service_iface_init))
 
 EGG_DEFINE_COUNTER (ParseAttempts,
                     "Clang",
@@ -551,8 +558,6 @@ ide_clang_service_start (IdeService *service)
   self->index = clang_createIndex (0, 0);
   clang_CXIndex_setGlobalOptions (self->index,
                                   CXGlobalOpt_ThreadBackgroundPriorityForAll);
-
-  IDE_SERVICE_CLASS (ide_clang_service_parent_class)->start (service);
 }
 
 static void
@@ -565,8 +570,6 @@ ide_clang_service_stop (IdeService *service)
 
   g_cancellable_cancel (self->cancellable);
   g_clear_object (&self->units_cache);
-
-  IDE_SERVICE_CLASS (ide_clang_service_parent_class)->start (service);
 }
 
 static void
@@ -596,16 +599,19 @@ ide_clang_service_finalize (GObject *object)
 }
 
 static void
+service_iface_init (IdeServiceInterface *iface)
+{
+  iface->start = ide_clang_service_start;
+  iface->stop = ide_clang_service_stop;
+}
+
+static void
 ide_clang_service_class_init (IdeClangServiceClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  IdeServiceClass *service_class = IDE_SERVICE_CLASS (klass);
 
   object_class->dispose = ide_clang_service_dispose;
   object_class->finalize = ide_clang_service_finalize;
-
-  service_class->start = ide_clang_service_start;
-  service_class->stop = ide_clang_service_stop;
 }
 
 static void

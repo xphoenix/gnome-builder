@@ -19,15 +19,14 @@
 #ifndef IDE_CLANG_SERVICE_H
 #define IDE_CLANG_SERVICE_H
 
-#include "ide-service.h"
-
 #include "ide-clang-translation-unit.h"
+#include "ide-service.h"
 
 G_BEGIN_DECLS
 
 #define IDE_TYPE_CLANG_SERVICE (ide_clang_service_get_type())
 
-G_DECLARE_FINAL_TYPE (IdeClangService, ide_clang_service, IDE, CLANG_SERVICE, IdeService)
+G_DECLARE_FINAL_TYPE (IdeClangService, ide_clang_service, IDE, CLANG_SERVICE, IdeObject)
 
 void                     ide_clang_service_get_translation_unit_async  (IdeClangService      *self,
                                                                         IdeFile              *file,

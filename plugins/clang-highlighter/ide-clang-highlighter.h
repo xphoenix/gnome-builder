@@ -1,4 +1,4 @@
-/* ide-clang-diagnostic-provider.h
+/* ide-clang-highlighter.h
  *
  * Copyright (C) 2015 Christian Hergert <christian@hergert.me>
  *
@@ -16,25 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef IDE_CLANG_DIAGNOSTIC_PROVIDER_H
-#define IDE_CLANG_DIAGNOSTIC_PROVIDER_H
+#ifndef IDE_CLANG_HIGHLIGHTER_H
+#define IDE_CLANG_HIGHLIGHTER_H
 
-#include "ide-diagnostic-provider.h"
+#include "ide-highlighter.h"
 
 G_BEGIN_DECLS
 
-#define IDE_TYPE_CLANG_DIAGNOSTIC_PROVIDER (ide_clang_diagnostic_provider_get_type())
+#define IDE_TYPE_CLANG_HIGHLIGHTER (ide_clang_highlighter_get_type())
 
-G_DECLARE_FINAL_TYPE (IdeClangDiagnosticProvider,
-                      ide_clang_diagnostic_provider,
-                      IDE, CLANG_DIAGNOSTIC_PROVIDER,
-                      IdeDiagnosticProvider)
-
-struct _IdeClangDiagnosticProvider
-{
-  IdeDiagnosticProvider parent_instance;
-};
+G_DECLARE_FINAL_TYPE (IdeClangHighlighter, ide_clang_highlighter, IDE, CLANG_HIGHLIGHTER, IdeObject)
 
 G_END_DECLS
 
-#endif /* IDE_CLANG_DIAGNOSTIC_PROVIDER_H */
+#endif /* IDE_CLANG_HIGHLIGHTER_H */

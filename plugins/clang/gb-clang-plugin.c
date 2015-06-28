@@ -1,4 +1,4 @@
-/* ide-gca-diagnostic-provider.h
+/* gb-clang-plugin.c
  *
  * Copyright (C) 2015 Christian Hergert <christian@hergert.me>
  *
@@ -16,19 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef IDE_GCA_DIAGNOSTIC_PROVIDER_H
-#define IDE_GCA_DIAGNOSTIC_PROVIDER_H
+#include <libpeas/peas.h>
+#include <ide.h>
 
-#include "ide-diagnostic-provider.h"
+#include "ide-clang-completion-item.h"
+#include "ide-clang-service.h"
 
-G_BEGIN_DECLS
+void
+peas_register_types (PeasObjectModule *module)
+{
+  peas_object_module_register_extension_type (module,
+                                              IDE_TYPE_SERVICE,
+                                              IDE_TYPE_CLANG_SERVICE);
 
-#define IDE_TYPE_GCA_DIAGNOSTIC_PROVIDER (ide_gca_diagnostic_provider_get_type())
-
-G_DECLARE_FINAL_TYPE (IdeGcaDiagnosticProvider, ide_gca_diagnostic_provider,
-                      IDE, GCA_DIAGNOSTIC_PROVIDER,
-                      IdeObject)
-
-G_END_DECLS
-
-#endif /* IDE_GCA_DIAGNOSTIC_PROVIDER_H */
+  g_type_ensure (IDE_TYPE_SERVICE);
+  g_type_ensure (IDE_TYPE_CLANG_TRANSLATION_UNIT);
+  g_type_ensure (IDE_TYPE_CLANG_COMPLETION_ITEM);
+}

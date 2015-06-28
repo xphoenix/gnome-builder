@@ -581,15 +581,12 @@ ide_buffer_reload_highlighter (IdeBuffer *self)
   if (language != NULL)
     {
       const gchar *lang_id;
-      gchar *name;
 
       lang_id = ide_language_get_id (language);
-      name = g_strdup_printf ("org.gnome.builder.highlighter.%s", lang_id);
-      point = ide_extension_point_lookup (name);
-      highlighter = ide_extension_point_create (name,
+      point = ide_extension_point_lookup (IDE_TYPE_HIGHLIGHTER);
+      highlighter = ide_extension_point_create (IDE_TYPE_HIGHLIGHTER, lang_id,
                                                 "context", priv->context,
                                                 NULL);
-      g_free (name);
     }
 
   if (priv->highlight_engine != NULL)
@@ -618,15 +615,12 @@ ide_buffer_reload_symbol_resolver (IdeBuffer *self)
   if (language != NULL)
     {
       const gchar *lang_id;
-      gchar *name;
 
       lang_id = ide_language_get_id (language);
-      name = g_strdup_printf ("org.gnome.builder.symbol-resolver.%s", lang_id);
-      point = ide_extension_point_lookup (name);
-      symbol_resolver = ide_extension_point_create (name,
+      point = ide_extension_point_lookup (IDE_TYPE_SYMBOL_RESOLVER);
+      symbol_resolver = ide_extension_point_create (IDE_TYPE_SYMBOL_RESOLVER, lang_id,
                                                     "context", priv->context,
                                                     NULL);
-      g_free (name);
     }
 
   g_set_object (&priv->symbol_resolver, symbol_resolver);
