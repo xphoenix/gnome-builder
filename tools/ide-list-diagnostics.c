@@ -23,6 +23,7 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <ide.h>
+#include <libpeas/peas.h>
 #include <stdlib.h>
 
 static GMainLoop *gMainLoop;
@@ -217,7 +218,7 @@ context_cb (GObject      *object,
 {
   g_autoptr(IdeContext) context = NULL;
   g_autoptr(GError) error = NULL;
-  IdeDiagnostician *diagnostician;
+  g_autoptr(IdeDiagnostician) diagnostician = NULL;
   IdeLanguage *language;
   IdeProject *project;
   IdeFile *file;
@@ -251,12 +252,12 @@ context_cb (GObject      *object,
     }
 
   language = ide_file_get_language (file);
-  diagnostician = ide_language_get_diagnostician (language);
+  diagnostician = ide_diagnostician_new (context, ide_language_get_source_language (language));
 
-  if (!diagnostician)
+  if (!ide_diagnostician_is_ready (diagnostician))
     {
-      g_printerr (_("No diagnostician for language \"%s\"\n"),
-                  ide_language_get_name (language));
+      g_printerr (_("No diagnostic providers for language \"%s\"\n"),
+                  ide_language_get_id (language));
       quit (EXIT_FAILURE);
       return;
     }
@@ -266,6 +267,53 @@ context_cb (GObject      *object,
                                     NULL,
                                     diagnose_cb,
                                     g_object_ref (context));
+}
+
+/*
+ * TODO: We should make this more generic.
+ */
+static void
+load_plugins (void)
+{
+  PeasEngine *engine;
+  const GList *list;
+
+  engine = peas_engine_get_default ();
+
+  if (g_getenv ("GB_IN_TREE_PLUGINS") != NULL)
+    {
+      GDir *dir;
+
+      if ((dir = g_dir_open ("plugins", 0, NULL)))
+        {
+          const gchar *name;
+
+          while ((name = g_dir_read_name (dir)))
+            {
+              gchar *path;
+
+              path = g_build_filename ("plugins", name, NULL);
+              peas_engine_prepend_search_path (engine, path, path);
+              g_free (path);
+            }
+
+          g_dir_close (dir);
+        }
+    }
+  else
+    {
+      peas_engine_prepend_search_path (engine,
+                                       PACKAGE_LIBDIR"/gnome-builder/plugins",
+                                       PACKAGE_DATADIR"/gnome-builder/plugins");
+    }
+
+  list = peas_engine_get_plugin_list (engine);
+
+  for (; list; list = list->next)
+    {
+      if (peas_plugin_info_is_builtin (list->data))
+        peas_engine_load_plugin (engine, list->data);
+    }
 }
 
 gint
@@ -307,6 +355,8 @@ main (gint   argc,
       g_printerr ("usage: %s [PROJECT_FILE] TARGET_FILE\n", argv [0]);
       return EXIT_FAILURE;
     }
+
+  load_plugins ();
 
   gFile = g_file_new_for_path (path);
 

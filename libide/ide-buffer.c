@@ -60,6 +60,7 @@
 typedef struct
 {
   IdeContext             *context;
+  IdeDiagnostician       *diagnostician;
   IdeDiagnostics         *diagnostics;
   GHashTable             *diagnostics_line_cache;
   IdeFile                *file;
@@ -494,35 +495,29 @@ ide_buffer__diagnose_timeout_cb (gpointer user_data)
 {
   IdeBuffer *self = user_data;
   IdeBufferPrivate *priv = ide_buffer_get_instance_private (self);
+  GtkSourceLanguage *language;
 
   g_assert (IDE_IS_BUFFER (self));
 
   priv->diagnose_timeout = 0;
 
-  if (priv->file)
+  /*
+   * FIXME: Why are we getting a diagnostician with a NULL language sometimes?
+   */
+  language = gtk_source_buffer_get_language (GTK_SOURCE_BUFFER (self));
+  if (ide_diagnostician_get_language (priv->diagnostician) != language)
+    ide_diagnostician_set_language (priv->diagnostician, language);
+
+  if ((priv->file != NULL) && ide_diagnostician_is_ready (priv->diagnostician))
     {
-      IdeLanguage *language;
+      priv->diagnostics_dirty = FALSE;
+      priv->in_diagnose = TRUE;
+      g_object_notify_by_pspec (G_OBJECT (self), gParamSpecs [PROP_BUSY]);
 
-      language = ide_file_get_language (priv->file);
-
-      if (language)
-        {
-          IdeDiagnostician *diagnostician;
-
-          diagnostician = ide_language_get_diagnostician (language);
-
-          if (diagnostician)
-            {
-              priv->diagnostics_dirty = FALSE;
-              priv->in_diagnose = TRUE;
-              g_object_notify_by_pspec (G_OBJECT (self), gParamSpecs [PROP_BUSY]);
-
-              ide_buffer_sync_to_unsaved_files (self);
-              ide_diagnostician_diagnose_async (diagnostician, priv->file, NULL,
-                                                ide_buffer__diagnostician_diagnose_cb,
-                                                g_object_ref (self));
-            }
-        }
+      ide_buffer_sync_to_unsaved_files (self);
+      ide_diagnostician_diagnose_async (priv->diagnostician, priv->file, NULL,
+                                        ide_buffer__diagnostician_diagnose_cb,
+                                        g_object_ref (self));
     }
 
   return G_SOURCE_REMOVE;
@@ -905,6 +900,7 @@ ide_buffer__file_notify_language (IdeBuffer  *self,
                                   GParamSpec *pspec,
                                   IdeFile    *file)
 {
+  IdeBufferPrivate *priv = ide_buffer_get_instance_private (self);
   GtkSourceLanguage *source_language;
   IdeLanguage *language;
 
@@ -920,6 +916,7 @@ ide_buffer__file_notify_language (IdeBuffer  *self,
     {
       source_language = ide_language_get_source_language (language);
       gtk_source_buffer_set_language (GTK_SOURCE_BUFFER (self), source_language);
+      ide_diagnostician_set_language (priv->diagnostician, source_language);
     }
 
   ide_file_load_settings_async (file,
@@ -935,6 +932,7 @@ ide_buffer_constructed (GObject *object)
 {
   IdeBuffer *self = (IdeBuffer *)object;
   IdeBufferPrivate *priv = ide_buffer_get_instance_private (self);
+  GtkSourceLanguage *language;
   GdkRGBA deprecated_rgba;
   GdkRGBA error_rgba;
   GdkRGBA note_rgba;
@@ -974,8 +972,10 @@ ide_buffer_constructed (GObject *object)
                               "underline-rgba", &error_rgba,
                               NULL);
 
-  priv->highlight_engine = ide_highlight_engine_new (self);
+  language = gtk_source_buffer_get_language (GTK_SOURCE_BUFFER (self));
+  priv->diagnostician = ide_diagnostician_new (priv->context, language);
 
+  priv->highlight_engine = ide_highlight_engine_new (self);
   ide_buffer_reload_highlighter (self);
 }
 

@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ide-context.h"
 #include "ide-diagnostic-provider.h"
 #include "ide-file.h"
 
@@ -24,6 +25,12 @@ G_DEFINE_INTERFACE (IdeDiagnosticProvider, ide_diagnostic_provider, IDE_TYPE_OBJ
 static void
 ide_diagnostic_provider_default_init (IdeDiagnosticProviderInterface *iface)
 {
+  g_object_interface_install_property (iface,
+                                       g_param_spec_object ("context",
+                                                            "Context",
+                                                            "Context",
+                                                            IDE_TYPE_CONTEXT,
+                                                            (G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS)));
 }
 
 void

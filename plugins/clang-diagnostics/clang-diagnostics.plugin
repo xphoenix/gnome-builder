@@ -8,4 +8,3 @@ Builtin=true
 Hidden=true
 Depends=gnome-builder-plugin-clang
 X-Diagnostic-Languages=c,chdr,cpp
-X-Diagnostic-Priority=100

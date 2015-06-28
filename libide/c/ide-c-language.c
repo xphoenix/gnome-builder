@@ -23,7 +23,6 @@
 #include "ide-c-format-provider.h"
 #include "ide-c-indenter.h"
 #include "ide-c-language.h"
-#include "ide-diagnostician.h"
 #include "ide-extension-point.h"
 #include "ide-internal.h"
 
@@ -55,17 +54,6 @@ ide_c_language_get_completion_providers (IdeLanguage *language)
 #endif
 
   return providers;
-}
-
-static IdeDiagnostician *
-ide_c_language_get_diagnostician (IdeLanguage *language)
-{
-  IdeCLanguage *self = (IdeCLanguage *)language;
-  IdeCLanguagePrivate *priv = ide_c_language_get_instance_private (self);
-
-  g_return_val_if_fail (IDE_IS_C_LANGUAGE (self), NULL);
-
-  return priv->diagnostician;
 }
 
 static IdeIndenter *
@@ -116,7 +104,6 @@ ide_c_language_class_init (IdeCLanguageClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   language_class->get_completion_providers = ide_c_language_get_completion_providers;
-  language_class->get_diagnostician = ide_c_language_get_diagnostician;
   language_class->get_indenter = ide_c_language_get_indenter;
   language_class->get_refactory = ide_c_language_get_refactory;
   language_class->get_name = ide_c_language_get_name;

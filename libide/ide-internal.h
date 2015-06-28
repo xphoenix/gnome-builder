@@ -75,10 +75,6 @@ void                _ide_diagnostic_take_fixit              (IdeDiagnostic      
                                                              IdeFixit              *fixit);
 void                _ide_diagnostic_take_range              (IdeDiagnostic         *self,
                                                              IdeSourceRange        *range);
-void                _ide_diagnostician_add_provider         (IdeDiagnostician      *self,
-                                                             IdeDiagnosticProvider *provider);
-void                _ide_diagnostician_remove_provider      (IdeDiagnostician      *self,
-                                                             IdeDiagnosticProvider *provider);
 IdeDiagnostics     *_ide_diagnostics_new                    (GPtrArray             *ar);
 const gchar        *_ide_file_get_content_type              (IdeFile               *self);
 GtkSourceFile      *_ide_file_set_content_type              (IdeFile               *self,

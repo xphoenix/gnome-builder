@@ -3,6 +3,9 @@ tools_PROGRAMS =
 tools_cflags = \
 	-I$(top_srcdir)/libide \
 	-I$(top_builddir)/libide \
+	-DPACKAGE_DATADIR="\"${datadir}\"" \
+	-DPACKAGE_LOCALE_DIR=\""${datadir}/locale"\" \
+	-DPACKAGE_LIBDIR=\""${libdir}"\" \
 	$(LIBIDE_CFLAGS) \
 	$(NULL)
 
