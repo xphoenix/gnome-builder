@@ -23,7 +23,6 @@
 #include "ide-indenter.h"
 #include "ide-internal.h"
 #include "ide-language.h"
-#include "ide-refactory.h"
 
 typedef struct
 {
@@ -37,7 +36,6 @@ enum {
   PROP_INDENTER,
   PROP_ID,
   PROP_NAME,
-  PROP_REFACTORY,
   LAST_PROP
 };
 
@@ -139,26 +137,6 @@ ide_language_get_indenter (IdeLanguage *self)
 }
 
 /**
- * ide_language_get_refactory:
- *
- * Fetches the refactory for @language.
- *
- * If @language does not provide an #IdeRefactory, then %NULL is returned.
- *
- * Returns: (transfer none) (nullable): An #IdeRefactory or %NULL.
- */
-IdeRefactory *
-ide_language_get_refactory (IdeLanguage *self)
-{
-  g_return_val_if_fail (IDE_IS_LANGUAGE (self), NULL);
-
-  if (IDE_LANGUAGE_GET_CLASS (self)->get_refactory)
-    return IDE_LANGUAGE_GET_CLASS (self)->get_refactory (self);
-
-  return NULL;
-}
-
-/**
  * ide_language_get_id:
  *
  * Fetches the unique identifier for the language.
@@ -227,10 +205,6 @@ ide_language_get_property (GObject    *object,
       g_value_set_string (value, ide_language_get_name (self));
       break;
 
-    case PROP_REFACTORY:
-      g_value_set_object (value, ide_language_get_refactory (self));
-      break;
-
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -286,13 +260,6 @@ ide_language_class_init (IdeLanguageClass *klass)
                          _("Name"),
                          _("The name of the language."),
                          NULL,
-                         (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
-
-  gParamSpecs [PROP_REFACTORY] =
-    g_param_spec_object ("refactory",
-                         _("Refactory"),
-                         _("The refactory engine for the language."),
-                         IDE_TYPE_REFACTORY,
                          (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
   g_object_class_install_properties (object_class, LAST_PROP, gParamSpecs);

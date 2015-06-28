@@ -30,7 +30,6 @@ typedef struct
 {
   IdeDiagnostician  *diagnostician;
   IdeIndenter       *indenter;
-  IdeRefactory      *refactory;
 } IdeCLanguagePrivate;
 
 static void _g_initable_iface_init (GInitableIface *iface);
@@ -67,17 +66,6 @@ ide_c_language_get_indenter (IdeLanguage *language)
   return priv->indenter;
 }
 
-static IdeRefactory *
-ide_c_language_get_refactory (IdeLanguage *language)
-{
-  IdeCLanguage *self = (IdeCLanguage *)language;
-  IdeCLanguagePrivate *priv = ide_c_language_get_instance_private (self);
-
-  g_return_val_if_fail (IDE_IS_C_LANGUAGE (self), NULL);
-
-  return priv->refactory;
-}
-
 static const gchar *
 ide_c_language_get_name (IdeLanguage *self)
 {
@@ -92,7 +80,6 @@ ide_c_language_dispose (GObject *object)
 
   g_clear_object (&priv->diagnostician);
   g_clear_object (&priv->indenter);
-  g_clear_object (&priv->refactory);
 
   G_OBJECT_CLASS (ide_c_language_parent_class)->dispose (object);
 }
@@ -105,7 +92,6 @@ ide_c_language_class_init (IdeCLanguageClass *klass)
 
   language_class->get_completion_providers = ide_c_language_get_completion_providers;
   language_class->get_indenter = ide_c_language_get_indenter;
-  language_class->get_refactory = ide_c_language_get_refactory;
   language_class->get_name = ide_c_language_get_name;
 
   object_class->dispose = ide_c_language_dispose;

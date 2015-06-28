@@ -36,7 +36,6 @@ struct _IdeLanguageClass
 
   IdeIndenter       *(*get_indenter)             (IdeLanguage *self);
   const gchar       *(*get_name)                 (IdeLanguage *self);
-  IdeRefactory      *(*get_refactory)            (IdeLanguage *self);
   GtkSourceLanguage *(*get_source_language)      (IdeLanguage *self);
   GList             *(*get_completion_providers) (IdeLanguage *self);
 };
@@ -44,7 +43,6 @@ struct _IdeLanguageClass
 const gchar       *ide_language_get_id                   (IdeLanguage *self);
 IdeIndenter       *ide_language_get_indenter             (IdeLanguage *self);
 const gchar       *ide_language_get_name                 (IdeLanguage *self);
-IdeRefactory      *ide_language_get_refactory            (IdeLanguage *self);
 GtkSourceLanguage *ide_language_get_source_language      (IdeLanguage *self);
 GList             *ide_language_get_completion_providers (IdeLanguage *self);
 
