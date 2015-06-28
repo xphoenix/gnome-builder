@@ -121,7 +121,6 @@ ide_c_language_initiable_init (GInitable     *initable,
       (g_strcmp0 (id, "cpp") == 0))
     {
       IdeContext *context;
-      g_autofree gchar *path = NULL;
 
       context = ide_object_get_context (IDE_OBJECT (initable));
 
