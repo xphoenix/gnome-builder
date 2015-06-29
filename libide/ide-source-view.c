@@ -990,37 +990,66 @@ ide_source_view_unload_completion (IdeSourceView *self)
 }
 
 static void
-ide_source_view_load_completion (IdeSourceView *self)
+ide_source_view_load_completion_plugin (IdeSourceView  *self,
+                                        PeasEngine     *engine,
+                                        PeasPluginInfo *plugin_info)
 {
   IdeSourceViewPrivate *priv = ide_source_view_get_instance_private (self);
   GtkSourceCompletion *completion;
+  PeasExtension *provider;
+  GtkTextBuffer *buffer;
+  GtkSourceLanguage *language;
+  const gchar *languages;
+  const gchar *lang_id;
+  g_auto(GStrv) parts = NULL;
+
+  g_assert (IDE_IS_SOURCE_VIEW (self));
+  g_assert (PEAS_IS_ENGINE (engine));
+  g_assert (plugin_info);
+
+  buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (self));
+  language = gtk_source_buffer_get_language (GTK_SOURCE_BUFFER (buffer));
+
+  if (!language)
+    return;
+
+  if (!peas_engine_provides_extension (engine, plugin_info, GTK_SOURCE_TYPE_COMPLETION_PROVIDER))
+    return;
+
+  languages = peas_plugin_info_get_external_data (plugin_info, "Completion-Languages");
+  if (languages == NULL)
+    return;
+
+  parts = g_strsplit (languages, ",", 0);
+  lang_id = gtk_source_language_get_id (language);
+
+  if (!g_strv_contains ((const gchar * const *)parts, lang_id))
+    return;
+
+  provider = peas_engine_create_extension (engine,
+                                           plugin_info,
+                                           GTK_SOURCE_TYPE_COMPLETION_PROVIDER,
+                                           NULL);
+  completion = gtk_source_view_get_completion (GTK_SOURCE_VIEW (self));
+  gtk_source_completion_add_provider (completion,
+                                      GTK_SOURCE_COMPLETION_PROVIDER (provider),
+                                      NULL);
+  g_ptr_array_add (priv->completion_providers, provider);
+}
+
+static void
+ide_source_view_load_completion (IdeSourceView *self)
+{
   PeasEngine *engine;
   const GList *list;
 
   g_assert (IDE_IS_SOURCE_VIEW (self));
 
-  completion = gtk_source_view_get_completion (GTK_SOURCE_VIEW (self));
   engine = peas_engine_get_default ();
   list = peas_engine_get_plugin_list (engine);
 
   for (; list; list = list->next)
-    {
-      PeasPluginInfo *plugin = list->data;
-
-      if (peas_engine_provides_extension (engine, plugin, GTK_SOURCE_TYPE_COMPLETION_PROVIDER))
-        {
-          PeasExtension *provider;
-
-          provider = peas_engine_create_extension (engine,
-                                                   plugin,
-                                                   GTK_SOURCE_TYPE_COMPLETION_PROVIDER,
-                                                   NULL);
-          gtk_source_completion_add_provider (completion,
-                                              GTK_SOURCE_COMPLETION_PROVIDER (provider),
-                                              NULL);
-          g_ptr_array_add (priv->completion_providers, provider);
-        }
-    }
+    ide_source_view_load_completion_plugin (self, engine, list->data);
 }
 
 static void
@@ -4814,6 +4843,49 @@ ide_source_view_real_decrease_font_size (IdeSourceView *self)
 }
 
 static void
+ide_source_view__engine_load_plugin (IdeSourceView  *self,
+                                     PeasPluginInfo *plugin_info,
+                                     PeasEngine     *engine)
+{
+  g_assert (IDE_IS_SOURCE_VIEW (self));
+  g_assert (plugin_info != NULL);
+  g_assert (PEAS_IS_ENGINE (engine));
+
+  ide_source_view_load_completion_plugin (self, engine, plugin_info);
+}
+
+static void
+ide_source_view__engine_unload_plugin (IdeSourceView  *self,
+                                       PeasPluginInfo *plugin_info,
+                                       PeasEngine     *engine)
+{
+  IdeSourceViewPrivate *priv = ide_source_view_get_instance_private (self);
+  gsize i;
+
+  g_assert (IDE_IS_SOURCE_VIEW (self));
+  g_assert (plugin_info != NULL);
+  g_assert (PEAS_IS_ENGINE (engine));
+
+  for (i = 0; i < priv->completion_providers->len; i++)
+    {
+      PeasExtensionBase *exten = g_ptr_array_index (priv->completion_providers, i);
+
+      if (peas_extension_base_get_plugin_info (exten) == plugin_info)
+        {
+          GtkSourceCompletion *completion;
+
+          completion = gtk_source_view_get_completion (GTK_SOURCE_VIEW (self));
+          gtk_source_completion_remove_provider (completion,
+                                                 GTK_SOURCE_COMPLETION_PROVIDER (exten),
+                                                 NULL);
+          g_ptr_array_remove_index (priv->completion_providers, i);
+          g_object_unref (exten);
+          break;
+        }
+    }
+}
+
+static void
 ide_source_view_dispose (GObject *object)
 {
   IdeSourceView *self = (IdeSourceView *)object;
@@ -5818,6 +5890,7 @@ ide_source_view_init (IdeSourceView *self)
   IdeSourceViewPrivate *priv = ide_source_view_get_instance_private (self);
   GtkSourceCompletion *completion;
   GtkTargetList *target_list;
+  PeasEngine *engine;
 
   priv->target_line_offset = -1;
   priv->snippets = g_queue_new ();
@@ -5929,6 +6002,21 @@ ide_source_view_init (IdeSourceView *self)
   target_list = gtk_drag_dest_get_target_list (GTK_WIDGET (self));
   if (target_list)
     gtk_target_list_add_uri_targets (target_list, TARGET_URI_LIST);
+
+  /*
+   * Track loaded plugins.
+   */
+  engine = peas_engine_get_default ();
+  g_signal_connect_object (engine,
+                           "load-plugin",
+                           G_CALLBACK (ide_source_view__engine_load_plugin),
+                           self,
+                           G_CONNECT_SWAPPED);
+  g_signal_connect_object (engine,
+                           "unload-plugin",
+                           G_CALLBACK (ide_source_view__engine_unload_plugin),
+                           self,
+                           G_CONNECT_SWAPPED);
 }
 
 const PangoFontDescription *
