@@ -19,7 +19,9 @@
 #define G_LOG_DOMAIN "ide-source-view"
 
 #include <glib/gi18n.h>
+#include <libpeas/peas.h>
 #include <stdlib.h>
+
 #include "egg-binding-group.h"
 #include "egg-signal-group.h"
 
@@ -92,7 +94,6 @@ typedef struct
   GtkSourceGutterRenderer     *line_diagnostics_renderer;
   IdeSourceViewCapture        *capture;
   IdeSourceViewMode           *mode;
-  GList                       *providers;
   GtkTextMark                 *rubberband_mark;
   GtkTextMark                 *rubberband_insert_mark;
   GtkTextMark                 *scroll_mark;
@@ -103,6 +104,7 @@ typedef struct
   GtkSourceSearchContext      *search_context;
   IdeAnimation                *hadj_animation;
   IdeAnimation                *vadj_animation;
+  GPtrArray                   *completion_providers;
 
   EggBindingGroup             *file_setting_bindings;
   EggSignalGroup              *buffer_signals;
@@ -964,28 +966,75 @@ ide_source_view_reload_file_settings (IdeSourceView *self)
 }
 
 static void
-ide_source_view_reload_language (IdeSourceView *self)
+ide_source_view_unload_completion (IdeSourceView *self)
 {
   IdeSourceViewPrivate *priv = ide_source_view_get_instance_private (self);
   GtkSourceCompletion *completion;
+
+  g_assert (IDE_IS_SOURCE_VIEW (self));
+
+  completion = gtk_source_view_get_completion (GTK_SOURCE_VIEW (self));
+
+  if (completion == NULL)
+    return;
+
+  while (priv->completion_providers->len > 0)
+    {
+      GtkSourceCompletionProvider *provider;
+
+      provider = g_ptr_array_index (priv->completion_providers, 0);
+      gtk_source_completion_remove_provider (completion, provider, NULL);
+      g_ptr_array_remove_index_fast (priv->completion_providers, 0);
+      g_object_unref (provider);
+    }
+}
+
+static void
+ide_source_view_load_completion (IdeSourceView *self)
+{
+  IdeSourceViewPrivate *priv = ide_source_view_get_instance_private (self);
+  GtkSourceCompletion *completion;
+  PeasEngine *engine;
+  const GList *list;
+
+  g_assert (IDE_IS_SOURCE_VIEW (self));
+
+  completion = gtk_source_view_get_completion (GTK_SOURCE_VIEW (self));
+  engine = peas_engine_get_default ();
+  list = peas_engine_get_plugin_list (engine);
+
+  for (; list; list = list->next)
+    {
+      PeasPluginInfo *plugin = list->data;
+
+      if (peas_engine_provides_extension (engine, plugin, GTK_SOURCE_TYPE_COMPLETION_PROVIDER))
+        {
+          PeasExtension *provider;
+
+          provider = peas_engine_create_extension (engine,
+                                                   plugin,
+                                                   GTK_SOURCE_TYPE_COMPLETION_PROVIDER,
+                                                   NULL);
+          gtk_source_completion_add_provider (completion,
+                                              GTK_SOURCE_COMPLETION_PROVIDER (provider),
+                                              NULL);
+          g_ptr_array_add (priv->completion_providers, provider);
+        }
+    }
+}
+
+static void
+ide_source_view_reload_language (IdeSourceView *self)
+{
   GtkTextBuffer *buffer;
   IdeFile *file = NULL;
   IdeLanguage *language = NULL;
   GtkSourceLanguage *source_language = NULL;
   IdeIndenter *indenter;
-  GList *list;
-  GList *iter;
 
   g_assert (IDE_IS_SOURCE_VIEW (self));
 
-  /*
-   * Unload any currently loaded completion providers.
-   */
-  completion = gtk_source_view_get_completion (GTK_SOURCE_VIEW (self));
-  for (iter = priv->providers; iter; iter = iter->next)
-    gtk_source_completion_remove_provider (completion, iter->data, NULL);
-  g_list_free_full (priv->providers, g_object_unref);
-  priv->providers = NULL;
+  ide_source_view_unload_completion (self);
 
   /*
    * Update source language, indenter, etc.
@@ -1004,13 +1053,7 @@ ide_source_view_reload_language (IdeSourceView *self)
   indenter = ide_language_get_indenter (language);
   ide_source_view_set_indenter (self, indenter);
 
-  /*
-   * Load the languages custom providers.
-   */
-  list = ide_language_get_completion_providers (language);
-  for (iter = list; iter; iter = iter->next)
-    gtk_source_completion_add_provider (completion, iter->data, NULL);
-  priv->providers = list;
+  ide_source_view_load_completion (self);
 }
 
 static void
@@ -1033,6 +1076,9 @@ ide_source_view__buffer_notify_language_cb (IdeSourceView *self,
 {
   g_assert (IDE_IS_SOURCE_VIEW (self));
   g_assert (IDE_IS_BUFFER (buffer));
+
+  ide_source_view_unload_completion (self);
+  ide_source_view_load_completion (self);
 }
 
 static void
@@ -4773,6 +4819,8 @@ ide_source_view_dispose (GObject *object)
   IdeSourceView *self = (IdeSourceView *)object;
   IdeSourceViewPrivate *priv = ide_source_view_get_instance_private (self);
 
+  ide_source_view_unload_completion (self);
+
   if (priv->hadj_animation)
     {
       ide_animation_stop (priv->hadj_animation);
@@ -4815,6 +4863,7 @@ ide_source_view_finalize (GObject *object)
   g_clear_pointer (&priv->font_desc, pango_font_description_free);
   g_clear_pointer (&priv->selections, g_queue_free);
   g_clear_pointer (&priv->snippets, g_queue_free);
+  g_clear_pointer (&priv->completion_providers, g_ptr_array_unref);
 
   G_OBJECT_CLASS (ide_source_view_parent_class)->finalize (object);
 }
@@ -5775,6 +5824,8 @@ ide_source_view_init (IdeSourceView *self)
   priv->selections = g_queue_new ();
   priv->show_line_diagnostics = TRUE;
   priv->font_scale = FONT_SCALE_NORMAL;
+
+  priv->completion_providers = g_ptr_array_new ();
 
   priv->file_setting_bindings = egg_binding_group_new ();
   egg_binding_group_bind (priv->file_setting_bindings, "indent-width",
