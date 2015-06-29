@@ -275,11 +275,8 @@ matches_value (IdeExtensionPoint *point,
 
       parts = g_strsplit (line, ",", 0);
 
-      for (i = 0; parts [i]; i++)
-        {
-          if (g_strcmp0 (parts [i], match_value))
-            return TRUE;
-        }
+      if (g_strv_contains ((const gchar * const *)parts, match_value))
+        return TRUE;
     }
 
   return FALSE;
