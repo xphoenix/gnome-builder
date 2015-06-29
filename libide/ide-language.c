@@ -150,6 +150,9 @@ ide_language_get_id (IdeLanguage *self)
 
   g_return_val_if_fail (IDE_IS_LANGUAGE (self), NULL);
 
+  if (priv->id == NULL)
+    return "plain";
+
   return priv->id;
 }
 
