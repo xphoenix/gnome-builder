@@ -18,7 +18,6 @@ libgnome_builder_plugin_clang_highlighter_la_CFLAGS = \
 
 libgnome_builder_plugin_clang_highlighter_la_LIBADD = \
 	$(BUILDER_LIBS) \
-	$(top_builddir)/plugins/clang/libgnome-builder-plugin-clang.la \
 	$(NULL)
 
 libgnome_builder_plugin_clang_highlighter_la_LDFLAGS = \
