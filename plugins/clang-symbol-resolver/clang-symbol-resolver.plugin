@@ -8,4 +8,4 @@ Builtin=true
 Hidden=true
 Depends=gnome-builder-plugin-clang
 X-Symbol-Resolver-Languages=c,cpp,chdr
-X-Symbol-Resolver-Priority=100
+X-Symbol-Resolver-Languages-Priority=100

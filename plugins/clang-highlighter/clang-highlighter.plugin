@@ -8,4 +8,4 @@ Builtin=true
 Hidden=true
 Depends=gnome-builder-plugin-clang
 X-Highlighter-Languages=c,cpp,chdr
-X-Highlighter-Priority=100
+X-Highlighter-Languages-Priority=100

@@ -168,7 +168,7 @@ ide_diagnostician_diagnose_finish (IdeDiagnostician  *self,
 }
 
 static gboolean
-supports_language (const gchar *languages,
+contains_language (const gchar *languages,
                    const gchar *lang_id)
 {
   g_auto(GStrv) parts = g_strsplit (languages, ",", 0);
@@ -198,7 +198,7 @@ ide_diagnostician__engine_load_plugin (IdeDiagnostician *self,
     return;
 
   languages = peas_plugin_info_get_external_data (plugin_info, "Diagnostic-Languages");
-  if (!supports_language (languages, lang_id))
+  if (!contains_language (languages, lang_id))
     return;
 
   context = ide_object_get_context (IDE_OBJECT (self));
