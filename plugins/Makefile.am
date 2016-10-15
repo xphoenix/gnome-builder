@@ -4,6 +4,7 @@ SUBDIRS = \
 	build-tools \
 	c-pack \
 	clang \
+	cmake \
 	color-picker \
 	command-bar \
 	comment-code \

@@ -1,0 +1,10 @@
+[Plugin]
+Module=cmake-plugin
+Name=CMake
+Description=Provides integration with the CMake build system
+Authors=Philipp Andronov <filipp.andronov@gmail.com>
+Copyright=Copyright © 2015 Philipp Andronov
+Builtin=true
+Hidden=true
+X-Project-File-Filter-Pattern=configure.ac,configure.in
+X-Project-File-Filter-Name=CMake Project (configure.ac)

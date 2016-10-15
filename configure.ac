@@ -281,6 +281,7 @@ m4_include([plugins/autotools-templates/configure.ac])
 m4_include([plugins/build-tools/configure.ac])
 m4_include([plugins/c-pack/configure.ac])
 m4_include([plugins/clang/configure.ac])
+m4_include([plugins/cmake/configure.ac])
 m4_include([plugins/color-picker/configure.ac])
 m4_include([plugins/command-bar/configure.ac])
 m4_include([plugins/comment-code/configure.ac])
@@ -391,7 +392,7 @@ dnl ***********************************************************************
 dnl Setup Various Compiler Optimizations
 dnl ***********************************************************************
 AC_MSG_CHECKING([whether to enable optimized builds])
-AC_ARG_ENABLE(optimizations, 
+AC_ARG_ENABLE(optimizations,
               AC_HELP_STRING([--enable-optimizations],
                              [turn on build-time optimizations [default=yes]]),
               [enable_optimizations=$enableval],
@@ -571,6 +572,7 @@ echo "  Autotools ............................ : ${enable_autotools_plugin}"
 echo "  Build Tools .......................... : ${enable_build_tools_plugin}"
 echo "  C Language Pack ...................... : ${enable_c_pack_plugin}"
 echo "  Clang ................................ : ${enable_clang_plugin}"
+echo "  Cmake ................................ : ${enable_cmake_plugin}"
 echo "  Color picker.......................... : ${enable_color_picker_plugin}"
 echo "  Command Bar .......................... : ${enable_command_bar_plugin}"
 echo "  Comment Code.......................... : ${enable_comment_code_plugin}"
