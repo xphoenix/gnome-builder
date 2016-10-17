@@ -21,16 +21,11 @@
 
 #include <ide.h>
 
-/*
 G_BEGIN_DECLS
 
-#define IDE_TYPE_AUTOTOOLS_BUILD_SYSTEM (ide_autotools_build_system_get_type())
+#define IDE_TYPE_CMAKE_BUILD_SYSTEM (ide_cmake_build_system_get_type())
+G_DECLARE_FINAL_TYPE (IdeCmakeBuildSystem, ide_cmake_build_system, IDE, CMAKE_BUILD_SYSTEM, IdeObject)
 
-G_DECLARE_FINAL_TYPE (IdeAutotoolsBuildSystem, ide_autotools_build_system, IDE, AUTOTOOLS_BUILD_SYSTEM, IdeObject)
-
-const gchar *ide_autotools_build_system_get_tarball_name (IdeAutotoolsBuildSystem *self);
 
 G_END_DECLS
-*/
-
 #endif /* IDE_CMAKE_BUILD_SYSTEM_H */
