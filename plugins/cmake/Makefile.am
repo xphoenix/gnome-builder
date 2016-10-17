@@ -6,6 +6,8 @@ dist_plugin_DATA = cmake.plugin
 
 libcmake_plugin_la_SOURCES = \
 	cmake-plugin.c \
+	ide-cmake-builder.c \
+	ide-cmake-builder.h \
 	ide-cmake-build-system.c \
 	ide-cmake-build-system.h \
 	$(NULL)
