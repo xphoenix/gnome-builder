@@ -8,6 +8,8 @@ libcmake_plugin_la_SOURCES = \
 	cmake-plugin.c \
 	ide-cmake-builder.c \
 	ide-cmake-builder.h \
+	ide-cmake-build-task.c \
+	ide-cmake-build-task.h \
 	ide-cmake-build-system.c \
 	ide-cmake-build-system.h \
 	$(NULL)
