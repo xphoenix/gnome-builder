@@ -11,6 +11,16 @@ G_DECLARE_FINAL_TYPE (IdeCmakeBuildTask, ide_cmake_build_task, IDE, CMAKE_BUILD_
 
 typedef gboolean (*BuildStep) (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable);
 
+
+void ide_cmake_build_task_execute_async(IdeCmakeBuildTask   *self,
+                                        GCancellable        *cancellable,
+                                        GAsyncReadyCallback  callback,
+                                        gpointer             user_data);
+
+gboolean ide_cmake_build_task_execute_finish(IdeCmakeBuildTask  *self,
+                                             GAsyncResult       *result,
+                                             GError             **error);
+
 /**
  * setenv:
  * Setup environment variables in the build subprocess

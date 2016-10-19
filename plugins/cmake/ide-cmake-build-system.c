@@ -11,6 +11,7 @@
 #include <ide-internal.h>
 
 #include "ide-cmake-build-system.h"
+#include "ide-cmake-builder.h"
 
 struct _IdeCmakeBuildSystem
 {
@@ -244,8 +245,20 @@ ide_cmake_build_system_get_priority (IdeBuildSystem *system)
 static IdeBuilder*
 ide_cmake_build_system_get_builder (IdeBuildSystem *system, IdeConfiguration *configuration, GError **error)
 {
+  IdeBuilder *ret;
+  IdeContext *context;
 
-  return 0;
+  g_assert (IDE_IS_CMAKE_BUILD_SYSTEM (system));
+  g_assert (IDE_IS_CONFIGURATION (configuration));
+
+  context = ide_object_get_context (IDE_OBJECT (system));
+  ret = g_object_new (IDE_TYPE_CMAKE_BUILDER,
+                      "context", context,
+                      "configuration", configuration,
+                      NULL);
+
+  return ret;
+
 };
 
 // ide_cmake_build_system_get_build_flags_async implements IdeBuildSystem interface

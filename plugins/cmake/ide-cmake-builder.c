@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include <glib/gi18n.h>
 #include <ide.h>
 
 #include "ide-cmake-builder.h"
@@ -85,6 +85,30 @@ ide_cmake_builder_get_needs_bootstrap (IdeCmakeBuilder *self)
 //
 // *** IdeBuilder overrides
 //
+static void
+ide_cmake_builder_after_build(GObject      *object,
+                              GAsyncResult *result,
+                              gpointer      user_data)
+{
+  GError *error = NULL;
+  g_autoptr(GTask) task = user_data;
+  IdeCmakeBuildTask *build_result = (IdeCmakeBuildTask *)object;
+
+  g_return_if_fail (IDE_IS_CMAKE_BUILD_TASK (build_result));
+  g_return_if_fail (G_IS_TASK (task));
+
+  if (!ide_cmake_build_task_execute_finish(build_result, result, &error)) {
+    if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+      ide_build_result_set_mode (IDE_BUILD_RESULT (build_result), _("Build cancelled"));
+    } else {
+      ide_build_result_set_mode (IDE_BUILD_RESULT (build_result), _("Build failed"));
+    }
+    g_task_return_error (task, error);
+  } else {
+    ide_build_result_set_mode (IDE_BUILD_RESULT (build_result), _("Build successful"));
+    g_task_return_pointer (task, g_object_ref (build_result), g_object_unref);
+  }
+}
 
 static void
 ide_cmake_builder_build_async (IdeBuilder           *builder,
@@ -126,13 +150,13 @@ ide_cmake_builder_build_async (IdeBuilder           *builder,
     *result = g_object_ref (build_result);
   }
 
-  /*
-  ide_autotools_build_task_execute_async (build_result,
-                                          flags,
-                                          cancellable,
-                                          ide_autotools_builder_build_cb,
-                                          g_object_ref (task));
-   */
+  // Launch build
+  ide_cmake_build_task_execute_async(
+    build_result,
+    cancellable,
+    ide_cmake_builder_after_build,
+    g_object_ref (task)
+  );
 }
 
 static IdeBuildResult *
@@ -140,7 +164,12 @@ ide_cmake_builder_build_finish (IdeBuilder    *builder,
                                 GAsyncResult  *result,
                                 GError        **error)
 {
-  return 0;
+  GTask *task = (GTask *)result;
+
+  g_return_val_if_fail (IDE_IS_CMAKE_BUILDER (builder), NULL);
+  g_return_val_if_fail (G_IS_TASK (task), NULL);
+
+  return g_task_propagate_pointer (task, error);
 }
 
 static void

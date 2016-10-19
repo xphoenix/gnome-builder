@@ -1,4 +1,5 @@
 #include <glib/gi18n.h>
+#include <glib-object.h>
 #include "ide-cmake-build-task.h"
 
 struct _IdeCmakeBuildTask
@@ -7,10 +8,14 @@ struct _IdeCmakeBuildTask
   IdeConfiguration *configuration;
 
   GFile            *directory;
-  GPtrArray        *extra_targets;
+  //GPtrArray        *extra_targets;
   GPtrArray        *steps;
 
   guint             executed : 1;
+
+  // private fields
+  IdeRuntime *runtime;
+  GFile *projectDir;
 };
 
 G_DEFINE_TYPE (IdeCmakeBuildTask, ide_cmake_build_task, IDE_TYPE_BUILD_RESULT)
@@ -44,7 +49,7 @@ ide_cmake_build_task_get_property (GObject    *object,
       break;
 
     case PROP_STEPS:
-      g_value_set_object(value, self->steps);
+      g_value_set_boxed(value, self->steps);
       break;
 
     default:
@@ -82,7 +87,7 @@ ide_cmake_build_task_set_property (GObject      *object,
       break;
 
     case PROP_STEPS:
-      steps = g_value_get_object(value);
+      steps = g_value_get_boxed(value);
       g_assert(steps != 0);
 
       g_ptr_array_free(self->steps, FALSE);
@@ -97,11 +102,25 @@ ide_cmake_build_task_set_property (GObject      *object,
 }
 
 static void
+ide_cmake_build_task_finalize (GObject *object)
+{
+  IdeCmakeBuildTask *self = (IdeCmakeBuildTask *)object;
+
+  g_clear_object (&self->directory);
+  g_clear_object (&self->configuration);
+  //g_clear_pointer (&self->extra_targets, g_ptr_array_unref);
+  g_clear_pointer (&self->steps, g_ptr_array_unref);
+
+  G_OBJECT_CLASS (ide_cmake_build_task_parent_class)->finalize (object);
+}
+
+
+static void
 ide_cmake_build_task_class_init (IdeCmakeBuildTaskClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = 0;//ide_autotools_build_task_finalize;
+  object_class->finalize = ide_cmake_build_task_finalize;
   object_class->get_property = ide_cmake_build_task_get_property;
   object_class->set_property = ide_cmake_build_task_set_property;
 
@@ -124,10 +143,10 @@ ide_cmake_build_task_class_init (IdeCmakeBuildTaskClass *klass)
                           G_PARAM_STATIC_STRINGS));
 
   properties [PROP_STEPS] =
-    g_param_spec_boolean ("steps",
+    g_param_spec_boxed ("steps",
                           "Build steps",
                           "Steps needs to be performed during the build",
-                          FALSE,
+                          G_TYPE_PTR_ARRAY,
                           (G_PARAM_READWRITE |
                            G_PARAM_CONSTRUCT_ONLY |
                            G_PARAM_STATIC_STRINGS));
@@ -144,11 +163,40 @@ ide_cmake_build_task_init (IdeCmakeBuildTask *self)
 // *** Async execution: call all prebuild hooks, execute build steps and call all post
 // build hooks
 //
+gboolean
+ide_cmake_build_task_execute_finish (IdeCmakeBuildTask  *self,
+                                     GAsyncResult       *result,
+                                     GError             **error)
+{
+  GTask *task = (GTask *)result;
+  guint sequence;
+  gboolean ret;
+
+  IDE_ENTRY;
+
+  g_return_val_if_fail (IDE_IS_CMAKE_BUILD_TASK (self), FALSE);
+  g_return_val_if_fail (G_IS_TASK (task), FALSE);
+
+// TODO: Check that build runs necessary configuration
+//
+//  sequence = ide_configuration_get_sequence (self->configuration);
+//  if (self->sequence == sequence) {
+//    ide_configuration_set_dirty (self->configuration, FALSE);
+//  }
+
+  /* Mark the task as failed */
+  ret = g_task_propagate_boolean (task, error);
+  if (ret == FALSE) {
+    ide_build_result_set_failed (IDE_BUILD_RESULT (self), TRUE);
+  }
+
+  ide_build_result_set_running (IDE_BUILD_RESULT (self), FALSE);
+  IDE_RETURN (ret);
+}
 
 /**
  * ide_cmake_build_task_steps_worker:
  * Executes given set of build steps asynchoniously.
- *
  */
 static void
 ide_cmake_build_task_steps_worker(GTask        *task,
@@ -156,14 +204,50 @@ ide_cmake_build_task_steps_worker(GTask        *task,
                                   gpointer      task_data,
                                   GCancellable *cancellable)
 {
+  GError *error;
+  gboolean result;
+  IdeCmakeBuildTask *self;
 
+  self = g_task_get_source_object (task);
+  g_assert(IDE_IS_CMAKE_BUILD_TASK(self));
+
+  // Run all tasks
+  result = TRUE;
+  for (guint i = 0; i < self->steps->len && result && !g_cancellable_is_cancelled (cancellable) ; i++) {
+    BuildStep f = (BuildStep)g_ptr_array_index(self->steps, i);
+    result = f(task, self, cancellable);
+  }
+
+  // Running post build steps
+  if (result) {
+    IdeEnvironment *environment;
+    IdeBuildCommandQueue *postbuild;
+
+    postbuild = ide_configuration_get_postbuild (self->configuration);
+    environment = ide_environment_copy (ide_configuration_get_environment (self->configuration));
+
+    result &= ide_build_command_queue_execute (
+        postbuild,
+        self->runtime,
+        environment,
+        IDE_BUILD_RESULT (self),
+        cancellable,
+        &error
+    );
+  }
+
+  // Done!
+  if (!result) {
+    ide_build_result_log_stderr (IDE_BUILD_RESULT (self), "%s %s", _("Build Failed: "), error->message);
+    g_task_return_error (task, error);
+  } else {
+    g_task_return_boolean (task, TRUE);
+  }
 }
 
 /**
  * ide_cmake_build_task_after_configuration_prebuild:
  * Called after configuration prebuild hooks are complete and starts build steps execution
- *
- *
  */
 void
 ide_cmake_build_task_after_configuration_prebuild (GObject      *object,
@@ -181,14 +265,14 @@ ide_cmake_build_task_after_configuration_prebuild (GObject      *object,
   g_assert (G_IS_ASYNC_RESULT (result));
 
   self = g_task_get_source_object (task);
+  g_assert(IDE_IS_CMAKE_BUILD_TASK(self));
 
   if (!ide_build_command_queue_execute_finish (cmdq, result, &error)) {
     ide_build_result_log_stderr (IDE_BUILD_RESULT (self), "%s %s", _("Build Failed: "), error->message);
     g_task_return_error (task, error);
-    IDE_EXIT;
+  } else {
+    g_task_run_in_thread (task, ide_cmake_build_task_steps_worker);
   }
-
-  g_task_run_in_thread (task, ide_cmake_build_task_steps_worker);
   IDE_EXIT;
 }
 
@@ -216,30 +300,24 @@ ide_cmake_build_task_after_runtime_prebuild (GObject      *object,
 
   if (!ide_runtime_prebuild_finish (runtime, result, &error)) {
     g_task_return_error (task, error);
-    IDE_EXIT;
+  } else {
+    self = g_task_get_source_object (task);
+    g_assert (IDE_IS_CMAKE_BUILD_TASK (self));
+
+    prebuild = ide_configuration_get_prebuild (self->configuration);
+    g_assert (IDE_IS_BUILD_COMMAND_QUEUE (prebuild));
+
+    cancellable = g_task_get_cancellable (task);
+    g_assert (!cancellable || G_IS_CANCELLABLE (cancellable));
+
+    ide_build_command_queue_execute_async (prebuild,
+                                           runtime,
+                                           ide_configuration_get_environment (self->configuration),
+                                           IDE_BUILD_RESULT (self),
+                                           cancellable,
+                                           ide_cmake_build_task_after_configuration_prebuild,
+                                           g_steal_pointer (&task));
   }
-
-  /*
-   * Now that the runtime has prepared itself, we need to allow the
-   * configuration's prebuild commands to be executed.
-   */
-  self = g_task_get_source_object (task);
-  g_assert (IDE_IS_CMAKE_BUILD_TASK (self));
-
-  prebuild = ide_configuration_get_prebuild (self->configuration);
-  g_assert (IDE_IS_BUILD_COMMAND_QUEUE (prebuild));
-
-  cancellable = g_task_get_cancellable (task);
-  g_assert (!cancellable || G_IS_CANCELLABLE (cancellable));
-
-  ide_build_command_queue_execute_async (prebuild,
-                                         runtime,
-                                         ide_configuration_get_environment (self->configuration),
-                                         IDE_BUILD_RESULT (self),
-                                         cancellable,
-                                         ide_cmake_build_task_after_configuration_prebuild,
-                                         g_steal_pointer (&task));
-
   IDE_EXIT;
 }
 
@@ -253,8 +331,9 @@ ide_cmake_build_task_execute_async (IdeCmakeBuildTask     *self,
                                     GAsyncReadyCallback    callback,
                                     gpointer               user_data)
 {
-  IdeRuntime *runtime;
   g_autoptr(GTask) task = NULL;
+  IdeContext *context;
+
   IDE_ENTRY;
 
   g_return_if_fail (IDE_IS_CMAKE_BUILD_TASK (self));
@@ -263,7 +342,6 @@ ide_cmake_build_task_execute_async (IdeCmakeBuildTask     *self,
 
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_source_tag (task, ide_cmake_build_task_execute_async);
-  g_task_set_task_data (task, self, NULL);
 
   if (self->executed) {
     g_task_return_new_error (
@@ -274,10 +352,18 @@ ide_cmake_build_task_execute_async (IdeCmakeBuildTask     *self,
       _("Cannot execute build task more than once")
     );
   } else {
-    self->executed = TRUE;
+    context = ide_object_get_context (IDE_OBJECT (self));
 
-    runtime = ide_configuration_get_runtime (self->configuration);
-    if (runtime == NULL) {
+    self->executed = TRUE;
+    self->runtime = ide_configuration_get_runtime (self->configuration);
+    self->projectDir = ide_context_get_project_file (context);
+
+    // TODO: better handling here
+    if (g_file_query_file_type(self->projectDir, G_FILE_QUERY_INFO_NONE, cancellable) != G_FILE_TYPE_DIRECTORY) {
+      self->projectDir = g_file_get_parent(self->projectDir);
+    }
+
+    if (self->runtime == NULL) {
       g_task_return_new_error (
         task,
         IDE_RUNTIME_ERROR,
@@ -289,7 +375,7 @@ ide_cmake_build_task_execute_async (IdeCmakeBuildTask     *self,
     } else {
       // Execute the pre-hook for the runtime before we start building
       ide_runtime_prebuild_async (
-        runtime,
+        self->runtime,
         cancellable,
         ide_cmake_build_task_after_runtime_prebuild,
         g_steal_pointer (&task)
@@ -303,18 +389,218 @@ ide_cmake_build_task_execute_async (IdeCmakeBuildTask     *self,
 // *** Build steps implementation
 //
 
+static gboolean
+log_in_main (gpointer data)
+{
+  struct {
+    IdeBuildResult *result;
+    gchar *message;
+  } *pair = data;
+
+  ide_build_result_log_stdout (pair->result, "%s", pair->message);
+
+  g_free (pair->message);
+  g_object_unref (pair->result);
+  g_slice_free1 (sizeof *pair, pair);
+
+  return G_SOURCE_REMOVE;
+}
+
+static IdeSubprocess *
+log_and_spawn (IdeCmakeBuildTask  *self,
+               IdeSubprocessLauncher  *launcher,
+               GCancellable           *cancellable,
+               GError                **error,
+               const gchar           *argv0,
+               ...)
+{
+  g_autoptr(GError) local_error = NULL;
+  IdeSubprocess *ret;
+  struct {
+    IdeBuildResult *result;
+    gchar *message;
+  } *pair;
+  GString *log;
+  gchar *item;
+  va_list args;
+  gint popcnt = 0;
+
+  g_assert (IDE_IS_CMAKE_BUILD_TASK (self));
+  g_assert (IDE_IS_SUBPROCESS_LAUNCHER (launcher));
+  g_assert (!cancellable || G_IS_CANCELLABLE (cancellable));
+
+  log = g_string_new (argv0);
+  ide_subprocess_launcher_push_argv (launcher, argv0);
+
+  va_start (args, argv0);
+  while (NULL != (item = va_arg (args, gchar *)))
+    {
+      ide_subprocess_launcher_push_argv (launcher, item);
+      g_string_append_printf (log, " '%s'", item);
+      popcnt++;
+    }
+  va_end (args);
+
+  pair = g_slice_alloc (sizeof *pair);
+  pair->result = g_object_ref (self);
+  pair->message = g_string_free (log, FALSE);
+  g_timeout_add (0, log_in_main, pair);
+
+  ret = ide_subprocess_launcher_spawn_sync (launcher, cancellable, &local_error);
+
+  if (ret == NULL)
+    {
+      ide_build_result_log_stderr (IDE_BUILD_RESULT (self), "%s %s",
+                                   _("Build Failed: "),
+                                   local_error->message);
+      g_propagate_error (error, g_steal_pointer (&local_error));
+    }
+
+  /* pop make args */
+  for (; popcnt; popcnt--)
+    g_free (ide_subprocess_launcher_pop_argv (launcher));
+
+  /* pop "make" */
+  g_free (ide_subprocess_launcher_pop_argv (launcher));
+
+  return ret;
+}
+
 gboolean ide_cmake_build_task_setenv (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable) {
-  return FALSE;
+  return TRUE;
 }
 
 gboolean ide_cmake_build_task_mkdirs (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable) {
-  return FALSE;
+  char *path;
+
+  g_assert (G_IS_TASK (task));
+  g_assert (IDE_IS_CMAKE_BUILD_TASK (self));
+  g_assert (!cancellable || G_IS_CANCELLABLE (cancellable));
+
+  path = g_file_get_path(self->directory);
+  if (!g_file_test (path, G_FILE_TEST_EXISTS)) {
+    if (g_mkdir_with_parents (path, 0750) != 0) {
+      g_task_return_new_error (
+        task,
+        G_IO_ERROR,
+        G_IO_ERROR_FAILED,
+        _("Failed to create build directory.")
+      );
+    }
+  } else if (!g_file_test (path, G_FILE_TEST_IS_DIR)){
+    g_task_return_new_error (
+      task,
+      G_IO_ERROR,
+      G_IO_ERROR_NOT_DIRECTORY,
+      _("'%s' is not a directory."),
+      path
+    );
+  }
+
+  g_free(path);
+  return TRUE;
 }
 
 gboolean ide_cmake_build_task_cmake (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable) {
-  return FALSE;
+  GError *error = NULL;
+  g_autofree char *build_path = NULL;
+  g_autofree char *project_path = NULL;
+  g_autoptr(IdeSubprocess) process = NULL;
+  g_autoptr(IdeSubprocessLauncher) launcher = NULL;
+
+  g_assert (G_IS_TASK (task));
+  g_assert (IDE_IS_CMAKE_BUILD_TASK (self));
+  g_assert (!cancellable || G_IS_CANCELLABLE (cancellable));
+
+  ide_build_result_set_mode (IDE_BUILD_RESULT (self), _("Running cmake…"));
+  if (NULL == (launcher = ide_runtime_create_launcher (self->runtime, &error))) {
+    g_task_return_error (task, error);
+  }
+
+  // Configure runtime
+  build_path = g_file_get_path(self->directory);
+  project_path = g_file_get_path(self->projectDir);
+  ide_subprocess_launcher_set_cwd (launcher, build_path);
+  ide_subprocess_launcher_setenv (launcher, "LANG", "C", TRUE);
+
+  // check runtime
+  if (!ide_runtime_contains_program_in_path (self->runtime, "cmake", cancellable)) {
+    g_task_return_new_error (
+      task,
+      G_IO_ERROR,
+      G_IO_ERROR_NOT_FOUND,
+      "Failed to locate make."
+    );
+    return FALSE;
+  }
+
+  // Launch cmake
+  process = log_and_spawn(self, launcher, cancellable, &error, "cmake", project_path, NULL);
+  if (!process) {
+    g_task_return_error (task, error);
+    return FALSE;
+  }
+
+  ide_build_result_log_subprocess (IDE_BUILD_RESULT (self), process);
+  if (!ide_subprocess_wait_check (process, cancellable, &error)) {
+    g_task_return_error (task, error);
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 gboolean ide_cmake_build_task_make (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable) {
-  return FALSE;
+  GError *error = NULL;
+  g_autofree char *make_bin = NULL;
+  g_autofree char *build_path = NULL;
+  g_autofree char *project_path = NULL;
+  g_autoptr(IdeSubprocess) process = NULL;
+  g_autoptr(IdeSubprocessLauncher) launcher = NULL;
+
+  g_assert (G_IS_TASK (task));
+  g_assert (IDE_IS_CMAKE_BUILD_TASK (self));
+  g_assert (!cancellable || G_IS_CANCELLABLE (cancellable));
+
+  ide_build_result_set_mode (IDE_BUILD_RESULT (self), _("Running cmake…"));
+  if (NULL == (launcher = ide_runtime_create_launcher (self->runtime, &error))) {
+    g_task_return_error (task, error);
+  }
+
+  // Configure runtime
+  build_path = g_file_get_path(self->directory);
+  project_path = g_file_get_path(self->projectDir);
+  ide_subprocess_launcher_set_flags (launcher, (G_SUBPROCESS_FLAGS_STDERR_PIPE | G_SUBPROCESS_FLAGS_STDOUT_PIPE));
+  ide_subprocess_launcher_set_cwd (launcher, build_path);
+  ide_subprocess_launcher_setenv (launcher, "LANG", "C", TRUE);
+
+  // check runtime
+  if (ide_runtime_contains_program_in_path (self->runtime, "gmake", cancellable)) {
+    make_bin = "gmake";
+  } else if (ide_runtime_contains_program_in_path (self->runtime, "make", cancellable)) {
+    make_bin = "make";
+  } else {
+    g_task_return_new_error (
+      task,
+      G_IO_ERROR,
+      G_IO_ERROR_NOT_FOUND,
+      "Failed to locate make."
+    );
+    return FALSE;
+  }
+
+  // Launch cmake
+  process = log_and_spawn(self, launcher, cancellable, &error, make_bin, NULL);
+  if (!process) {
+    g_task_return_error (task, error);
+    return FALSE;
+  }
+
+  ide_build_result_log_subprocess (IDE_BUILD_RESULT (self), process);
+  if (!ide_subprocess_wait_check (process, cancellable, &error)) {
+    g_task_return_error (task, error);
+    return FALSE;
+  }
+
+  return TRUE;
 }
