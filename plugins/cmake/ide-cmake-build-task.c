@@ -535,7 +535,7 @@ gboolean ide_cmake_build_task_cmake (GTask *task, IdeCmakeBuildTask *self, GCanc
   }
 
   // Launch cmake
-  process = log_and_spawn(self, launcher, cancellable, &error, "cmake", project_path, NULL);
+  process = log_and_spawn(self, launcher, cancellable, &error, "cmake", "CMAKE_EXPORT_COMPILE_COMMANDS", project_path, NULL);
   if (!process) {
     g_task_return_error (task, error);
     return FALSE;
@@ -552,7 +552,7 @@ gboolean ide_cmake_build_task_cmake (GTask *task, IdeCmakeBuildTask *self, GCanc
 
 gboolean ide_cmake_build_task_make (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable) {
   GError *error = NULL;
-  g_autofree char *make_bin = NULL;
+  char *make_bin = NULL;
   g_autofree char *build_path = NULL;
   g_autofree char *project_path = NULL;
   g_autoptr(IdeSubprocess) process = NULL;
