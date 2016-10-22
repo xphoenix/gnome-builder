@@ -204,7 +204,7 @@ ide_cmake_build_task_steps_worker(GTask        *task,
                                   gpointer      task_data,
                                   GCancellable *cancellable)
 {
-  GError *error;
+  GError *error = NULL;
   gboolean result;
   IdeCmakeBuildTask *self;
 
@@ -215,7 +215,8 @@ ide_cmake_build_task_steps_worker(GTask        *task,
   result = TRUE;
   for (guint i = 0; i < self->steps->len && result && !g_cancellable_is_cancelled (cancellable) ; i++) {
     BuildStep f = (BuildStep)g_ptr_array_index(self->steps, i);
-    result = f(task, self, cancellable);
+    result = f(self, cancellable, &error);
+    result &= (error == NULL);
   }
 
   // Running post build steps
@@ -466,55 +467,51 @@ log_and_spawn (IdeCmakeBuildTask  *self,
   return ret;
 }
 
-gboolean ide_cmake_build_task_setenv (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable) {
+gboolean ide_cmake_build_task_setenv (IdeCmakeBuildTask *self, GCancellable *cancellable, GError **error) {
   return TRUE;
 }
 
-gboolean ide_cmake_build_task_mkdirs (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable) {
-  char *path;
+gboolean ide_cmake_build_task_mkdirs (IdeCmakeBuildTask *self, GCancellable *cancellable, GError **error) {
+  g_autofree char *path;
 
-  g_assert (G_IS_TASK (task));
   g_assert (IDE_IS_CMAKE_BUILD_TASK (self));
   g_assert (!cancellable || G_IS_CANCELLABLE (cancellable));
 
   path = g_file_get_path(self->directory);
   if (!g_file_test (path, G_FILE_TEST_EXISTS)) {
     if (g_mkdir_with_parents (path, 0750) != 0) {
-      g_task_return_new_error (
-        task,
+      *error = g_error_new (
         G_IO_ERROR,
         G_IO_ERROR_FAILED,
         _("Failed to create build directory.")
       );
+      return FALSE;
     }
   } else if (!g_file_test (path, G_FILE_TEST_IS_DIR)){
-    g_task_return_new_error (
-      task,
+    *error = g_error_new (
       G_IO_ERROR,
       G_IO_ERROR_NOT_DIRECTORY,
       _("'%s' is not a directory."),
       path
     );
+    return FALSE;
   }
 
-  g_free(path);
   return TRUE;
 }
 
-gboolean ide_cmake_build_task_cmake (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable) {
-  GError *error = NULL;
+gboolean ide_cmake_build_task_cmake (IdeCmakeBuildTask *self, GCancellable *cancellable, GError **error) {
   g_autofree char *build_path = NULL;
   g_autofree char *project_path = NULL;
   g_autoptr(IdeSubprocess) process = NULL;
   g_autoptr(IdeSubprocessLauncher) launcher = NULL;
 
-  g_assert (G_IS_TASK (task));
   g_assert (IDE_IS_CMAKE_BUILD_TASK (self));
   g_assert (!cancellable || G_IS_CANCELLABLE (cancellable));
 
   ide_build_result_set_mode (IDE_BUILD_RESULT (self), _("Running cmake…"));
-  if (NULL == (launcher = ide_runtime_create_launcher (self->runtime, &error))) {
-    g_task_return_error (task, error);
+  if (NULL == (launcher = ide_runtime_create_launcher (self->runtime, error))) {
+    return FALSE;
   }
 
   // Configure runtime
@@ -525,8 +522,7 @@ gboolean ide_cmake_build_task_cmake (GTask *task, IdeCmakeBuildTask *self, GCanc
 
   // check runtime
   if (!ide_runtime_contains_program_in_path (self->runtime, "cmake", cancellable)) {
-    g_task_return_new_error (
-      task,
+    *error = g_error_new (
       G_IO_ERROR,
       G_IO_ERROR_NOT_FOUND,
       "Failed to locate make."
@@ -535,36 +531,32 @@ gboolean ide_cmake_build_task_cmake (GTask *task, IdeCmakeBuildTask *self, GCanc
   }
 
   // Launch cmake
-  process = log_and_spawn(self, launcher, cancellable, &error, "cmake", "CMAKE_EXPORT_COMPILE_COMMANDS", project_path, NULL);
+  process = log_and_spawn(self, launcher, cancellable, error, "cmake", "-DCMAKE_EXPORT_COMPILE_COMMANDS=On", project_path, NULL);
   if (!process) {
-    g_task_return_error (task, error);
     return FALSE;
   }
 
   ide_build_result_log_subprocess (IDE_BUILD_RESULT (self), process);
-  if (!ide_subprocess_wait_check (process, cancellable, &error)) {
-    g_task_return_error (task, error);
+  if (!ide_subprocess_wait_check (process, cancellable, error)) {
     return FALSE;
   }
 
   return TRUE;
 }
 
-gboolean ide_cmake_build_task_make (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable) {
-  GError *error = NULL;
+gboolean ide_cmake_build_task_make (IdeCmakeBuildTask *self, GCancellable *cancellable, GError **error) {
   char *make_bin = NULL;
   g_autofree char *build_path = NULL;
   g_autofree char *project_path = NULL;
   g_autoptr(IdeSubprocess) process = NULL;
   g_autoptr(IdeSubprocessLauncher) launcher = NULL;
 
-  g_assert (G_IS_TASK (task));
   g_assert (IDE_IS_CMAKE_BUILD_TASK (self));
   g_assert (!cancellable || G_IS_CANCELLABLE (cancellable));
 
-  ide_build_result_set_mode (IDE_BUILD_RESULT (self), _("Running cmake…"));
-  if (NULL == (launcher = ide_runtime_create_launcher (self->runtime, &error))) {
-    g_task_return_error (task, error);
+  ide_build_result_set_mode (IDE_BUILD_RESULT (self), _("Running make…"));
+  if (NULL == (launcher = ide_runtime_create_launcher (self->runtime, error))) {
+    return FALSE;
   }
 
   // Configure runtime
@@ -580,8 +572,7 @@ gboolean ide_cmake_build_task_make (GTask *task, IdeCmakeBuildTask *self, GCance
   } else if (ide_runtime_contains_program_in_path (self->runtime, "make", cancellable)) {
     make_bin = "make";
   } else {
-    g_task_return_new_error (
-      task,
+    *error = g_error_new (
       G_IO_ERROR,
       G_IO_ERROR_NOT_FOUND,
       "Failed to locate make."
@@ -590,15 +581,13 @@ gboolean ide_cmake_build_task_make (GTask *task, IdeCmakeBuildTask *self, GCance
   }
 
   // Launch cmake
-  process = log_and_spawn(self, launcher, cancellable, &error, make_bin, NULL);
+  process = log_and_spawn(self, launcher, cancellable, error, make_bin, NULL);
   if (!process) {
-    g_task_return_error (task, error);
     return FALSE;
   }
 
   ide_build_result_log_subprocess (IDE_BUILD_RESULT (self), process);
-  if (!ide_subprocess_wait_check (process, cancellable, &error)) {
-    g_task_return_error (task, error);
+  if (!ide_subprocess_wait_check (process, cancellable, error)) {
     return FALSE;
   }
 

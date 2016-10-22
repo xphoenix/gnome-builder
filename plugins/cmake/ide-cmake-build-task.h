@@ -9,7 +9,7 @@
 G_DECLARE_FINAL_TYPE (IdeCmakeBuildTask, ide_cmake_build_task, IDE, CMAKE_BUILD_TASK, IdeBuildResult)
 
 
-typedef gboolean (*BuildStep) (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable);
+typedef gboolean (*BuildStep) (IdeCmakeBuildTask *self, GCancellable *cancellable, GError **error);
 
 
 void ide_cmake_build_task_execute_async(IdeCmakeBuildTask   *self,
@@ -26,24 +26,24 @@ gboolean ide_cmake_build_task_execute_finish(IdeCmakeBuildTask  *self,
  * Setup environment variables in the build subprocess
  *
  */
-gboolean ide_cmake_build_task_setenv (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable);
+gboolean ide_cmake_build_task_setenv (IdeCmakeBuildTask *self, GCancellable *cancellable, GError **error);
 
 /**
  * mkdirs:
  * Creates necessary directory structure
  */
-gboolean ide_cmake_build_task_mkdirs (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable);
+gboolean ide_cmake_build_task_mkdirs (IdeCmakeBuildTask *self, GCancellable *cancellable, GError **error);
 
 /**
  * cmake:
  * Calls cmake to recreate Makeflies for the project
  */
-gboolean ide_cmake_build_task_cmake  (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable);
+gboolean ide_cmake_build_task_cmake  (IdeCmakeBuildTask *self, GCancellable *cancellable, GError **error);
 
 /**
  * make:
  * Calls GNU make to perform actual build
  */
-gboolean ide_cmake_build_task_make   (GTask *task, IdeCmakeBuildTask *self, GCancellable *cancellable);
+gboolean ide_cmake_build_task_make   (IdeCmakeBuildTask *self, GCancellable *cancellable, GError **error);
 
 #endif /* IDE_CMAKE_BUILDER_STEP_H */
