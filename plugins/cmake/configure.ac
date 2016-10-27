@@ -5,6 +5,16 @@ AC_ARG_ENABLE([cmake-plugin],
               [enable_cmake_plugin=$enableval],
               [enable_cmake_plugin=yes])
 
+# If cmake is auto/yes, check that json-glib is available
+AS_IF([test "$enable_cmake_plugin" != "no"],[
+	PKG_CHECK_MODULES([JSON], [json-glib-1.0 >= 0.14.0], , [
+		enable_cmake_plugin=no
+		AC_MSG_ERROR([Failed to locate json-glib dependencies.])
+	])
+	AC_SUBST(JSON_CFLAGS)
+	AC_SUBST(JSON_LIBS)
+])
+
 # for if ENABLE_CMAKE_PLUGIN in Makefile.am
 AM_CONDITIONAL(ENABLE_CMAKE_PLUGIN, test x$enable_cmake_plugin != xno)
 

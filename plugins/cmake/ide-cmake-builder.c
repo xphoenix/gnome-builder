@@ -133,6 +133,7 @@ ide_cmake_builder_build_async (IdeBuilder           *builder,
   g_ptr_array_add(build_steps, ide_cmake_build_task_setenv);
   g_ptr_array_add(build_steps, ide_cmake_build_task_mkdirs);
   g_ptr_array_add(build_steps, ide_cmake_build_task_cmake);
+  g_ptr_array_add(build_steps, ide_cmake_build_task_compile_db);
   g_ptr_array_add(build_steps, ide_cmake_build_task_make);
 
   task = g_task_new (self, cancellable, callback, user_data);
@@ -179,6 +180,7 @@ ide_cmake_builder_install_async (IdeBuilder           *builder,
                                  GAsyncReadyCallback   callback,
                                  gpointer              user_data)
 {
+
 }
 
 static IdeBuildResult *

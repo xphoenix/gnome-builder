@@ -1,6 +1,9 @@
 #include <glib/gi18n.h>
 #include <glib-object.h>
+#include <json-glib/json-glib.h>
 #include "ide-cmake-build-task.h"
+#include "ide-cmake-compile-db.h"
+
 
 struct _IdeCmakeBuildTask
 {
@@ -12,6 +15,8 @@ struct _IdeCmakeBuildTask
   GPtrArray        *steps;
 
   guint             executed : 1;
+
+
 
   // private fields
   IdeRuntime *runtime;
@@ -543,6 +548,21 @@ gboolean ide_cmake_build_task_cmake (IdeCmakeBuildTask *self, GCancellable *canc
 
   return TRUE;
 }
+
+gboolean ide_cmake_build_task_compile_db  (IdeCmakeBuildTask *self, GCancellable *cancellable, GError **error) {
+  g_autoptr(GError) localError = NULL;
+  g_autoptr(IdeCmakeCompileDb) db = NULL;
+  g_autoptr(GFile) file = g_file_resolve_relative_path (self->directory, "compile_commands.json");
+  g_autofree char *filename = g_file_get_path(file);
+
+  db = ide_cmake_compile_db_load(file, &localError);
+  if (localError != NULL) {
+    g_print ("Unable to parse `%s': %s\n", filename, localError->message);
+  }
+
+  return TRUE;
+}
+
 
 gboolean ide_cmake_build_task_make (IdeCmakeBuildTask *self, GCancellable *cancellable, GError **error) {
   char *make_bin = NULL;
